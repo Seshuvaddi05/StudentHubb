@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StudentHub Admin</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        .admin-wrapper {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: #ffffff;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 5px rgba(15, 23, 42, 0.15);
+        }
+
+        .admin-title {
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .admin-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .admin-row label {
+            font-size: 0.9rem;
+            color: #374151;
+        }
+
+        .admin-row input,
+        .admin-row select,
+        .admin-row textarea {
+            padding: 0.55rem 0.8rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            font-size: 0.9rem;
+        }
+
+        .admin-row input:focus,
+        .admin-row select:focus,
+        .admin-row textarea:focus {
+            outline: none;
+            border-color: #111827;
+            box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.12);
+        }
+
+        .admin-note {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 0.4rem;
+        }
+
+        .admin-section-title {
+            font-size: 1.1rem;
+            margin-top: 1.8rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .admin-list {
+            margin-top: 0.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .admin-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0.8rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            font-size: 0.88rem;
+        }
+
+        .admin-item-title {
+            font-weight: 600;
+        }
+
+        .admin-item-meta {
+            font-size: 0.78rem;
+            color: #6b7280;
+        }
+
+        .admin-delete-btn {
+            padding: 0.3rem 0.7rem;
+            border-radius: 999px;
+            border: 1px solid #ef4444;
+            background: #fee2e2;
+            color: #b91c1c;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.15s ease, transform 0.1s ease;
+        }
+
+        .admin-delete-btn:hover {
+            background: #fecaca;
+            transform: translateY(-1px);
+        }
+
+        .admin-empty {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        /* Lock overlay */
+        .lock-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .lock-box {
+            background: #ffffff;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.45);
+            width: 90%;
+            max-width: 360px;
+            text-align: center;
+        }
+
+        .lock-box h2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .lock-input {
+            width: 100%;
+            margin-top: 0.8rem;
+            padding: 0.55rem 0.8rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            font-size: 0.9rem;
+        }
+
+        .lock-input:focus {
+            outline: none;
+            border-color: #111827;
+            box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.12);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo">StudentHub Admin</div>
+        <nav>
+            <a href="/">Back to Site</a>
+        </nav>
+    </header>
+
+    <!-- Password lock overlay -->
+    <div id="admin-lock" class="lock-overlay">
+        <div class="lock-box">
+            <h2>Admin Login</h2>
+            <p class="section-subtitle">
+                Enter admin password to manage uploads and deletions.
+            </p>
+            <input type="password" id="admin-password-input" class="lock-input" placeholder="Admin password" />
+            <button id="admin-login-btn" class="btn primary" style="margin-top: 0.8rem;">
+                Unlock
+            </button>
+            <p id="admin-lock-error" class="form-note"></p>
+        </div>
+    </div>
+
+    <div class="admin-wrapper">
+        <h2 class="admin-title">Upload New Material</h2>
+        <p class="section-subtitle">
+            Use this form to upload a new PDF and add it to the website automatically.
+        </p>
+
+        <form id="admin-upload-form" class="admin-form">
+            <div class="admin-row">
+                <label for="adm-type">Material Type</label>
+                <select id="adm-type" required>
+                    <option value="">Select type</option>
+                    <option value="ebook">E-Book</option>
+                    <option value="questionPaper">Question Paper</option>
+                </select>
+            </div>
+
+            <div class="admin-row">
+                <label for="adm-title">Title</label>
+                <input type="text" id="adm-title" required placeholder="Title shown on card" />
+            </div>
+
+            <div class="admin-row">
+                <label for="adm-description">Description</label>
+                <textarea id="adm-description" rows="2" required placeholder="Short description"></textarea>
+            </div>
+
+            <div class="admin-row">
+                <label for="adm-subject">Subject</label>
+                <input type="text" id="adm-subject" placeholder="e.g. Quantitative Aptitude" />
+            </div>
+
+            <div class="admin-row">
+                <label for="adm-exam">Exam</label>
+                <input type="text" id="adm-exam" placeholder="e.g. RRB NTPC, SSC CGL, etc." />
+            </div>
+
+            <div class="admin-row">
+                <label for="adm-year">Year</label>
+                <input type="text" id="adm-year" placeholder="e.g. 2023" />
+            </div>
+
+            <div class="admin-row">
+                <label for="adm-file">PDF File</label>
+                <input type="file" id="adm-file" accept="application/pdf" required />
+            </div>
+
+            <button type="submit" class="btn primary">Upload & Save</button>
+
+            <p class="admin-note" id="admin-status"></p>
+        </form>
+
+        <hr style="margin: 1.8rem 0 1rem 0;" />
+
+        <h3 class="admin-section-title">Existing E-Books</h3>
+        <div id="admin-ebooks-list" class="admin-list"></div>
+
+        <h3 class="admin-section-title">Existing Question Papers</h3>
+        <div id="admin-qps-list" class="admin-list"></div>
+    </div>
+
+    <script>
+        // ===== PASSWORD LOCK =====
+        const ADMIN_PASSWORD = "StudentHub@9112"; // <<-- CHANGE YOUR PASSWORD HERE
+
+        const lockOverlay = document.getElementById("admin-lock");
+        const pwdInput = document.getElementById("admin-password-input");
+        const loginBtn = document.getElementById("admin-login-btn");
+        const lockError = document.getElementById("admin-lock-error");
+
+        function unlockAdmin() {
+            lockOverlay.style.display = "none";
+            localStorage.setItem("studenthub_admin_unlocked", "1");
+            loadAdminLists(); // load data after unlock
+        }
+
+        function checkAutoUnlock() {
+            if (localStorage.getItem("studenthub_admin_unlocked") === "1") {
+                lockOverlay.style.display = "none";
+                loadAdminLists();
+            }
+        }
+
+        loginBtn.addEventListener("click", () => {
+            const val = pwdInput.value;
+            if (!val) {
+                lockError.textContent = "Please enter password.";
+                return;
+            }
+            if (val === ADMIN_PASSWORD) {
+                lockError.textContent = "";
+                unlockAdmin();
+            } else {
+                lockError.textContent = "Incorrect password.";
+            }
+        });
+
+        pwdInput.addEventListener("keyup", (e) => {
+            if (e.key === "Enter") {
+                loginBtn.click();
+            }
+        });
+
+        // ===== ADMIN LOGIC (upload + list + delete) =====
+        const form = document.getElementById("admin-upload-form");
+        const statusEl = document.getElementById("admin-status");
+        const ebooksListEl = document.getElementById("admin-ebooks-list");
+        const qpsListEl = document.getElementById("admin-qps-list");
+
+        async function loadAdminLists() {
+            ebooksListEl.innerHTML = "Loading...";
+            qpsListEl.innerHTML = "Loading...";
+
+            try {
+                const res = await fetch("/api/materials");
+                const data = await res.json();
+
+                renderAdminList(ebooksListEl, data.ebooks || [], "ebook");
+                renderAdminList(qpsListEl, data.questionPapers || [], "questionPaper");
+            } catch (err) {
+                console.error("Error loading lists:", err);
+                ebooksListEl.innerHTML = '<span class="admin-empty">Error loading ebooks.</span>';
+                qpsListEl.innerHTML = '<span class="admin-empty">Error loading question papers.</span>';
+            }
+        }
+
+        function renderAdminList(container, list, type) {
+            container.innerHTML = "";
+
+            if (!list.length) {
+                container.innerHTML = '<span class="admin-empty">No items yet.</span>';
+                return;
+            }
+
+            list.forEach((item, index) => {
+                const row = document.createElement("div");
+                row.className = "admin-item";
+
+                const info = document.createElement("div");
+                const titleEl = document.createElement("div");
+                titleEl.className = "admin-item-title";
+                titleEl.textContent = item.title;
+
+                const metaEl = document.createElement("div");
+                metaEl.className = "admin-item-meta";
+                metaEl.textContent = `Exam: ${item.exam || "—"} | Subject: ${item.subject || "—"
+                    } | Year: ${item.year || "—"}`;
+
+                info.appendChild(titleEl);
+                info.appendChild(metaEl);
+
+                const delBtn = document.createElement("button");
+                delBtn.className = "admin-delete-btn";
+                delBtn.textContent = "Delete";
+                delBtn.addEventListener("click", () => handleDelete(type, index, item.title));
+
+                row.appendChild(info);
+                row.appendChild(delBtn);
+
+                container.appendChild(row);
+            });
+        }
+
+        async function handleDelete(type, index, title) {
+            const ok = confirm(`Delete "${title}"? This will also delete the PDF file.`);
+            if (!ok) return;
+
+            try {
+                const res = await fetch(`/api/materials/${type}/${index}`, {
+                    method: "DELETE",
+                });
+
+                const text = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    data = null;
+                }
+
+                if (!res.ok) {
+                    alert("Delete failed: " + (data?.error || text || res.status));
+                } else {
+                    alert("Deleted successfully.");
+                    loadAdminLists();
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Network error while deleting: " + err.message);
+            }
+        }
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            statusEl.textContent = "Uploading...";
+
+            const type = document.getElementById("adm-type").value;
+            const title = document.getElementById("adm-title").value.trim();
+            const description = document.getElementById("adm-description").value.trim();
+            const subject = document.getElementById("adm-subject").value.trim();
+            const exam = document.getElementById("adm-exam").value.trim();
+            const year = document.getElementById("adm-year").value.trim();
+            const fileInput = document.getElementById("adm-file");
+
+            if (!type || !title || !description || !fileInput.files.length) {
+                statusEl.textContent = "Please fill required fields and choose a file.";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("type", type);
+            formData.append("title", title);
+            formData.append("description", description);
+            formData.append("subject", subject);
+            formData.append("exam", exam);
+            formData.append("year", year);
+            formData.append("file", fileInput.files[0]);
+
+            try {
+                const res = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const text = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    data = null;
+                }
+
+                if (!res.ok) {
+                    statusEl.textContent =
+                        "Server error: " + (data?.error || text || `HTTP ${res.status}`);
+                } else {
+                    statusEl.textContent = "Uploaded successfully! It will appear on the main page.";
+                    form.reset();
+                    loadAdminLists();
+                }
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = "Network error: " + err.message;
+            }
+        });
+
+        // Auto unlock if already logged in once
+        checkAutoUnlock();
+    </script>
+</body>
+
+</html>

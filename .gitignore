@@ -1,0 +1,14 @@
+# Node
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+
+# PDFs and uploaded files (we won't push them to GitHub)
+pdfs/**/*.pdf
+
+# VS Code
+.vscode
