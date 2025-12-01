@@ -8,13 +8,14 @@ const multer = require("multer");
 const cors = require("cors");
 
 const app = express();
-// IMPORTANT: use env port for hosting (Render, Railway, etc.)
-const PORT = process.env.PORT || 4000; // local: http://127.0.0.1:4000
+const PORT = process.env.PORT || 4000; // Render will set PORT env
+
+// ---- Admin secret (for protecting admin actions) ----
+const ADMIN_SECRET = process.env.ADMIN_SECRET || "changeme123"; // set real value on Render!
 
 // ---- Middleware ----
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // helpful for form fields
 
 // Serve all static files (HTML, CSS, JS, PDFs)
 app.use(express.static(__dirname));
@@ -42,6 +43,19 @@ function writeData(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
 }
 
+// ---- Small helper to check admin header ----
+function checkAdmin(req, res) {
+  // If ADMIN_SECRET is empty, allow everything (local dev)
+  if (!ADMIN_SECRET) return true;
+
+  const header = req.headers["x-admin-secret"];
+  if (header !== ADMIN_SECRET) {
+    res.status(401).json({ error: "Unauthorized (admin secret missing or wrong)" });
+    return false;
+  }
+  return true;
+}
+
 // ---- Multer storage (for PDFs) ----
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -65,6 +79,22 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// ---- API: admin login (checks password) ----
+app.post("/api/admin-login", (req, res) => {
+  const { password } = req.body || {};
+
+  if (!ADMIN_SECRET) {
+    // if not set, allow everything (mainly for local dev)
+    return res.json({ ok: true });
+  }
+
+  if (password === ADMIN_SECRET) {
+    return res.json({ ok: true });
+  }
+
+  return res.status(401).json({ ok: false, error: "Invalid password" });
+});
+
 // ---- API: get all materials ----
 app.get("/api/materials", (req, res) => {
   const data = readData();
@@ -73,6 +103,9 @@ app.get("/api/materials", (req, res) => {
 
 // ---- API: upload a new PDF & add metadata ----
 app.post("/api/upload", (req, res) => {
+  // ✅ Protect this route
+  if (!checkAdmin(req, res)) return;
+
   upload.single("file")(req, res, (err) => {
     if (err) {
       console.error("Multer error:", err);
@@ -101,7 +134,7 @@ app.post("/api/upload", (req, res) => {
         exam: (exam || "").trim(),
         year: (year || "").trim() || "—",
         downloads: 0,
-        createdAt: new Date().toISOString() // timestamp for "recent"
+        createdAt: new Date().toISOString()
       };
 
       if (type === "ebook") {
@@ -127,6 +160,9 @@ app.post("/api/upload", (req, res) => {
 
 // ---- API: delete a material + its PDF ----
 app.delete("/api/materials/:type/:index", (req, res) => {
+  // ✅ Protect this route
+  if (!checkAdmin(req, res)) return;
+
   try {
     const { type, index } = req.params;
     const i = parseInt(index, 10);
@@ -191,7 +227,7 @@ app.get("/api/download/:type/:index", (req, res) => {
 
     writeData(data);
 
-    // Redirect to PDF file (served via express.static)
+    // Redirect to PDF file
     return res.redirect("/" + list[i].file);
   } catch (err) {
     console.error("Download error:", err);

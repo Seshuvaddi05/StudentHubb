@@ -16,6 +16,56 @@
       "subject": "Logical Reasoning",
       "exam": "rrb",
       "year": "2021"
+    },
+    {
+      "title": "book1",
+      "description": "book1",
+      "file": "pdfs/ebooks/1764564013775-dokumen.pub_a-modern-approach-to-logical-reasoning-1nbsped-8121919053-9788121919050.pdf",
+      "subject": "English",
+      "exam": "Compitative, Non Compitative, ssc, intermediate",
+      "year": "2023",
+      "downloads": 0,
+      "createdAt": "2025-12-01T04:40:14.117Z"
+    },
+    {
+      "title": "book2",
+      "description": "book2",
+      "file": "pdfs/ebooks/1764564064806-rs-aggarwal-quantitative-aptitude.pdf",
+      "subject": "Chemistry",
+      "exam": "Compitative, Non Compitative, ssc, intermediate",
+      "year": "2022",
+      "downloads": 0,
+      "createdAt": "2025-12-01T04:41:04.939Z"
+    },
+    {
+      "title": "book3",
+      "description": "book3",
+      "file": "pdfs/ebooks/1764564120640-vdoc.pub_lucent-s-general-knowledge.pdf",
+      "subject": "Logical Reasoning",
+      "exam": "Compitative, Non Compitative",
+      "year": "2014",
+      "downloads": 0,
+      "createdAt": "2025-12-01T04:42:01.135Z"
+    },
+    {
+      "title": "book4",
+      "description": "book4",
+      "file": "pdfs/ebooks/1764564164038-physics_cbse_&_state_boards_unsolved_papers_question_bank.pdf",
+      "subject": "English",
+      "exam": "Compitative, Non Compitative",
+      "year": "2022",
+      "downloads": 0,
+      "createdAt": "2025-12-01T04:42:44.191Z"
+    },
+    {
+      "title": "book5",
+      "description": "book5",
+      "file": "pdfs/ebooks/1764564198398-parcham-current-affairs-yearbook-2025.pdf",
+      "subject": "English",
+      "exam": "Compitative, Non Compitative, ssc, intermediate",
+      "year": "2023",
+      "downloads": 0,
+      "createdAt": "2025-12-01T04:43:18.785Z"
     }
   ],
   "questionPapers": [
