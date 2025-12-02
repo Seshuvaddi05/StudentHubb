@@ -30,7 +30,8 @@
     <form id="admin-login-form" class="request-form">
       <div class="form-row">
         <label for="admin-password">Password</label>
-        <input type="password" id="admin-password" required placeholder="Enter admin password" />
+        <input type="password" id="admin-password" required placeholder="Enter admin password"
+          autocomplete="new-password" />
       </div>
       <button type="submit" class="btn primary">Login</button>
       <p id="admin-login-error" class="form-note" style="color:#b91c1c; display:none;">
@@ -41,7 +42,13 @@
 
   <!-- Admin Panel (hidden until login) -->
   <section class="section" id="admin-panel" style="display:none;">
-    <h2>Upload Material</h2>
+
+    <!-- Top row: title + logout -->
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:0.75rem;">
+      <h2 style="margin:0;">Upload Material</h2>
+      <button id="admin-logout-btn" class="btn small">Log out</button>
+    </div>
+
     <p class="section-subtitle">
       Upload new e-books or question papers. All fields are optional except Type, Title and File.
     </p>

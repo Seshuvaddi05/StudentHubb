@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://studenthubb.onrender.com/sitemap.xml

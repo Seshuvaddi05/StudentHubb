@@ -1,8 +1,26 @@
 // admin.js
-// Works with your current admin.html (login-section, admin-panel, mat-* ids)
+// Works with admin.html (login-section, admin-panel, mat-* ids)
 
 function $(id) {
   return document.getElementById(id);
+}
+
+// =============== VIEW SWITCH ===============
+
+function showAdminPanel() {
+  const loginSection = $("login-section");
+  const adminPanel = $("admin-panel");
+  if (loginSection) loginSection.style.display = "none";
+  if (adminPanel) adminPanel.style.display = "block";
+  loadMaterialsList();
+}
+
+function showLogin() {
+  const loginSection = $("login-section");
+  const adminPanel = $("admin-panel");
+  if (adminPanel) adminPanel.style.display = "none";
+  if (loginSection) loginSection.style.display = "block";
+  localStorage.removeItem("studenthub_admin_logged");
 }
 
 // =============== LOGIN ===============
@@ -12,7 +30,14 @@ async function handleAdminLogin(e) {
 
   const pwdInput = $("admin-password");
   const errorEl = $("admin-login-error");
-  if (errorEl) errorEl.style.display = "none";
+  if (errorEl) {
+    errorEl.style.display = "none";
+  }
+
+  if (!pwdInput) {
+    alert("Password input not found.");
+    return;
+  }
 
   const password = pwdInput.value.trim();
   if (!password) {
@@ -34,43 +59,30 @@ async function handleAdminLogin(e) {
 
     const data = await res.json().catch(() => ({}));
 
-    if (!res.ok) {
+    if (!res.ok || data.ok === false) {
+      const msg = data.message || data.error || "Invalid password. Please try again.";
       if (errorEl) {
-        errorEl.textContent = data.error || "Invalid password. Please try again.";
+        errorEl.textContent = msg;
         errorEl.style.display = "block";
       } else {
-        alert(data.error || "Invalid password.");
+        alert(msg);
       }
       return;
     }
 
     // success
     localStorage.setItem("studenthub_admin_logged", "1");
+    pwdInput.value = "";
     showAdminPanel();
   } catch (err) {
     console.error("Login error:", err);
-    alert("Could not reach server for login.");
+    if (errorEl) {
+      errorEl.textContent = "Could not reach server for login.";
+      errorEl.style.display = "block";
+    } else {
+      alert("Could not reach server for login.");
+    }
   }
-}
-
-function showAdminPanel() {
-  const loginSection = $("login-section");
-  const adminPanel = $("admin-panel");
-
-  if (loginSection) loginSection.style.display = "none";
-  if (adminPanel) adminPanel.style.display = "block";
-
-  loadMaterialsList();
-}
-
-function showLogin() {
-  const loginSection = $("login-section");
-  const adminPanel = $("admin-panel");
-
-  if (loginSection) loginSection.style.display = "block";
-  if (adminPanel) adminPanel.style.display = "none";
-
-  localStorage.removeItem("studenthub_admin_logged");
 }
 
 // =============== LOAD MATERIALS LIST ===============
@@ -92,9 +104,13 @@ async function loadMaterialsList() {
     const qps = data.questionPapers || [];
 
     if (statsEl) {
-      statsEl.textContent = `E-Books: ${ebooks.length} | Question Papers: ${qps.length} | Total: ${
-        ebooks.length + qps.length
-      }`;
+      statsEl.textContent =
+        "E-Books: " +
+        ebooks.length +
+        " | Question Papers: " +
+        qps.length +
+        " | Total: " +
+        (ebooks.length + qps.length);
     }
 
     if (!ebooks.length && !qps.length) {
@@ -113,7 +129,7 @@ async function loadMaterialsList() {
       h3.style.margin = "0.75rem 0 0.4rem";
       section.appendChild(h3);
 
-      list.forEach((item, index) => {
+      list.forEach(function (item, index) {
         const row = document.createElement("div");
         row.style.display = "flex";
         row.style.justifyContent = "space-between";
@@ -124,13 +140,19 @@ async function loadMaterialsList() {
         row.style.marginBottom = "0.35rem";
 
         const label = document.createElement("div");
-        label.innerHTML = `
-          <strong>${item.title || "(no title)"}</strong><br/>
-          <span style="font-size:0.8rem;color:#6b7280;">
-            ${item.exam || "—"} | ${item.subject || "—"} | Year: ${item.year || "—"} |
-            Downloads: ${item.downloads || 0}
-          </span>
-        `;
+        label.innerHTML =
+          "<strong>" +
+          (item.title || "(no title)") +
+          "</strong><br/>" +
+          "<span style='font-size:0.8rem;color:#6b7280;'>" +
+          (item.exam || "—") +
+          " | " +
+          (item.subject || "—") +
+          " | Year: " +
+          (item.year || "—") +
+          " | Downloads: " +
+          (item.downloads || 0) +
+          "</span>";
         row.appendChild(label);
 
         const delBtn = document.createElement("button");
@@ -138,7 +160,9 @@ async function loadMaterialsList() {
         delBtn.className = "btn small";
         delBtn.style.background = "#ef4444";
         delBtn.style.color = "#ffffff";
-        delBtn.addEventListener("click", () => handleDelete(type, index));
+        delBtn.addEventListener("click", function () {
+          handleDelete(type, index);
+        });
         row.appendChild(delBtn);
 
         section.appendChild(row);
@@ -166,11 +190,13 @@ async function handleDelete(type, index) {
   if (!confirm("Are you sure you want to delete this item?")) return;
 
   try {
-    const res = await fetch(`/api/materials/${type}/${index}`, {
+    const res = await fetch("/api/materials/" + type + "/" + index, {
       method: "DELETE"
     });
 
-    const data = await res.json().catch(() => ({}));
+    const data = await res.json().catch(function () {
+      return {};
+    });
     if (!res.ok) {
       alert(data.error || "Delete failed.");
       return;
@@ -198,7 +224,10 @@ async function handleUpload(e) {
   const fileEl = $("mat-file");
   const statusEl = $("upload-status");
 
-  if (statusEl) statusEl.textContent = "";
+  if (statusEl) {
+    statusEl.textContent = "";
+    statusEl.style.color = "#6b7280";
+  }
 
   if (!typeEl || !titleEl || !fileEl) {
     alert("Form elements not found in HTML.");
@@ -216,10 +245,10 @@ async function handleUpload(e) {
   const fd = new FormData();
   fd.append("type", type);
   fd.append("title", title);
-  fd.append("description", (descEl?.value || "").trim());
-  fd.append("subject", (subjEl?.value || "").trim());
-  fd.append("exam", (examEl?.value || "").trim());
-  fd.append("year", (yearEl?.value || "").trim());
+  fd.append("description", descEl ? descEl.value.trim() : "");
+  fd.append("subject", subjEl ? subjEl.value.trim() : "");
+  fd.append("exam", examEl ? examEl.value.trim() : "");
+  fd.append("year", yearEl ? yearEl.value.trim() : "");
   fd.append("file", fileEl.files[0]);
 
   try {
@@ -228,7 +257,9 @@ async function handleUpload(e) {
       body: fd
     });
 
-    const data = await res.json().catch(() => ({}));
+    const data = await res.json().catch(function () {
+      return {};
+    });
 
     if (!res.ok) {
       const msg = data.error || "Upload failed.";
@@ -248,7 +279,9 @@ async function handleUpload(e) {
       alert("Uploaded successfully!");
     }
 
-    $("upload-form")?.reset();
+    const uploadFormEl = $("upload-form");
+    if (uploadFormEl) uploadFormEl.reset();
+
     loadMaterialsList();
   } catch (err) {
     console.error("Upload error:", err);
@@ -263,18 +296,20 @@ async function handleUpload(e) {
 
 // =============== INIT ===============
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function () {
   const loginForm = $("admin-login-form");
-  if (loginForm) {
-    loginForm.addEventListener("submit", handleAdminLogin);
-  }
+  if (loginForm) loginForm.addEventListener("submit", handleAdminLogin);
 
   const uploadForm = $("upload-form");
-  if (uploadForm) {
-    uploadForm.addEventListener("submit", handleUpload);
+  if (uploadForm) uploadForm.addEventListener("submit", handleUpload);
+
+  const logoutBtn = $("admin-logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function () {
+      showLogin();
+    });
   }
 
-  // Auto-show panel if already logged in
   const logged = localStorage.getItem("studenthub_admin_logged") === "1";
   if (logged) {
     showAdminPanel();
