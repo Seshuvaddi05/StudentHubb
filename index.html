@@ -2,47 +2,63 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>StudentHub – Free E-Books & Previous Year Question Papers</title>
+    <title>StudentHub – Free E-Books & Previous Year Question Papers</title>
 
-  <!-- Basic SEO -->
-  <meta name="description"
+    <!-- Basic SEO -->
+    <meta name="description"
         content="StudentHub lets you download free e-books and previous year question papers for RRB, SSC, campus placements and other competitive exams." />
-  <meta name="keywords"
+    <meta name="keywords"
         content="studenthub, free ebooks, question papers, previous year papers, RRB NTPC, SSC, aptitude, reasoning, placements" />
-  <meta name="author" content="StudentHub" />
-  <meta name="robots" content="index, follow" />
+    <meta name="author" content="StudentHub" />
+    <meta name="robots" content="index, follow" />
 
-  <!-- Canonical URL -->
-  <link rel="canonical" href="https://studenthubb.onrender.com/" />
+    <!-- Open Graph / Social preview -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="StudentHub | Free E-Books & Question Papers" />
+    <meta property="og:description"
+        content="Download free e-books and previous year question papers for competitive exams from StudentHub." />
+    <meta property="og:url" content="https://studenthubb.onrender.com/" />
+    <meta property="og:site_name" content="StudentHub" />
+    <!-- Replace this with your own image later -->
+    <meta property="og:image" content="https://studenthubb.onrender.com/assets/studenthub-preview.png" />
 
-  <!-- Favicon (you can replace with your own icon later) -->
-  <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="StudentHub | Free E-Books & Question Papers" />
+    <meta name="twitter:description" content="Simple, clean and fast access to exam materials in one place." />
+    <meta name="twitter:image" content="https://studenthubb.onrender.com/assets/studenthub-preview.png" />
 
-  <!-- Open Graph (for WhatsApp, Facebook, etc.) -->
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="StudentHub – Free E-Books & Question Papers" />
-  <meta property="og:description"
+
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://studenthubb.onrender.com/" />
+
+    <!-- Favicon (you can replace with your own icon later) -->
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+
+    <!-- Open Graph (for WhatsApp, Facebook, etc.) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="StudentHub – Free E-Books & Question Papers" />
+    <meta property="og:description"
         content="Simple, clean website to download exam e-books and previous year question papers for free." />
-  <meta property="og:url" content="https://studenthubb.onrender.com/" />
-  <!-- TODO: create this image: /assets/og-image.png (1200x630) -->
-  <meta property="og:image" content="https://studenthubb.onrender.com/assets/og-image.png" />
-  <meta property="og:site_name" content="StudentHub" />
+    <meta property="og:url" content="https://studenthubb.onrender.com/" />
+    <!-- TODO: create this image: /assets/og-image.png (1200x630) -->
+    <meta property="og:image" content="https://images.unsplash.com/photo-1528372444006-1bfc81acab02?w=1200&h=630&fit=crop" />
+    <meta property="og:site_name" content="StudentHub" />
 
-  <!-- Twitter / X Card -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="StudentHub – Free E-Books & Question Papers" />
-  <meta name="twitter:description"
-        content="Download free e-books and previous year question papers for competitive exams." />
-  <meta name="twitter:image" content="https://studenthubb.onrender.com/assets/og-image.png" />
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="StudentHub – Free E-Books & Question Papers" />
+    <meta name="twitter:description"content="Download free e-books and previous year question papers for competitive exams." />
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1528372444006-1bfc81acab02?w=1200&h=630&fit=crop" />
+    <!-- PWA / App-like hint (optional, helps on Android) -->
+    <meta name="theme-color" content="#111827" />
 
-  <!-- PWA / App-like hint (optional, helps on Android) -->
-  <meta name="theme-color" content="#111827" />
-
-  <!-- Structured data (helps Google understand your site) -->
-  <script type="application/ld+json">
+    <!-- Structured data (helps Google understand your site) -->
+    <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -57,7 +73,8 @@
   }
   </script>
 
-  <link rel="stylesheet" href="styles.css" />
+    <link rel="canonical" href="https://studenthubb.onrender.com/" />
+    <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
@@ -227,6 +244,42 @@
             question papers to help students prepare better for their exams.
         </p>
     </section>
+
+    <!-- Share StudentHub Section -->
+    <section id="share" class="section">
+        <h2>Share StudentHub</h2>
+        <p class="section-subtitle">
+            Help other students discover free e-books and question papers.
+        </p>
+
+        <div class="share-buttons">
+            <button id="share-copy" type="button" class="share-btn">
+                📋 Copy site link
+            </button>
+
+            <a id="share-whatsapp" class="share-btn" target="_blank" rel="noopener">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="share-icon"
+                    alt="WhatsApp logo" />
+                Share on WhatsApp
+            </a>
+
+            <a id="share-telegram" class="share-btn" target="_blank" rel="noopener">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="share-icon"
+                    alt="Telegram logo" />
+                Share on Telegram
+            </a>
+
+            <a id="share-facebook" class="share-btn" target="_blank" rel="noopener">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Facebook_icon.svg" class="share-icon"
+                    alt="Facebook logo" />
+                Share on Facebook
+            </a>
+        </div>
+
+
+        <p id="share-status" class="form-note" style="margin-top:0.4rem;"></p>
+    </section>
+
 
     <!-- Contact / Request Section -->
     <section id="contact" class="section">
