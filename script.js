@@ -18,9 +18,8 @@ function createCard(item) {
 
   const meta = document.createElement("p");
   meta.style = "font-size: 0.8rem; color: #6b7280; margin-bottom: 0.4rem;";
-  meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${
-    item.subject || "—"
-  } | Year: ${item.year || "—"}`;
+  meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${item.subject || "—"
+    } | Year: ${item.year || "—"}`;
   article.appendChild(meta);
 
   // DOWNLOAD COUNTER
@@ -72,9 +71,8 @@ function createRecentCard(item) {
 
   const meta = document.createElement("p");
   meta.style = "font-size: 0.8rem; color: #6b7280; margin-bottom: 0.6rem;";
-  meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${
-    item.subject || "—"
-  } | Year: ${item.year || "—"}`;
+  meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${item.subject || "—"
+    } | Year: ${item.year || "—"}`;
   article.appendChild(meta);
 
   const btnRow = document.createElement("div");
@@ -478,11 +476,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
       const body = encodeURIComponent(
         `Name: ${name}\n` +
-          `Email: ${email}\n` +
-          `Material Type: ${type}\n` +
-          `Exam / Subject: ${exam}\n\n` +
-          `Requested Details:\n${details}\n\n` +
-          `Sent from StudentHub website.`
+        `Email: ${email}\n` +
+        `Material Type: ${type}\n` +
+        `Exam / Subject: ${exam}\n\n` +
+        `Requested Details:\n${details}\n\n` +
+        `Sent from StudentHub website.`
       );
 
       const mailtoLink = `mailto:${to}?subject=${subject}&body=${body}`;
@@ -505,4 +503,87 @@ document.addEventListener("DOMContentLoaded", async () => {
       else applyQPFilters();
     });
   });
+
+  // --- Share StudentHub section ---
+  const shareCopyBtn = document.getElementById("share-copy");
+  const shareStatus = document.getElementById("share-status");
+  const shareWhatsApp = document.getElementById("share-whatsapp");
+  const shareTelegram = document.getElementById("share-telegram");
+  const shareFacebook = document.getElementById("share-facebook");
+
+  try {
+    const siteUrl = window.location.origin + "/";
+    const shareText =
+      "Free E-Books & Previous Year Question Papers – StudentHub: " + siteUrl;
+
+    // Update links dynamically (overwrites default hrefs, which is fine)
+    if (shareWhatsApp) {
+      shareWhatsApp.href =
+        "https://wa.me/?text=" + encodeURIComponent(shareText);
+    }
+
+    if (shareTelegram) {
+      shareTelegram.href =
+        "https://t.me/share/url?url=" +
+        encodeURIComponent(siteUrl) +
+        "&text=" +
+        encodeURIComponent("StudentHub – Free exam materials");
+    }
+
+    if (shareFacebook) {
+      shareFacebook.href =
+        "https://www.facebook.com/sharer/sharer.php?u=" +
+        encodeURIComponent(siteUrl);
+    }
+
+    // Copy link button
+    if (shareCopyBtn && shareStatus) {
+      shareCopyBtn.addEventListener("click", async () => {
+        const textToCopy = siteUrl;
+
+        // Try modern clipboard API first
+        if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(textToCopy);
+            shareStatus.textContent =
+              "Link copied! You can paste it anywhere.";
+          } catch (err) {
+            console.warn("Clipboard API failed, falling back:", err);
+            fallbackCopy(textToCopy, shareStatus);
+          }
+        } else {
+          // Not a secure context (e.g. 192.168.x.x) → fallback
+          fallbackCopy(textToCopy, shareStatus);
+        }
+
+        setTimeout(() => {
+          shareStatus.textContent = "";
+        }, 3000);
+      });
+    }
+  } catch (err) {
+    console.error("Error initializing share buttons:", err);
+  }
+
+  function fallbackCopy(textToCopy, statusEl) {
+    const dummy = document.createElement("input");
+    dummy.value = textToCopy;
+    document.body.appendChild(dummy);
+    dummy.select();
+    try {
+      document.execCommand("copy");
+      if (statusEl) {
+        statusEl.textContent =
+          "Link copied! You can paste it anywhere.";
+      }
+    } catch (err2) {
+      console.error("execCommand copy failed:", err2);
+      if (statusEl) {
+        statusEl.textContent =
+          "Unable to copy. Please copy the link from the address bar.";
+      }
+    }
+    document.body.removeChild(dummy);
+  }
 });
+
