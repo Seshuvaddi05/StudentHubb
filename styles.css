@@ -735,3 +735,7 @@ body.dark .load-status.error {
   color: #fee2e2;
   border-color: #b91c1c;
 }
+
+.hidden {
+  display: none;
+}

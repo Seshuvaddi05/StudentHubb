@@ -8,14 +8,32 @@ const multer = require("multer");
 const cors = require("cors");
 
 const app = express();
-const PORT = process.env.PORT || 4000; // Render will set PORT env
 
-// ---- Admin secret (for protecting admin actions) ----
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "changeme123"; // set real value on Render!
+// IMPORTANT: use Render's / local PORT if provided
+const PORT = process.env.PORT || 4000; // http://127.0.0.1:4000
+
+const ADMIN_SECRET = process.env.ADMIN_SECRET || "changeme123";
+
 
 // ---- Middleware ----
 app.use(cors());
 app.use(express.json());
+
+// ---- Admin login route ----
+app.post("/api/admin/login", (req, res) => {
+  const { password } = req.body || {};
+
+  if (!password) {
+    return res.status(400).json({ ok: false, message: "Password required" });
+  }
+
+  if (password === ADMIN_SECRET) {
+    return res.json({ ok: true, message: "Welcome admin" });
+  }
+
+  return res.status(401).json({ ok: false, message: "Invalid password" });
+});
+
 
 // Serve all static files (HTML, CSS, JS, PDFs)
 app.use(express.static(__dirname));
@@ -43,19 +61,6 @@ function writeData(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
 }
 
-// ---- Small helper to check admin header ----
-function checkAdmin(req, res) {
-  // If ADMIN_SECRET is empty, allow everything (local dev)
-  if (!ADMIN_SECRET) return true;
-
-  const header = req.headers["x-admin-secret"];
-  if (header !== ADMIN_SECRET) {
-    res.status(401).json({ error: "Unauthorized (admin secret missing or wrong)" });
-    return false;
-  }
-  return true;
-}
-
 // ---- Multer storage (for PDFs) ----
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -79,33 +84,42 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ---- API: admin login (checks password) ----
-app.post("/api/admin-login", (req, res) => {
-  const { password } = req.body || {};
+/* ==========================================================
+   ADMIN LOGIN ENDPOINT  (this was missing before)
+   ========================================================== */
+app.post("/api/admin/login", (req, res) => {
+  try {
+    const { password } = req.body || {};
+    const ADMIN_SECRET = process.env.ADMIN_SECRET || "changeme123";
 
-  if (!ADMIN_SECRET) {
-    // if not set, allow everything (mainly for local dev)
+    if (!password) {
+      return res.status(400).json({ ok: false, message: "Password required" });
+    }
+
+    if (password !== ADMIN_SECRET) {
+      return res.status(401).json({ ok: false, message: "Invalid password" });
+    }
+
+    // For now we just say "ok" and let frontend remember in localStorage
     return res.json({ ok: true });
+  } catch (err) {
+    console.error("Admin login error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
   }
-
-  if (password === ADMIN_SECRET) {
-    return res.json({ ok: true });
-  }
-
-  return res.status(401).json({ ok: false, error: "Invalid password" });
 });
 
-// ---- API: get all materials ----
+/* ==========================================================
+   API: get all materials
+   ========================================================== */
 app.get("/api/materials", (req, res) => {
   const data = readData();
   res.json(data);
 });
 
-// ---- API: upload a new PDF & add metadata ----
+/* ==========================================================
+   API: upload a new PDF & add metadata
+   ========================================================== */
 app.post("/api/upload", (req, res) => {
-  // ✅ Protect this route
-  if (!checkAdmin(req, res)) return;
-
   upload.single("file")(req, res, (err) => {
     if (err) {
       console.error("Multer error:", err);
@@ -133,8 +147,8 @@ app.post("/api/upload", (req, res) => {
         subject: (subject || "").trim(),
         exam: (exam || "").trim(),
         year: (year || "").trim() || "—",
-        downloads: 0,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        downloads: 0
       };
 
       if (type === "ebook") {
@@ -158,11 +172,10 @@ app.post("/api/upload", (req, res) => {
   });
 });
 
-// ---- API: delete a material + its PDF ----
+/* ==========================================================
+   API: delete a material + its PDF
+   ========================================================== */
 app.delete("/api/materials/:type/:index", (req, res) => {
-  // ✅ Protect this route
-  if (!checkAdmin(req, res)) return;
-
   try {
     const { type, index } = req.params;
     const i = parseInt(index, 10);
@@ -205,7 +218,9 @@ app.delete("/api/materials/:type/:index", (req, res) => {
   }
 });
 
-// ---- API: track a download ----
+/* ==========================================================
+   API: track a download
+   ========================================================== */
 app.get("/api/download/:type/:index", (req, res) => {
   try {
     const { type, index } = req.params;
@@ -247,5 +262,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`StudentHub server running at http://127.0.0.1:${PORT}`);
+    console.log(`StudentHub server running at http://127.0.0.1:${PORT}`);
+    console.log("ADMIN_SECRET in this run is:", ADMIN_SECRET);
 });
+
