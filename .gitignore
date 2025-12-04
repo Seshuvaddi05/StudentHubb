@@ -8,7 +8,7 @@ yarn-error.log*
 .env
 
 # PDFs and uploaded files (we won't push them to GitHub)
-pdfs/**/*.pdf
+#pdfs/**/*.pdf
 
 # VS Code
 .vscode
