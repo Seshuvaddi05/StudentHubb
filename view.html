@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>StudentHub – View Material</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Reuse main site styles -->
+  <link rel="stylesheet" href="/styles.css" />
+
+  <!-- Viewer-specific tweaks -->
+  <style>
+    .viewer-header {
+      margin-bottom: 0.75rem;
+    }
+
+    .viewer-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .viewer-meta {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 0.75rem;
+    }
+
+    .viewer-status {
+      margin-bottom: 0.75rem;
+    }
+
+    .viewer-breadcrumb a {
+      color: #2563eb;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+
+    .viewer-breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+    .viewer-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Better button styles for the viewer page */
+    .viewer-actions .btn.secondary {
+      background: #f3f4f6;
+      color: #111827;
+      border-color: #d1d5db;
+    }
+
+    .viewer-actions .btn.secondary:hover {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+    }
+
+    body.dark .viewer-actions .btn.secondary {
+      background: #020617;
+      color: #e5e7eb;
+      border-color: #1f2937;
+    }
+
+    body.dark .viewer-actions .btn.secondary:hover {
+      background: #111827;
+    }
+
+    .viewer-frame-wrapper {
+      width: 100%;
+      height: 72vh;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      background: #111827;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.3);
+      border: 1px solid #e5e7eb;
+      margin-bottom: 1.25rem;
+    }
+
+    .viewer-share {
+      margin-top: 0.5rem;
+    }
+
+    .viewer-share-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 0.4rem;
+    }
+
+    /* Report issue button style */
+    .share-btn-danger {
+      background: #fee2e2;
+      border-color: #fecaca;
+      color: #b91c1c;
+    }
+
+    .share-btn-danger:hover {
+      background: #fecaca;
+    }
+
+    body.dark .share-btn-danger {
+      background: #450a0a;
+      border-color: #b91c1c;
+      color: #fee2e2;
+    }
+
+    body.dark .share-btn-danger:hover {
+      background: #7f1d1d;
+    }
+
+    /* Related section */
+    .viewer-related {
+      margin-top: 2rem;
+    }
+
+    .viewer-related-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .viewer-related-subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 1rem;
+    }
+
+    body.dark .viewer-meta,
+    body.dark .viewer-related-subtitle {
+      color: #9ca3af;
+    }
+
+    body.dark .viewer-frame-wrapper {
+      border-color: #1f2937;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.7);
+    }
+
+    @media (max-width: 640px) {
+      .viewer-frame-wrapper {
+        height: 65vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="logo">StudentHub</div>
+    <nav class="nav-links" id="nav-links">
+      <a href="/">Home</a>
+    </nav>
+    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+  </header>
+
+  <main class="section" style="max-width: 1100px;">
+    <div class="viewer-header">
+      <p class="viewer-breadcrumb">
+        <a href="/">← Back to StudentHub</a>
+      </p>
+      <h1 id="view-title" class="viewer-title">Loading material...</h1>
+      <p id="view-meta" class="viewer-meta"></p>
+    </div>
+
+    <p id="view-status" class="form-note viewer-status">
+      Fetching details from server…
+    </p>
+
+    <!-- Buttons -->
+    <div class="viewer-actions">
+      <a id="open-full" class="btn primary" target="_blank" rel="noopener">Open full PDF</a>
+      <a id="download" class="btn secondary" target="_blank" rel="noopener">Download</a>
+    </div>
+
+    <!-- Embedded PDF -->
+    <div class="viewer-frame-wrapper">
+      <iframe
+        id="pdf-frame"
+        src=""
+        style="width: 100%; height: 100%; border: 0;"
+      ></iframe>
+    </div>
+
+    <!-- Share this material -->
+    <section class="viewer-share">
+      <p class="viewer-share-title">Share this material</p>
+      <div class="share-buttons">
+        <button id="view-share-copy" type="button" class="share-btn">
+          📋 Copy page link
+        </button>
+
+        <a id="view-share-whatsapp" class="share-btn" target="_blank" rel="noopener">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+            class="share-icon"
+            alt="WhatsApp logo"
+          />
+          WhatsApp
+        </a>
+
+        <a id="view-share-telegram" class="share-btn" target="_blank" rel="noopener">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg"
+            class="share-icon"
+            alt="Telegram logo"
+          />
+          Telegram
+        </a>
+
+        <a id="view-share-facebook" class="share-btn" target="_blank" rel="noopener">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Facebook_icon.svg"
+            class="share-icon"
+            alt="Facebook logo"
+          />
+          Facebook
+        </a>
+
+        <!-- Report issue button -->
+        <button id="view-report" type="button" class="share-btn share-btn-danger">
+          ⚠ Report issue
+        </button>
+      </div>
+      <p id="view-share-status" class="form-note" style="margin-top:0.4rem;"></p>
+    </section>
+
+    <!-- Related materials -->
+    <section id="view-related" class="viewer-related" style="display:none;">
+      <h2 class="viewer-related-title">Related materials</h2>
+      <p class="viewer-related-subtitle">
+        You might also like these similar e-books or question papers.
+      </p>
+      <div id="view-related-list" class="cards-grid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // ---------- Small helpers ----------
+    function slugify(text) {
+      return (text || "")
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    function applyTheme(theme) {
+      const body = document.body;
+      const toggleBtn = document.getElementById("theme-toggle");
+      if (!body || !toggleBtn) return;
+
+      if (theme === "dark") {
+        body.classList.add("dark");
+        toggleBtn.textContent = "☀️";
+      } else {
+        body.classList.remove("dark");
+        toggleBtn.textContent = "🌙";
+      }
+
+      localStorage.setItem("studenthub_theme", theme);
+    }
+
+    function fallbackCopy(textToCopy, statusEl) {
+      const dummy = document.createElement("input");
+      dummy.value = textToCopy;
+      document.body.appendChild(dummy);
+      dummy.select();
+      try {
+        document.execCommand("copy");
+        if (statusEl) {
+          statusEl.textContent = "Link copied! You can paste it anywhere.";
+        }
+      } catch (err2) {
+        console.error("execCommand copy failed:", err2);
+        if (statusEl) {
+          statusEl.textContent =
+            "Unable to copy. Please copy the link from the address bar.";
+        }
+      }
+      document.body.removeChild(dummy);
+    }
+
+    // Create a small card for "related" materials
+    function createRelatedCard(item) {
+      const article = document.createElement("article");
+      article.className = "card";
+
+      const title = document.createElement("h3");
+      title.textContent = item.title || "Material";
+      article.appendChild(title);
+
+      const meta = document.createElement("p");
+      meta.style = "font-size:0.85rem;color:#6b7280;margin-bottom:0.5rem;";
+      meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${
+        item.subject || "—"
+      } | Year: ${item.year || "—"}`;
+      article.appendChild(meta);
+
+      const btnRow = document.createElement("div");
+      btnRow.style = "display:flex;flex-wrap:wrap;gap:0.5rem;";
+
+      const viewLink = document.createElement("a");
+      viewLink.href = "/view/" + slugify(item.title || "");
+      viewLink.className = "btn small secondary";
+      viewLink.textContent = "Open page";
+      btnRow.appendChild(viewLink);
+
+      const dlLink = document.createElement("a");
+      dlLink.href = `/api/download/${item.type}/${item.index}`;
+      dlLink.target = "_blank";
+      dlLink.rel = "noopener";
+      dlLink.className = "btn small primary";
+      dlLink.textContent = "Download";
+      btnRow.appendChild(dlLink);
+
+      article.appendChild(btnRow);
+      return article;
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const yearSpan = document.getElementById("year");
+      if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+
+      // Theme initial
+      const savedTheme = localStorage.getItem("studenthub_theme") || "light";
+      applyTheme(savedTheme);
+
+      const themeToggleBtn = document.getElementById("theme-toggle");
+      if (themeToggleBtn) {
+        themeToggleBtn.addEventListener("click", () => {
+          const next = document.body.classList.contains("dark") ? "light" : "dark";
+          applyTheme(next);
+        });
+      }
+
+      const titleEl = document.getElementById("view-title");
+      const metaEl = document.getElementById("view-meta");
+      const statusEl = document.getElementById("view-status");
+      const frame = document.getElementById("pdf-frame");
+      const openBtn = document.getElementById("open-full");
+      const downloadBtn = document.getElementById("download");
+
+      const shareCopyBtn = document.getElementById("view-share-copy");
+      const shareStatus = document.getElementById("view-share-status");
+      const shareWhatsApp = document.getElementById("view-share-whatsapp");
+      const shareTelegram = document.getElementById("view-share-telegram");
+      const shareFacebook = document.getElementById("view-share-facebook");
+      const reportBtn = document.getElementById("view-report");
+
+      const relatedSection = document.getElementById("view-related");
+      const relatedList = document.getElementById("view-related-list");
+
+      // Get slug from URL: /view/<slug>
+      const parts = window.location.pathname.split("/");
+      const slug = parts[parts.length - 1] || "";
+      if (!slug) {
+        statusEl.textContent = "Invalid link.";
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/materials");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+
+        let combined = [];
+
+        (data.ebooks || []).forEach((item, i) => {
+          combined.push({ ...item, type: "ebook", index: i });
+        });
+        (data.questionPapers || []).forEach((item, i) => {
+          combined.push({ ...item, type: "questionPaper", index: i });
+        });
+
+        // Find by slug
+        const found = combined.find((item) => slugify(item.title) === slug);
+
+        if (!found) {
+          titleEl.textContent = "Material not found";
+          metaEl.textContent = "";
+          statusEl.textContent =
+            "We couldn't find this material. It may have been removed.";
+          frame.style.display = "none";
+          openBtn.style.display = "none";
+          downloadBtn.style.display = "none";
+          if (shareCopyBtn) shareCopyBtn.style.display = "none";
+          if (shareWhatsApp) shareWhatsApp.style.display = "none";
+          if (shareTelegram) shareTelegram.style.display = "none";
+          if (shareFacebook) shareFacebook.style.display = "none";
+          if (reportBtn) reportBtn.style.display = "none";
+          if (relatedSection) relatedSection.style.display = "none";
+          return;
+        }
+
+        // Fill UI
+        titleEl.textContent = found.title || "Material";
+        metaEl.textContent = `Exam: ${found.exam || "—"} | Subject: ${
+          found.subject || "—"
+        } | Year: ${found.year || "—"}`;
+        statusEl.textContent = "";
+
+        // PDF URL
+        const pdfUrl = found.file.startsWith("http")
+          ? found.file
+          : "/" + found.file.replace(/^\/+/, "");
+
+        frame.src = pdfUrl;
+        openBtn.href = pdfUrl;
+        downloadBtn.href = `/api/download/${found.type}/${found.index}`;
+
+        // ----- Per-material share buttons -----
+        const pageUrl = window.location.href;
+        const shareText =
+          (found.title || "StudentHub material") +
+          " – " +
+          pageUrl;
+
+        if (shareWhatsApp) {
+          shareWhatsApp.href =
+            "https://wa.me/?text=" + encodeURIComponent(shareText);
+        }
+
+        if (shareTelegram) {
+          shareTelegram.href =
+            "https://t.me/share/url?url=" +
+            encodeURIComponent(pageUrl) +
+            "&text=" +
+            encodeURIComponent(found.title || "StudentHub material");
+        }
+
+        if (shareFacebook) {
+          shareFacebook.href =
+            "https://www.facebook.com/sharer/sharer.php?u=" +
+            encodeURIComponent(pageUrl);
+        }
+
+        // Copy page link
+        if (shareCopyBtn && shareStatus) {
+          shareCopyBtn.addEventListener("click", async () => {
+            const textToCopy = pageUrl;
+
+            if (navigator.clipboard && window.isSecureContext) {
+              try {
+                await navigator.clipboard.writeText(textToCopy);
+                shareStatus.textContent =
+                  "Link copied! You can paste it anywhere.";
+              } catch (err) {
+                console.warn("Clipboard API failed, falling back:", err);
+                fallbackCopy(textToCopy, shareStatus);
+              }
+            } else {
+              fallbackCopy(textToCopy, shareStatus);
+            }
+
+            setTimeout(() => {
+              shareStatus.textContent = "";
+            }, 3000);
+          });
+        }
+
+        // ----- Report issue button -----
+        if (reportBtn) {
+          reportBtn.addEventListener("click", () => {
+            const to = "seshuvaddi03@gmail.com"; // your email
+            const subject = encodeURIComponent(
+              `[StudentHub Issue] ${found.title || "Material"}`
+            );
+            const body = encodeURIComponent(
+`Hi,
+
+I found an issue with this material on StudentHub.
+
+Title: ${found.title || ""}
+Type: ${found.type}
+Exam: ${found.exam || ""}
+Subject: ${found.subject || ""}
+Year: ${found.year || ""}
+Page URL: ${pageUrl}
+
+Issue details:
+(Please describe the problem here...)
+
+Thanks.`
+            );
+
+            window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+          });
+        }
+
+        // ----- Related materials -----
+        if (relatedSection && relatedList) {
+          // Start with all other items
+          let related = combined.filter(
+            (item) => slugify(item.title) !== slugify(found.title)
+          );
+
+          // Prefer same exam
+          if (found.exam) {
+            const sameExam = related.filter((it) => it.exam === found.exam);
+            if (sameExam.length) {
+              related = sameExam;
+            }
+          }
+
+          // If still empty and subject exists, try same subject
+          if (!related.length && found.subject) {
+            const sameSubject = combined.filter(
+              (it) =>
+                slugify(it.title) !== slugify(found.title) &&
+                it.subject === found.subject
+            );
+            if (sameSubject.length) {
+              related = sameSubject;
+            }
+          }
+
+          // Sort: most downloaded first
+          related.sort(
+            (a, b) => (b.downloads || 0) - (a.downloads || 0)
+          );
+
+          const topRelated = related.slice(0, 4);
+
+          if (!topRelated.length) {
+            relatedSection.style.display = "none";
+          } else {
+            relatedList.innerHTML = "";
+            topRelated.forEach((item) => {
+              relatedList.appendChild(createRelatedCard(item));
+            });
+            relatedSection.style.display = "block";
+          }
+        }
+      } catch (err) {
+        console.error("Error loading material:", err);
+        titleEl.textContent = "Error loading material";
+        statusEl.textContent =
+          "Something went wrong while fetching this material. Please try again later.";
+        frame.style.display = "none";
+        openBtn.style.display = "none";
+        downloadBtn.style.display = "none";
+        if (shareCopyBtn) shareCopyBtn.style.display = "none";
+        if (shareWhatsApp) shareWhatsApp.style.display = "none";
+        if (shareTelegram) shareTelegram.style.display = "none";
+        if (shareFacebook) shareFacebook.style.display = "none";
+        if (reportBtn) reportBtn.style.display = "none";
+        if (relatedSection) relatedSection.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -11,29 +11,11 @@ const app = express();
 
 // IMPORTANT: use Render's / local PORT if provided
 const PORT = process.env.PORT || 4000; // http://127.0.0.1:4000
-
 const ADMIN_SECRET = process.env.ADMIN_SECRET || "changeme123";
-
 
 // ---- Middleware ----
 app.use(cors());
 app.use(express.json());
-
-// ---- Admin login route ----
-app.post("/api/admin/login", (req, res) => {
-  const { password } = req.body || {};
-
-  if (!password) {
-    return res.status(400).json({ ok: false, message: "Password required" });
-  }
-
-  if (password === ADMIN_SECRET) {
-    return res.json({ ok: true, message: "Welcome admin" });
-  }
-
-  return res.status(401).json({ ok: false, message: "Invalid password" });
-});
-
 
 // Serve all static files (HTML, CSS, JS, PDFs)
 app.use(express.static(__dirname));
@@ -61,6 +43,16 @@ function writeData(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
 }
 
+// Create a URL-friendly slug from a title
+function slugify(text) {
+  return (text || "")
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 // ---- Multer storage (for PDFs) ----
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -85,12 +77,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 /* ==========================================================
-   ADMIN LOGIN ENDPOINT  (this was missing before)
+   ADMIN LOGIN ENDPOINT
    ========================================================== */
 app.post("/api/admin/login", (req, res) => {
   try {
     const { password } = req.body || {};
-    const ADMIN_SECRET = process.env.ADMIN_SECRET || "changeme123";
 
     if (!password) {
       return res.status(400).json({ ok: false, message: "Password required" });
@@ -100,8 +91,8 @@ app.post("/api/admin/login", (req, res) => {
       return res.status(401).json({ ok: false, message: "Invalid password" });
     }
 
-    // For now we just say "ok" and let frontend remember in localStorage
-    return res.json({ ok: true });
+    // Frontend stores this in localStorage
+    return res.json({ ok: true, message: "Welcome admin" });
   } catch (err) {
     console.error("Admin login error:", err);
     return res.status(500).json({ ok: false, message: "Server error" });
@@ -114,6 +105,49 @@ app.post("/api/admin/login", (req, res) => {
 app.get("/api/materials", (req, res) => {
   const data = readData();
   res.json(data);
+});
+
+/* ==========================================================
+   API: get single material by slug (for viewer page)
+   ========================================================== */
+app.get("/api/material-by-slug/:slug", (req, res) => {
+  try {
+    const slugParam = (req.params.slug || "").toLowerCase().trim();
+    if (!slugParam) {
+      return res.status(400).json({ error: "Missing slug" });
+    }
+
+    const data = readData();
+
+    function findInList(list, typeName) {
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i];
+        const s = slugify(item.title || `material-${typeName}-${i}`);
+        if (s === slugParam) {
+          return { item, index: i, type: typeName };
+        }
+      }
+      return null;
+    }
+
+    let result = findInList(data.ebooks || [], "ebook");
+    if (!result) {
+      result = findInList(data.questionPapers || [], "questionPaper");
+    }
+
+    if (!result) {
+      return res.status(404).json({ error: "Material not found" });
+    }
+
+    return res.json({
+      item: result.item,
+      type: result.type,
+      index: result.index
+    });
+  } catch (err) {
+    console.error("Error in /api/material-by-slug:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 /* ==========================================================
@@ -250,7 +284,16 @@ app.get("/api/download/:type/:index", (req, res) => {
   }
 });
 
-// Fallback: serve index.html for root
+/* ==========================================================
+   Viewer page route: /view/:slug
+   ========================================================== */
+app.get("/view/:slug", (req, res) => {
+  res.sendFile(path.join(__dirname, "view.html"));
+});
+
+/* ==========================================================
+   Root route: index.html
+   ========================================================== */
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
@@ -262,7 +305,6 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`StudentHub server running at http://127.0.0.1:${PORT}`);
-    console.log("ADMIN_SECRET in this run is:", ADMIN_SECRET);
+  console.log(`StudentHub server running at http://127.0.0.1:${PORT}`);
+  console.log("ADMIN_SECRET in this run is:", ADMIN_SECRET);
 });
-

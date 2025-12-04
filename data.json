@@ -7,7 +7,7 @@
       "subject": "Quantitative Aptitude",
       "exam": "Competitive Exams",
       "year": "—",
-      "downloads": 1
+      "downloads": 3
     },
     {
       "title": "Logical Reasoning",
@@ -15,7 +15,8 @@
       "file": "pdfs/ebooks/1764344034392-dokumen.pub_a-modern-approach-to-logical-reasoning-1nbsped-8121919053-9788121919050.pdf",
       "subject": "Logical Reasoning",
       "exam": "rrb",
-      "year": "2021"
+      "year": "2021",
+      "downloads": 1
     },
     {
       "title": "book1",
@@ -34,7 +35,7 @@
       "subject": "Chemistry",
       "exam": "Compitative, Non Compitative, ssc, intermediate",
       "year": "2022",
-      "downloads": 0,
+      "downloads": 1,
       "createdAt": "2025-12-01T04:41:04.939Z"
     },
     {
@@ -54,7 +55,7 @@
       "subject": "English",
       "exam": "Compitative, Non Compitative",
       "year": "2022",
-      "downloads": 0,
+      "downloads": 1,
       "createdAt": "2025-12-01T04:42:44.191Z"
     },
     {
@@ -64,7 +65,7 @@
       "subject": "English",
       "exam": "Compitative, Non Compitative, ssc, intermediate",
       "year": "2023",
-      "downloads": 0,
+      "downloads": 2,
       "createdAt": "2025-12-01T04:43:18.785Z"
     },
     {
@@ -75,7 +76,7 @@
       "exam": "UPSC",
       "year": "2024",
       "createdAt": "2025-12-02T03:25:40.454Z",
-      "downloads": 1
+      "downloads": 36
     }
   ],
   "questionPapers": [
@@ -85,7 +86,8 @@
       "file": "pdfs/question-papers/1764349753846-study-iq_english-for-all-exams.pdf",
       "subject": "English",
       "exam": "Compitative, Non Compitative, ssc, intermediate",
-      "year": "2025"
+      "year": "2025",
+      "downloads": 1
     },
     {
       "title": "Chemistry",
@@ -94,7 +96,18 @@
       "subject": "Chemistry",
       "exam": "Compitative, Non Compitative, ssc, intermediate",
       "year": "2022",
-      "createdAt": "2025-11-29T12:42:00.244Z"
+      "createdAt": "2025-11-29T12:42:00.244Z",
+      "downloads": 3
+    },
+    {
+      "title": "English",
+      "description": "Best To Learn top level Course",
+      "file": "pdfs/question-papers/1764755875790-physics_cbse_&_state_boards_unsolved_papers_question_bank.pdf",
+      "subject": "English",
+      "exam": "Compitative, Non Compitative, SSC, Intermediate,",
+      "year": "2025",
+      "createdAt": "2025-12-03T09:57:56.053Z",
+      "downloads": 4
     }
   ]
 }

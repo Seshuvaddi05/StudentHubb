@@ -311,6 +311,71 @@ body.dark .share-btn:hover {
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
 }
 
+
+/* Badges on cards (New / Popular) */
+.card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.35rem;
+}
+
+/* Row for title + NEW badge */
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+/* Small NEW badge on recent uploads */
+.new-badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+body.dark .new-badge {
+  background: #14532d;
+  color: #bbf7d0;
+  border-color: #15803d;
+}
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-new {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-popular {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+body.dark .badge-new {
+  background: #14532d;
+  color: #bbf7d0;
+}
+
+body.dark .badge-popular {
+  background: #451a03;
+  color: #fed7aa;
+}
+
 /* Recently added section */
 .recent-grid {
   display: grid;
@@ -330,6 +395,45 @@ body.dark .share-btn:hover {
 
 body.dark .recent-card-tag {
   background: #1d4ed8;
+  color: #e5e7eb;
+}
+
+/* "New" pill for recently uploaded items */
+.new-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: #f97316;
+  /* orange */
+  color: #ffffff;
+  font-weight: 500;
+}
+
+body.dark .new-pill {
+  background: #fb923c;
+  color: #111827;
+}
+
+/* Small chips for Exam / Subject / Year on cards */
+.meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.45rem;
+}
+
+.meta-chip {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+body.dark .meta-chip {
+  background: #020617;
+  border: 1px solid #1f2937;
   color: #e5e7eb;
 }
 
@@ -755,7 +859,8 @@ body.dark .pdf-modal-close {
   color: #075985;
   font-size: 0.85rem;
   border: 1px solid #bae6fd;
-  display: none; /* hidden by default */
+  display: none;
+  /* hidden by default */
 }
 
 .load-status.error {
@@ -804,4 +909,45 @@ body.dark .load-status.error {
   width: 18px;
   height: 18px;
   display: inline-block;
+}
+
+/* --- Search Suggestions Dropdown --- */
+.suggest-box {
+  position: absolute;
+  width: 100%;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  margin-top: 0.25rem;
+  padding: 0.35rem 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 50;
+  max-height: 220px;
+  overflow-y: auto;
+  display: none;
+}
+
+body.dark .suggest-box {
+  background: #020617;
+  border-color: #1f2937;
+  box-shadow: 0 4px 12px rgba(255,255,255,0.05);
+}
+
+.suggest-item {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: #111827;
+}
+
+body.dark .suggest-item {
+  color: #e5e7eb;
+}
+
+.suggest-item:hover {
+  background: #f3f4f6;
+}
+
+body.dark .suggest-item:hover {
+  background: #1e293b;
 }

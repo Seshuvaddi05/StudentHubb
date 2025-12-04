@@ -3,23 +3,109 @@
 let ebooks = [];
 let questionPapers = [];
 
+// ====== SLUGIFY (for /view/<slug> links) ======
+function slugify(text) {
+  return (text || "")
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// ====== HIGHLIGHT HELPERS (for search matches) ======
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function highlightText(text, terms) {
+  if (!terms || !terms.length || !text) return text;
+
+  let result = text.toString();
+  terms.forEach((t) => {
+    if (!t) return;
+    const pattern = new RegExp(`(${escapeRegExp(t)})`, "gi");
+    result = result.replace(pattern, "<mark>$1</mark>");
+  });
+  return result;
+}
+
+// ====== TOAST (Download notification) ======
+let toastEl = null;
+let toastTimer = null;
+
+function showToast(message) {
+  if (!toastEl) {
+    toastEl = document.createElement("div");
+    toastEl.id = "download-toast";
+    toastEl.style.position = "fixed";
+    toastEl.style.left = "50%";
+    toastEl.style.bottom = "1rem";
+    toastEl.style.transform = "translateX(-50%)";
+    toastEl.style.padding = "0.5rem 1rem";
+    toastEl.style.borderRadius = "999px";
+    toastEl.style.background = "rgba(15, 23, 42, 0.95)";
+    toastEl.style.color = "#f9fafb";
+    toastEl.style.fontSize = "0.85rem";
+    toastEl.style.boxShadow = "0 8px 20px rgba(15, 23, 42, 0.6)";
+    toastEl.style.opacity = "0";
+    toastEl.style.pointerEvents = "none";
+    toastEl.style.transition = "opacity 0.2s ease";
+    toastEl.style.zIndex = "100";
+    document.body.appendChild(toastEl);
+  }
+
+  toastEl.textContent = message;
+  toastEl.style.opacity = "1";
+
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+  }
+
+  toastTimer = setTimeout(() => {
+    if (toastEl) toastEl.style.opacity = "0";
+  }, 1800);
+}
+
 // ====== CARD CREATION ======
-function createCard(item) {
+function createCard(item, highlightTerms = []) {
   const article = document.createElement("article");
   article.className = "card";
 
+  // Title row with NEW badge
+  const titleRow = document.createElement("div");
+  titleRow.className = "card-title-row";
+
   const h3 = document.createElement("h3");
-  h3.textContent = item.title;
-  article.appendChild(h3);
+  const titleText = item.title || "";
+  h3.innerHTML = highlightText(titleText, highlightTerms);
+  titleRow.appendChild(h3);
+
+  // Show NEW if created within last 7 days
+  if (item.createdAt) {
+    const createdTime = new Date(item.createdAt).getTime();
+    const now = Date.now();
+    const diffDays = (now - createdTime) / (1000 * 60 * 60 * 24);
+    if (diffDays <= 7) {
+      const badge = document.createElement("span");
+      badge.className = "new-badge";
+      badge.textContent = "NEW";
+      titleRow.appendChild(badge);
+    }
+  }
+
+  article.appendChild(titleRow);
 
   const pDesc = document.createElement("p");
-  pDesc.textContent = item.description;
+  const descText = item.description || "";
+  pDesc.innerHTML = highlightText(descText, highlightTerms);
   article.appendChild(pDesc);
 
   const meta = document.createElement("p");
   meta.style = "font-size: 0.8rem; color: #6b7280; margin-bottom: 0.4rem;";
-  meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${item.subject || "—"
-    } | Year: ${item.year || "—"}`;
+  meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${
+    item.subject || "—"
+  } | Year: ${item.year || "—"}`;
   article.appendChild(meta);
 
   // DOWNLOAD COUNTER
@@ -28,10 +114,11 @@ function createCard(item) {
   dcount.textContent = `Downloads: ${item.downloads || 0}`;
   article.appendChild(dcount);
 
-  // Buttons row: Preview + Download
+  // Buttons row: Preview + Open page + Download
   const btnRow = document.createElement("div");
   btnRow.style = "display:flex; flex-wrap:wrap; gap:0.5rem;";
 
+  // Preview in modal
   const previewBtn = document.createElement("button");
   previewBtn.type = "button";
   previewBtn.className = "btn small secondary";
@@ -39,11 +126,28 @@ function createCard(item) {
   previewBtn.addEventListener("click", () => openPdfPreview(item));
   btnRow.appendChild(previewBtn);
 
+  // Open dedicated /view/<slug> page
+  const viewLink = document.createElement("a");
+  viewLink.href = `/view/${slugify(item.title)}`;
+  viewLink.target = "_blank";
+  viewLink.rel = "noopener";
+  viewLink.className = "btn small secondary";
+  viewLink.textContent = "Open page";
+  btnRow.appendChild(viewLink);
+
+  // Download (with tracking)
   const link = document.createElement("a");
   link.href = `/api/download/${item.type}/${item.index}`;
   link.target = "_blank";
+  link.rel = "noopener";
   link.className = "btn small primary";
   link.textContent = "Download";
+
+  // 🔔 Show toast on download click
+  link.addEventListener("click", () => {
+    showToast("Download starting...");
+  });
+
   btnRow.appendChild(link);
 
   article.appendChild(btnRow);
@@ -61,9 +165,28 @@ function createRecentCard(item) {
   tag.textContent = item.type === "ebook" ? "E-Book" : "Question Paper";
   article.appendChild(tag);
 
+  // Title row with NEW badge
+  const titleRow = document.createElement("div");
+  titleRow.className = "card-title-row";
+
   const h3 = document.createElement("h3");
   h3.textContent = item.title;
-  article.appendChild(h3);
+  titleRow.appendChild(h3);
+
+  // Show NEW if created within last 7 days
+  if (item.createdAt) {
+    const createdTime = new Date(item.createdAt).getTime();
+    const now = Date.now();
+    const diffDays = (now - createdTime) / (1000 * 60 * 60 * 24);
+    if (diffDays <= 7) {
+      const badge = document.createElement("span");
+      badge.className = "new-badge";
+      badge.textContent = "NEW";
+      titleRow.appendChild(badge);
+    }
+  }
+
+  article.appendChild(titleRow);
 
   const pDesc = document.createElement("p");
   pDesc.textContent = item.description;
@@ -71,13 +194,15 @@ function createRecentCard(item) {
 
   const meta = document.createElement("p");
   meta.style = "font-size: 0.8rem; color: #6b7280; margin-bottom: 0.6rem;";
-  meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${item.subject || "—"
-    } | Year: ${item.year || "—"}`;
+  meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${
+    item.subject || "—"
+  } | Year: ${item.year || "—"}`;
   article.appendChild(meta);
 
   const btnRow = document.createElement("div");
   btnRow.style = "display:flex; flex-wrap:wrap; gap:0.5rem;";
 
+  // Preview in modal
   const previewBtn = document.createElement("button");
   previewBtn.type = "button";
   previewBtn.className = "btn small secondary";
@@ -85,11 +210,28 @@ function createRecentCard(item) {
   previewBtn.addEventListener("click", () => openPdfPreview(item));
   btnRow.appendChild(previewBtn);
 
+  // Open dedicated /view/<slug> page
+  const viewLink = document.createElement("a");
+  viewLink.href = `/view/${slugify(item.title)}`;
+  viewLink.target = "_blank";
+  viewLink.rel = "noopener";
+  viewLink.className = "btn small secondary";
+  viewLink.textContent = "Open page";
+  btnRow.appendChild(viewLink);
+
+  // Download (with tracking)
   const link = document.createElement("a");
   link.href = `/api/download/${item.type}/${item.index}`;
   link.target = "_blank";
+  link.rel = "noopener";
   link.className = "btn small primary";
   link.textContent = "Download";
+
+  // 🔔 Toast here too
+  link.addEventListener("click", () => {
+    showToast("Download starting...");
+  });
+
   btnRow.appendChild(link);
 
   article.appendChild(btnRow);
@@ -98,18 +240,88 @@ function createRecentCard(item) {
 }
 
 // ====== RENDER LISTS ======
-function renderList(list, containerId) {
+function renderList(list, containerId, searchTerms = []) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
   container.innerHTML = "";
 
   if (list.length === 0) {
-    container.innerHTML = `<p style="color:#6b7280;">No items found.</p>`;
+    // Friendly empty state + "Request this material" button
+    let searchTerm = "";
+    let contextLabel = "material";
+
+    if (containerId === "ebooks-list") {
+      const input = document.getElementById("ebook-search");
+      if (input) searchTerm = input.value.trim();
+      contextLabel = "e-book";
+    } else if (containerId === "qp-list") {
+      const input = document.getElementById("qp-search");
+      if (input) searchTerm = input.value.trim();
+      contextLabel = "question paper";
+    }
+
+    const safeTerm = searchTerm ? ` for "${searchTerm}"` : "";
+    const btnId = `empty-request-btn-${containerId}`;
+
+    container.innerHTML = `
+      <div class="card" style="border:1px dashed #d1d5db; background:#f9fafb; text-align:left; padding:1rem; border-radius:0.75rem;">
+        <h3 style="font-size:1rem; margin-bottom:0.3rem;">No materials found${safeTerm}.</h3>
+        <p style="font-size:0.85rem; color:#6b7280; margin-bottom:0.6rem;">
+          You can request this ${contextLabel}, and we’ll try to add it soon.
+        </p>
+        <button type="button" id="${btnId}" class="btn small primary">
+          Request this ${contextLabel}
+        </button>
+      </div>
+    `;
+
+    // Hook up the "Request" button
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.addEventListener("click", () => {
+        const form = document.getElementById("request-form");
+        const typeSelect = document.getElementById("req-type");
+        const examInput = document.getElementById("req-exam");
+        const detailsInput = document.getElementById("req-details");
+
+        if (typeSelect) {
+          if (containerId === "ebooks-list") typeSelect.value = "E-Book";
+          else if (containerId === "qp-list") typeSelect.value = "Question Paper";
+        }
+
+        if (examInput && searchTerm) {
+          examInput.value = searchTerm;
+        }
+
+        if (detailsInput && searchTerm) {
+          const base = `Looking for a ${contextLabel} related to: ${searchTerm}`;
+          // Only override if empty
+          if (!detailsInput.value.trim()) {
+            detailsInput.value = base;
+          }
+        }
+
+        const contactSection = document.getElementById("contact");
+        if (contactSection) {
+          contactSection.scrollIntoView({ behavior: "smooth" });
+        } else if (form) {
+          form.scrollIntoView({ behavior: "smooth" });
+        }
+
+        const nameInput = document.getElementById("req-name");
+        if (nameInput) {
+          setTimeout(() => nameInput.focus(), 300);
+        }
+      });
+    }
+
     return;
   }
 
-  list.forEach((item) => container.appendChild(createCard(item)));
+  list.forEach((item) =>
+    container.appendChild(createCard(item, searchTerms))
+  );
 }
 
 // ====== RENDER RECENT (for Recent + Popular) ======
@@ -146,9 +358,10 @@ function populateDropdown(list, field, dropdownId) {
   });
 }
 
-// ====== FILTER FUNCTION ======
+// ====== FILTER FUNCTION (multi-keyword search) ======
 function filterItems(list, search, examFilter, yearFilter = "") {
   const q = search.trim().toLowerCase();
+  const terms = q.split(/\s+/).filter(Boolean); // ["ssc","2024"]
 
   return list.filter((item) => {
     const text =
@@ -162,7 +375,12 @@ function filterItems(list, search, examFilter, yearFilter = "") {
       " " +
       (item.year || "");
 
-    const matchesSearch = text.toLowerCase().includes(q);
+    const textLower = text.toLowerCase();
+
+    // every word must appear somewhere
+    const matchesSearch =
+      terms.length === 0 || terms.every((t) => textLower.includes(t));
+
     const matchesExam = examFilter ? item.exam === examFilter : true;
     const matchesYear = yearFilter ? item.year === yearFilter : true;
 
@@ -403,42 +621,208 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (ebooksStatEl) ebooksStatEl.textContent = ebooksLen.toString();
   if (qpStatEl) qpStatEl.textContent = qpLen.toString();
 
-  // EBOOK Filters + Sort
+  // ====== E-BOOK Filters + Sort + Summary ======
   const ebookSearch = document.getElementById("ebook-search");
   const ebookExam = document.getElementById("ebook-exam-filter");
   const ebookSort = document.getElementById("ebook-sort");
 
-  function applyEbookFilters() {
-    const filtered = filterItems(ebooks, ebookSearch.value, ebookExam.value);
-    const sorted = sortItems(filtered, ebookSort.value);
-    renderList(sorted, "ebooks-list");
+  // Create dynamic summary row under ebook filter bar
+  let ebookSummaryText = null;
+  let ebookClearBtn = null;
+  const ebookSection = document.getElementById("ebooks");
+  if (ebookSection) {
+    const bar = ebookSection.querySelector(".filter-bar");
+    if (bar && bar.parentNode) {
+      const row = document.createElement("div");
+      row.style =
+        "margin:0.2rem 0 0.75rem; font-size:0.8rem; color:#6b7280; display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;";
+
+      ebookSummaryText = document.createElement("span");
+      ebookSummaryText.id = "ebook-filter-summary";
+      ebookSummaryText.textContent = "Showing all e-books.";
+
+      ebookClearBtn = document.createElement("button");
+      ebookClearBtn.type = "button";
+      ebookClearBtn.id = "ebook-clear-filters";
+      ebookClearBtn.className = "chip";
+      ebookClearBtn.textContent = "Clear filters";
+      ebookClearBtn.style.display = "none";
+
+      row.appendChild(ebookSummaryText);
+      row.appendChild(ebookClearBtn);
+      bar.parentNode.insertBefore(row, bar.nextSibling);
+    }
   }
 
-  ebookSearch.addEventListener("input", applyEbookFilters);
-  ebookExam.addEventListener("change", applyEbookFilters);
-  ebookSort.addEventListener("change", applyEbookFilters);
+  function updateEbookFilterSummary(filteredCount = ebooks.length) {
+    if (!ebookSummaryText || !ebookClearBtn) return;
 
-  // QUESTION PAPER Filters + Sort
+    const extras = [];
+    const searchVal = ebookSearch ? ebookSearch.value.trim() : "";
+    const examVal = ebookExam ? ebookExam.value : "";
+    const sortVal = ebookSort ? ebookSort.value : "recent";
+
+    if (searchVal) extras.push(`Search: "${searchVal}"`);
+    if (examVal) extras.push(`Exam: ${examVal}`);
+    if (sortVal && sortVal !== "recent") {
+      const label = sortVal === "title" ? "Title A–Z" : "Most downloaded";
+      extras.push(`Sort: ${label}`);
+    }
+
+    const base = `Showing ${filteredCount} of ${ebooks.length} e-books`;
+
+    if (extras.length === 0) {
+      ebookSummaryText.textContent = base + ".";
+      ebookClearBtn.style.display = "none";
+    } else {
+      ebookSummaryText.textContent = base + " • " + extras.join(" • ");
+      ebookClearBtn.style.display = "inline-flex";
+    }
+  }
+
+  function applyEbookFilters() {
+    const searchVal = ebookSearch ? ebookSearch.value : "";
+    const filtered = filterItems(
+      ebooks,
+      searchVal,
+      ebookExam ? ebookExam.value : ""
+    );
+    const sorted = sortItems(filtered, ebookSort ? ebookSort.value : "recent");
+
+    const terms = searchVal
+      .trim()
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    renderList(sorted, "ebooks-list", terms);
+    updateEbookFilterSummary(filtered.length);
+  }
+
+  function applyEebookFiltersWrapper() {
+    applyEbookFilters();
+  }
+
+  if (ebookSearch) ebookSearch.addEventListener("input", applyEebookFiltersWrapper);
+  if (ebookExam) ebookExam.addEventListener("change", applyEebookFiltersWrapper);
+  if (ebookSort)
+    ebookSort.addEventListener("change", () => {
+      applyEbookFilters();
+    });
+
+  // Clear filters button for ebooks
+  if (ebookClearBtn && ebookSearch && ebookExam && ebookSort) {
+    ebookClearBtn.addEventListener("click", () => {
+      ebookSearch.value = "";
+      ebookExam.value = "";
+      ebookSort.value = "recent";
+      applyEbookFilters();
+    });
+  }
+
+  // Initialize ebook summary once data is loaded
+  updateEbookFilterSummary(ebooks.length);
+
+  // ====== QUESTION PAPER Filters + Sort + Summary ======
   const qpSearch = document.getElementById("qp-search");
   const qpExam = document.getElementById("qp-exam-filter");
   const qpYear = document.getElementById("qp-year-filter");
   const qpSort = document.getElementById("qp-sort");
 
-  function applyQPFilters() {
-    const filtered = filterItems(
-      questionPapers,
-      qpSearch.value,
-      qpExam.value,
-      qpYear.value
-    );
-    const sorted = sortItems(filtered, qpSort.value);
-    renderList(sorted, "qp-list");
+  // Dynamic summary row under question paper filter bar
+  let qpSummaryText = null;
+  let qpClearBtn = null;
+  const qpSection = document.getElementById("question-papers");
+  if (qpSection) {
+    const bar2 = qpSection.querySelector(".filter-bar");
+    if (bar2 && bar2.parentNode) {
+      const row2 = document.createElement("div");
+      row2.style =
+        "margin:0.2rem 0 0.75rem; font-size:0.8rem; color:#6b7280; display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;";
+
+      qpSummaryText = document.createElement("span");
+      qpSummaryText.id = "qp-filter-summary";
+      qpSummaryText.textContent = "Showing all question papers.";
+
+      qpClearBtn = document.createElement("button");
+      qpClearBtn.type = "button";
+      qpClearBtn.id = "qp-clear-filters";
+      qpClearBtn.className = "chip";
+      qpClearBtn.textContent = "Clear filters";
+      qpClearBtn.style.display = "none";
+
+      row2.appendChild(qpSummaryText);
+      row2.appendChild(qpClearBtn);
+      bar2.parentNode.insertBefore(row2, bar2.nextSibling);
+    }
   }
 
-  qpSearch.addEventListener("input", applyQPFilters);
-  qpExam.addEventListener("change", applyQPFilters);
-  qpYear.addEventListener("change", applyQPFilters);
-  qpSort.addEventListener("change", applyQPFilters);
+  function updateQPFilterSummary(filteredCount = questionPapers.length) {
+    if (!qpSummaryText || !qpClearBtn) return;
+
+    const extras = [];
+    const searchVal = qpSearch ? qpSearch.value.trim() : "";
+    const examVal = qpExam ? qpExam.value : "";
+    const yearVal = qpYear ? qpYear.value : "";
+    const sortVal = qpSort ? qpSort.value : "recent";
+
+    if (searchVal) extras.push(`Search: "${searchVal}"`);
+    if (examVal) extras.push(`Exam: ${examVal}`);
+    if (yearVal) extras.push(`Year: ${yearVal}`);
+    if (sortVal && sortVal !== "recent") {
+      const label = sortVal === "title" ? "Title A–Z" : "Most downloaded";
+      extras.push(`Sort: ${label}`);
+    }
+
+    const base = `Showing ${filteredCount} of ${questionPapers.length} question papers`;
+
+    if (extras.length === 0) {
+      qpSummaryText.textContent = base + ".";
+      qpClearBtn.style.display = "none";
+    } else {
+      qpSummaryText.textContent = base + " • " + extras.join(" • ");
+      qpClearBtn.style.display = "inline-flex";
+    }
+  }
+
+  function applyQPFilters() {
+    const searchVal = qpSearch ? qpSearch.value : "";
+    const filtered = filterItems(
+      questionPapers,
+      searchVal,
+      qpExam ? qpExam.value : "",
+      qpYear ? qpYear.value : ""
+    );
+    const sorted = sortItems(filtered, qpSort ? qpSort.value : "recent");
+
+    const terms = searchVal
+      .trim()
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    renderList(sorted, "qp-list", terms);
+    updateQPFilterSummary(filtered.length);
+  }
+
+  if (qpSearch) qpSearch.addEventListener("input", applyQPFilters);
+  if (qpExam) qpExam.addEventListener("change", applyQPFilters);
+  if (qpYear) qpYear.addEventListener("change", applyQPFilters);
+  if (qpSort) qpSort.addEventListener("change", applyQPFilters);
+
+  // Clear filters for question papers
+  if (qpClearBtn && qpSearch && qpExam && qpYear && qpSort) {
+    qpClearBtn.addEventListener("click", () => {
+      qpSearch.value = "";
+      qpExam.value = "";
+      qpYear.value = "";
+      qpSort.value = "recent";
+      applyQPFilters();
+    });
+  }
+
+  // Initialize qp summary
+  updateQPFilterSummary(questionPapers.length);
 
   // Back to top button
   const backToTopBtn = document.getElementById("back-to-top");
@@ -476,11 +860,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
       const body = encodeURIComponent(
         `Name: ${name}\n` +
-        `Email: ${email}\n` +
-        `Material Type: ${type}\n` +
-        `Exam / Subject: ${exam}\n\n` +
-        `Requested Details:\n${details}\n\n` +
-        `Sent from StudentHub website.`
+          `Email: ${email}\n` +
+          `Material Type: ${type}\n` +
+          `Exam / Subject: ${exam}\n\n` +
+          `Requested Details:\n${details}\n\n` +
+          `Sent from StudentHub website.`
       );
 
       const mailtoLink = `mailto:${to}?subject=${subject}&body=${body}`;
@@ -516,7 +900,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const shareText =
       "Free E-Books & Previous Year Question Papers – StudentHub: " + siteUrl;
 
-    // Update links dynamically (overwrites default hrefs, which is fine)
+    // Update links dynamically
     if (shareWhatsApp) {
       shareWhatsApp.href =
         "https://wa.me/?text=" + encodeURIComponent(shareText);
@@ -585,5 +969,56 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     document.body.removeChild(dummy);
   }
-});
 
+  // ============================
+  // Keyboard shortcut for search
+  // ============================
+  document.addEventListener("keydown", (e) => {
+    // Don't trigger if user is already typing in a field
+    const active = document.activeElement;
+    const tag = active && active.tagName;
+    if (
+      tag === "INPUT" ||
+      tag === "TEXTAREA" ||
+      tag === "SELECT" ||
+      active?.isContentEditable
+    ) {
+      return;
+    }
+
+    const isSlash = e.key === "/";
+    const isGlobalSearch = e.ctrlKey && e.key.toLowerCase() === "k";
+
+    if (!isSlash && !isGlobalSearch) return;
+
+    e.preventDefault();
+
+    const ebookSectionEl = document.getElementById("ebooks");
+    const qpSectionEl = document.getElementById("question-papers");
+    const ebookSearchInput = document.getElementById("ebook-search");
+    const qpSearchInput = document.getElementById("qp-search");
+
+    if (!ebookSearchInput && !qpSearchInput) return;
+
+    // If only one search exists, just focus that
+    if (!ebookSectionEl || !qpSectionEl || !ebookSearchInput || !qpSearchInput) {
+      const targetInput = ebookSearchInput || qpSearchInput;
+      targetInput.focus();
+      targetInput.select();
+      return;
+    }
+
+    const scrollY = window.scrollY || window.pageYOffset;
+    const ebookTop = ebookSectionEl.offsetTop;
+    const qpTop = qpSectionEl.offsetTop;
+    const midPoint = (ebookTop + qpTop) / 2;
+
+    if (scrollY < midPoint) {
+      ebookSearchInput.focus();
+      ebookSearchInput.select();
+    } else {
+      qpSearchInput.focus();
+      qpSearchInput.select();
+    }
+  });
+});
