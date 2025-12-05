@@ -226,6 +226,80 @@ body.dark .share-btn:hover {
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.25);
 }
 
+/* Better contrast for small secondary buttons (e.g. "Verify email") */
+.btn.small.secondary,
+.btn.secondary.small {
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid #d1d5db;
+}
+
+.btn.small.secondary:hover,
+.btn.secondary.small:hover {
+  background: #e5e7eb;
+}
+
+body.dark .btn.small.secondary,
+body.dark .btn.secondary.small {
+  background: #020617;
+  color: #e5e7eb;
+  border-color: #1f2937;
+}
+
+body.dark .btn.small.secondary:hover,
+body.dark .btn.secondary.small:hover {
+  background: #111827;
+}
+
+/* ---------------------------------------
+   Secondary buttons (e.g. Logout, small actions)
+   Make sure text is clearly visible in light mode
+---------------------------------------- */
+.btn.secondary {
+  background: #f3f4f6;          /* light gray background */
+  color: #111827;               /* dark text for contrast */
+  border: 1px solid #d1d5db;
+  box-shadow: none;
+}
+
+.btn.secondary:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
+/* Disabled secondary buttons: still readable */
+.btn.secondary:disabled {
+  opacity: 0.8;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Dark mode variant */
+body.dark .btn.secondary {
+  background: #020617;
+  color: #e5e7eb;
+  border-color: #1f2937;
+}
+
+body.dark .btn.secondary:hover {
+  background: #111827;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.7);
+}
+
+/* Disabled in dark mode */
+body.dark .btn.secondary:disabled {
+  opacity: 0.8;
+  color: #9ca3af;
+  background: #020617;
+  border-color: #1f2937;
+}
+
+
+
 /* Sections */
 .section {
   padding: 2.5rem 1.5rem;

@@ -7,8 +7,13 @@ yarn-error.log*
 # Environment files
 .env
 
-# PDFs and uploaded files (we won't push them to GitHub)
-#pdfs/**/*.pdf
+# PDFs and uploaded files (entire folder ignored)
+pdfs/
+pdfs/**/*
+
+# Local JSON user/material DB
+users.json
+data.json
 
 # VS Code
 .vscode

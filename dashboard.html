@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>StudentHub – My Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    .dashboard-container {
+      max-width: 1100px;
+      margin: 2rem auto;
+    }
+
+    .dash-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .dash-title {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .dash-subtitle {
+      font-size: 0.95rem;
+      color: #6b7280;
+    }
+
+    body.dark .dash-subtitle {
+      color: #9ca3af;
+    }
+
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .dash-card {
+      background: #ffffff;
+      border-radius: 0.9rem;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      border: 1px solid #e5e7eb;
+    }
+
+    .dash-card h3 {
+      font-size: 0.95rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .dash-metric {
+      font-size: 1.7rem;
+      font-weight: 600;
+    }
+
+    body.dark .dash-card {
+      background: #020617;
+      border-color: #1f2937;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.7);
+    }
+
+    .dash-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .dash-section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .dash-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .dash-list-item {
+      background: #ffffff;
+      padding: 0.75rem 0.9rem;
+      border-radius: 0.75rem;
+      border: 1px solid #e5e7eb;
+      font-size: 0.9rem;
+    }
+
+    .dash-list-item-title {
+      font-weight: 500;
+      margin-bottom: 0.15rem;
+    }
+
+    .dash-list-item-meta {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    body.dark .dash-list-item {
+      background: #020617;
+      border-color: #1f2937;
+    }
+
+    body.dark .dash-list-item-meta {
+      color: #9ca3af;
+    }
+
+    .dash-logout-row {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-logout {
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 640px) {
+      .dashboard-container {
+        margin-top: 1.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="logo">StudentHub</div>
+    <nav class="nav-links" id="nav-links">
+      <a href="/">Home</a>
+      <a href="/dashboard.html" class="nav-link-active">My dashboard</a>
+    </nav>
+    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+  </header>
+
+  <main class="section">
+    <div class="dashboard-container">
+      <div class="dash-header">
+        <h1 class="dash-title" id="dash-title">My dashboard</h1>
+        <p class="dash-subtitle" id="dash-subtitle">
+          Loading your account details…
+        </p>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="dash-grid">
+        <div class="dash-card">
+          <h3>Total e-books</h3>
+          <div class="dash-metric" id="metric-ebooks">–</div>
+        </div>
+        <div class="dash-card">
+          <h3>Total question papers</h3>
+          <div class="dash-metric" id="metric-qps">–</div>
+        </div>
+        <div class="dash-card">
+          <h3>All materials</h3>
+          <div class="dash-metric" id="metric-total">–</div>
+        </div>
+        <div class="dash-card">
+          <h3>Your account</h3>
+          <div style="font-size:0.85rem;" id="account-info">—</div>
+          <div class="dash-links">
+            <a href="/#ebooks" class="chip">Browse e-books</a>
+            <a href="/#question-papers" class="chip">Browse question papers</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recommended (most downloaded) -->
+      <section style="margin-bottom:1.5rem;">
+        <h2 class="dash-section-title">Popular materials on StudentHub</h2>
+        <div id="popular-list" class="dash-list">
+          <!-- filled by JS -->
+        </div>
+      </section>
+
+      <div class="dash-logout-row">
+        <button class="btn secondary btn-logout" id="btn-logout">
+          Logout
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // --- Theme helper (reuse style from main site) ---
+    function applyTheme(theme) {
+      const body = document.body;
+      const toggleBtn = document.getElementById("theme-toggle");
+      if (!body || !toggleBtn) return;
+
+      if (theme === "dark") {
+        body.classList.add("dark");
+        toggleBtn.textContent = "☀️";
+      } else {
+        body.classList.remove("dark");
+        toggleBtn.textContent = "🌙";
+      }
+
+      localStorage.setItem("studenthub_theme", theme);
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const yearSpan = document.getElementById("year");
+      if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+
+      const savedTheme = localStorage.getItem("studenthub_theme") || "light";
+      applyTheme(savedTheme);
+      const themeToggleBtn = document.getElementById("theme-toggle");
+      if (themeToggleBtn) {
+        themeToggleBtn.addEventListener("click", () => {
+          const next = document.body.classList.contains("dark")
+            ? "light"
+            : "dark";
+          applyTheme(next);
+        });
+      }
+
+      const dashTitle = document.getElementById("dash-title");
+      const dashSubtitle = document.getElementById("dash-subtitle");
+      const metricE = document.getElementById("metric-ebooks");
+      const metricQ = document.getElementById("metric-qps");
+      const metricT = document.getElementById("metric-total");
+      const accountInfo = document.getElementById("account-info");
+      const popularList = document.getElementById("popular-list");
+      const logoutBtn = document.getElementById("btn-logout");
+
+      // 1) Fetch current user
+      try {
+        const meRes = await fetch("/api/me");
+        if (meRes.status === 401) {
+          // Just in case; server should redirect already
+          window.location.href = "/login.html?next=" + encodeURIComponent("/dashboard.html");
+          return;
+        }
+        const meData = await meRes.json();
+        if (!meData.ok) {
+          dashSubtitle.textContent = "Unable to load your account.";
+        } else {
+          const u = meData.user;
+          dashTitle.textContent = "Welcome, " + (u.name || u.email);
+          const created = u.createdAt
+            ? new Date(u.createdAt).toLocaleDateString()
+            : "—";
+          dashSubtitle.textContent = "You joined StudentHub on " + created + ".";
+          accountInfo.textContent =
+            (u.email || "") +
+            " • " +
+            (u.provider === "google" ? "Signed in with Google" : "Email account");
+        }
+      } catch (err) {
+        console.error(err);
+        dashSubtitle.textContent = "Failed to load your account.";
+      }
+
+      // 2) Fetch materials for stats + popular list
+      try {
+        const res = await fetch("/api/materials");
+        const data = await res.json();
+        const ebooks = data.ebooks || [];
+        const qps = data.questionPapers || [];
+
+        const eLen = ebooks.length;
+        const qLen = qps.length;
+        const tLen = eLen + qLen;
+
+        metricE.textContent = eLen;
+        metricQ.textContent = qLen;
+        metricT.textContent = tLen;
+
+        const combined = [...ebooks.map(i => ({ ...i, type: "E-Book" })), 
+                          ...qps.map(i => ({ ...i, type: "Question paper" }))];
+
+        combined.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
+        const top = combined.slice(0, 6);
+
+        popularList.innerHTML = "";
+        if (!top.length) {
+          popularList.innerHTML =
+            '<p style="font-size:0.9rem;color:#6b7280;">No materials uploaded yet.</p>';
+        } else {
+          top.forEach((item) => {
+            const div = document.createElement("div");
+            div.className = "dash-list-item";
+            div.innerHTML = `
+              <div class="dash-list-item-title">${item.title || "Untitled"}</div>
+              <div class="dash-list-item-meta">
+                ${item.type} • ${item.exam || "—"} • Downloads: ${
+              item.downloads || 0
+            }
+              </div>
+            `;
+            popularList.appendChild(div);
+          });
+        }
+      } catch (err) {
+        console.error("Error loading materials for dashboard:", err);
+        popularList.innerHTML =
+          '<p style="font-size:0.9rem;color:#b91c1c;">Error loading materials.</p>';
+      }
+
+      // 3) Logout
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+          try {
+            await fetch("/api/auth/logout", { method: "POST" });
+          } catch (err) {
+            console.error("Logout error:", err);
+          }
+          window.location.href = "/login.html";
+        });
+      }
+    });
+  </script>
+</body>
+</html>

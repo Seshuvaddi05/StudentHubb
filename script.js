@@ -537,6 +537,100 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // ================================
+  // Navbar: Login / Dashboard / Logout
+  // ================================
+  async function setupAuthNav() {
+    const header = document.querySelector(".navbar");
+    if (!header || !themeToggleBtn) return;
+
+    // Container for auth buttons
+    const authContainer = document.createElement("div");
+    authContainer.id = "nav-auth";
+    authContainer.style.display = "none";
+    authContainer.style.alignItems = "center";
+    authContainer.style.gap = "0.5rem";
+    authContainer.style.marginLeft = "0.75rem";
+
+    // Insert just before theme toggle button
+    header.insertBefore(authContainer, themeToggleBtn);
+
+    // Helpers to render states
+    function renderLoggedOut() {
+      authContainer.innerHTML = "";
+      const loginLink = document.createElement("a");
+      loginLink.className = "btn small secondary";
+      loginLink.textContent = "Login";
+      loginLink.href = "/login.html?next=" + encodeURIComponent("/dashboard.html");
+      authContainer.appendChild(loginLink);
+      authContainer.style.display = "flex";
+    }
+
+    function renderLoggedIn(userName) {
+      authContainer.innerHTML = "";
+
+      const dashLink = document.createElement("a");
+      dashLink.className = "btn small secondary";
+      dashLink.textContent = "My dashboard";
+      dashLink.href = "/dashboard.html";
+
+      const logoutBtn = document.createElement("button");
+      logoutBtn.type = "button";
+      logoutBtn.className = "btn small tertiary-logout";
+      logoutBtn.textContent = "Logout";
+
+      logoutBtn.style.background = "transparent";
+      logoutBtn.style.border = "1px solid rgba(156,163,175,0.5)";
+      logoutBtn.style.color = "#f9fafb";
+      logoutBtn.style.padding = "0.3rem 0.75rem";
+      logoutBtn.style.borderRadius = "999px";
+      logoutBtn.style.fontSize = "0.8rem";
+      logoutBtn.style.cursor = "pointer";
+
+      // Improve colors in light mode
+      if (!document.body.classList.contains("dark")) {
+        logoutBtn.style.color = "#111827";
+        logoutBtn.style.borderColor = "rgba(156,163,175,0.9)";
+      }
+
+      logoutBtn.addEventListener("click", async () => {
+        try {
+          await fetch("/api/auth/logout", { method: "POST" });
+        } catch (e) {
+          console.error("Logout error:", e);
+        }
+        window.location.href = "/";
+      });
+
+      authContainer.appendChild(dashLink);
+      authContainer.appendChild(logoutBtn);
+      authContainer.style.display = "flex";
+    }
+
+    // Try to fetch current user
+    try {
+      const res = await fetch("/api/me", {
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) {
+        renderLoggedOut();
+        return;
+      }
+      const data = await res.json();
+      if (data && data.ok && data.user) {
+        renderLoggedIn(data.user.name || "User");
+      } else {
+        renderLoggedOut();
+      }
+    } catch (err) {
+      console.error("Error checking auth status:", err);
+      renderLoggedOut();
+    }
+  }
+
+  // Call auth nav setup (don’t block rest of page if it fails)
+  setupAuthNav().catch((e) => console.error(e));
+
   // Load status bar
   const loadStatus = document.getElementById("load-status");
   if (loadStatus) {

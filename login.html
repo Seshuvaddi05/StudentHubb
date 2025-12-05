@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>StudentHub – Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Google Identity Services for "Login with Google" -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <style>
+    .auth-container {
+      max-width: 480px;
+      margin: 2.5rem auto;
+      background: #ffffff;
+      border-radius: 0.9rem;
+      padding: 1.5rem 1.75rem;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+    }
+
+    body.dark .auth-container {
+      background: #020617;
+      border: 1px solid #1f2937;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .auth-tab {
+      flex: 1;
+      text-align: center;
+      padding: 0.5rem 0.75rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+    }
+
+    .auth-tab.active {
+      background: #111827;
+      color: #f9fafb;
+      border-color: #111827;
+    }
+
+    body.dark .auth-tab {
+      border-color: #1f2937;
+      color: #e5e7eb;
+      background: #020617;
+    }
+
+    body.dark .auth-tab.active {
+      background: #fbbf24;
+      color: #111827;
+      border-color: #fbbf24;
+    }
+
+    .auth-heading {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+
+    .auth-subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 0.9rem;
+    }
+
+    body.dark .auth-subtitle {
+      color: #9ca3af;
+    }
+
+    .auth-divider {
+      text-align: center;
+      margin: 0.9rem 0;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .auth-divider span {
+      padding: 0 0.4rem;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+      content: "";
+      display: inline-block;
+      width: 40%;
+      height: 1px;
+      background: #e5e7eb;
+      vertical-align: middle;
+    }
+
+    body.dark .auth-divider::before,
+    body.dark .auth-divider::after {
+      background: #1f2937;
+    }
+
+    .google-btn-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-status {
+      margin-top: 0.4rem;
+      font-size: 0.8rem;
+      color: #16a34a;
+      font-weight: 500; /* a bit bolder so it’s clearer in light mode */
+    }
+
+    .auth-status.error {
+      color: #b91c1c;
+    }
+
+    .forgot-link {
+      margin-top: 0.3rem;
+      font-size: 0.8rem;
+      background: none;
+      border: none;
+      padding: 0;
+      color: #2563eb;
+      cursor: pointer;
+      text-decoration: none;
+      align-self: flex-end;
+    }
+
+    .forgot-link:hover {
+      text-decoration: underline;
+    }
+
+    body.dark .forgot-link {
+      color: #93c5fd;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="logo">StudentHub</div>
+    <nav class="nav-links" id="nav-links">
+      <a href="/">Home</a>
+    </nav>
+    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+  </header>
+
+  <main class="section" style="max-width: 900px;">
+    <div class="auth-container">
+      <div class="auth-tabs">
+        <button id="tab-login" class="auth-tab active">Login</button>
+        <button id="tab-register" class="auth-tab">Register</button>
+      </div>
+
+      <h1 class="auth-heading" id="auth-title">Welcome back 👋</h1>
+      <p class="auth-subtitle" id="auth-subtitle">
+        Login to view and download free e-books and question papers.
+      </p>
+
+      <!-- Google login -->
+      <div class="google-btn-wrapper">
+        <div id="google-login-btn"></div>
+      </div>
+
+      <div class="auth-divider"><span>or continue with email</span></div>
+
+      <!-- LOGIN form -->
+      <form id="login-form" class="request-form">
+        <div class="form-row">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" required placeholder="you@example.com" />
+        </div>
+        <div class="form-row">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" required placeholder="Enter your password" />
+        </div>
+        <button type="submit" class="btn primary">Login</button>
+        <button type="button" id="forgot-password-link" class="forgot-link">
+          Forgot password?
+        </button>
+      </form>
+
+      <!-- REGISTER form -->
+      <form id="register-form" class="request-form" style="display:none;">
+        <div class="form-row">
+          <label for="reg-name">Full name</label>
+          <input type="text" id="reg-name" required placeholder="Your name" />
+        </div>
+        <div class="form-row">
+          <label for="reg-email">Email</label>
+          <input type="email" id="reg-email" required placeholder="you@example.com" />
+        </div>
+        <div class="form-row">
+          <label for="reg-password">Password</label>
+          <input type="password" id="reg-password" required placeholder="Choose a password" />
+        </div>
+
+        <div id="otp-section" style="display:none;">
+          <div class="form-row">
+            <label for="reg-otp">Email verification code</label>
+            <input type="text" id="reg-otp" maxlength="6" placeholder="Enter 6-digit code" />
+          </div>
+          <button type="button" class="btn small secondary" id="btn-verify-otp">
+            Verify email
+          </button>
+        </div>
+
+        <button type="submit" class="btn primary" id="btn-register-main">
+          Register &amp; send OTP
+        </button>
+      </form>
+
+      <!-- RESET PASSWORD form -->
+      <form id="reset-form" class="request-form" style="display:none; margin-top:1rem;">
+        <div class="form-row">
+          <label for="reset-email">Email</label>
+          <input type="email" id="reset-email" required placeholder="you@example.com" />
+        </div>
+
+        <button type="button" class="btn small secondary" id="btn-reset-send">
+          Send reset code
+        </button>
+
+        <div id="reset-step2" style="display:none; margin-top:0.75rem;">
+          <div class="form-row">
+            <label for="reset-otp">Reset code</label>
+            <input type="text" id="reset-otp" maxlength="6" placeholder="Enter 6-digit code" />
+          </div>
+          <div class="form-row">
+            <label for="reset-password">New password</label>
+            <input type="password" id="reset-password" placeholder="Choose a new password" />
+          </div>
+          <button type="button" class="btn primary" id="btn-reset-confirm">
+            Update password
+          </button>
+        </div>
+
+        <p class="form-note" style="font-size:0.8rem; margin-top:0.4rem;">
+          Tip: check your spam / promotions folder if you don’t see the email.
+        </p>
+      </form>
+
+      <p id="auth-status" class="auth-status"></p>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // ---- THEME TOGGLE (reuse from main site) ----
+    function applyTheme(theme) {
+      const body = document.body;
+      const toggleBtn = document.getElementById("theme-toggle");
+      if (!body || !toggleBtn) return;
+
+      if (theme === "dark") {
+        body.classList.add("dark");
+        toggleBtn.textContent = "☀️";
+      } else {
+        body.classList.remove("dark");
+        toggleBtn.textContent = "🌙";
+      }
+
+      localStorage.setItem("studenthub_theme", theme);
+    }
+
+    function showStatus(msg, isError = false) {
+      const el = document.getElementById("auth-status");
+      if (!el) return;
+      el.textContent = msg || "";
+      if (isError) el.classList.add("error");
+      else el.classList.remove("error");
+    }
+
+    // nextUrl is used both in normal login & Google login
+    let nextUrl = "/";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const yearSpan = document.getElementById("year");
+      if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+
+      // Theme
+      const savedTheme = localStorage.getItem("studenthub_theme") || "light";
+      applyTheme(savedTheme);
+      const themeToggleBtn = document.getElementById("theme-toggle");
+      if (themeToggleBtn) {
+        themeToggleBtn.addEventListener("click", () => {
+          const next = document.body.classList.contains("dark") ? "light" : "dark";
+          applyTheme(next);
+        });
+      }
+
+      // Where to go after login
+      const urlParams = new URLSearchParams(window.location.search);
+      nextUrl = urlParams.get("next") || "/";
+
+      const tabLogin = document.getElementById("tab-login");
+      const tabRegister = document.getElementById("tab-register");
+      const loginForm = document.getElementById("login-form");
+      const registerForm = document.getElementById("register-form");
+      const resetForm = document.getElementById("reset-form");
+      const resetStep2 = document.getElementById("reset-step2");
+      const authTitle = document.getElementById("auth-title");
+      const authSubtitle = document.getElementById("auth-subtitle");
+      const otpSection = document.getElementById("otp-section");
+      const forgotLink = document.getElementById("forgot-password-link");
+
+      function switchTo(tab) {
+        showStatus("");
+        if (tab === "login") {
+          tabLogin.classList.add("active");
+          tabRegister.classList.remove("active");
+          loginForm.style.display = "";
+          registerForm.style.display = "none";
+          authTitle.textContent = "Welcome back 👋";
+          authSubtitle.textContent =
+            "Login to view and download free e-books and question papers.";
+        } else {
+          tabLogin.classList.remove("active");
+          tabRegister.classList.add("active");
+          loginForm.style.display = "none";
+          registerForm.style.display = "";
+          authTitle.textContent = "Create your free account";
+          authSubtitle.textContent =
+            "Register once, then download any StudentHub materials.";
+        }
+        // Hide reset form whenever switching tabs
+        if (resetForm) {
+          resetForm.style.display = "none";
+        }
+      }
+
+      tabLogin.addEventListener("click", () => switchTo("login"));
+      tabRegister.addEventListener("click", () => switchTo("register"));
+
+      // ---- FORGOT PASSWORD (show reset form) ----
+      if (forgotLink && resetForm) {
+        forgotLink.addEventListener("click", () => {
+          // Ensure we're on the Login tab
+          switchTo("login");
+          resetForm.style.display = "";
+          // Prefill email from login box if present
+          const loginEmail = document.getElementById("login-email");
+          const resetEmail = document.getElementById("reset-email");
+          if (loginEmail && resetEmail && loginEmail.value.trim()) {
+            resetEmail.value = loginEmail.value.trim();
+          }
+          // hide step2 initially
+          if (resetStep2) resetStep2.style.display = "none";
+          resetForm.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+
+      // ---- EMAIL LOGIN ----
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        showStatus("Logging in...");
+        const email = document.getElementById("login-email").value.trim();
+        const password = document.getElementById("login-password").value;
+
+        try {
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.ok) {
+            showStatus(data.message || "Login failed.", true);
+            return;
+          }
+          showStatus("Login successful. Redirecting...");
+          setTimeout(() => {
+            window.location.href = nextUrl;
+          }, 800);
+        } catch (err) {
+          console.error(err);
+          showStatus("Error logging in.", true);
+        }
+      });
+
+      // ---- REGISTER + OTP ----
+      const regForm = registerForm;
+      const btnVerifyOtp = document.getElementById("btn-verify-otp");
+
+      regForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        showStatus("Registering and sending OTP...");
+        const name = document.getElementById("reg-name").value.trim();
+        const email = document.getElementById("reg-email").value.trim();
+        const password = document.getElementById("reg-password").value;
+
+        try {
+          const res = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.ok) {
+            showStatus(data.message || "Registration failed.", true);
+            return;
+          }
+          showStatus(
+            data.message ||
+            "Registered. Check your email for the verification code."
+          );
+          otpSection.style.display = "";
+        } catch (err) {
+          console.error(err);
+          showStatus("Error while registering.", true);
+        }
+      });
+
+      btnVerifyOtp.addEventListener("click", async () => {
+        const email = document.getElementById("reg-email").value.trim();
+        const code = document.getElementById("reg-otp").value.trim();
+        if (!email || !code) {
+          showStatus("Enter email and code.", true);
+          return;
+        }
+        showStatus("Verifying code...");
+        try {
+          const res = await fetch("/api/auth/verify-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, code }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.ok) {
+            showStatus(data.message || "Invalid code.", true);
+            return;
+          }
+          showStatus("Email verified! You can now login.");
+          switchTo("login");
+          document.getElementById("login-email").value = email;
+        } catch (err) {
+          console.error(err);
+          showStatus("Error verifying code.", true);
+        }
+      });
+
+      // ---- PASSWORD RESET: SEND CODE ----
+      const btnResetSend = document.getElementById("btn-reset-send");
+      const btnResetConfirm = document.getElementById("btn-reset-confirm");
+
+      if (btnResetSend && resetForm && resetStep2) {
+        btnResetSend.addEventListener("click", async () => {
+          const email = document.getElementById("reset-email").value.trim();
+          if (!email) {
+            showStatus("Please enter your email to reset password.", true);
+            return;
+          }
+          showStatus("Sending reset code...");
+          try {
+            const res = await fetch("/api/auth/request-reset", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+              showStatus(data.message || "Could not send reset code.", true);
+              return;
+            }
+            showStatus(
+              data.message ||
+              "If this email exists, we have sent a reset code. Check your inbox."
+            );
+            resetStep2.style.display = "";
+          } catch (err) {
+            console.error(err);
+            showStatus("Error sending reset code.", true);
+          }
+        });
+      }
+
+      // ---- PASSWORD RESET: CONFIRM NEW PASSWORD ----
+      if (btnResetConfirm && resetStep2) {
+        btnResetConfirm.addEventListener("click", async () => {
+          const email = document.getElementById("reset-email").value.trim();
+          const code = document.getElementById("reset-otp").value.trim();
+          const newPassword = document.getElementById("reset-password").value;
+
+          if (!email || !code || !newPassword) {
+            showStatus("Please fill email, code and new password.", true);
+            return;
+          }
+
+          showStatus("Updating password...");
+          try {
+            const res = await fetch("/api/auth/reset-password", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, code, newPassword }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+              showStatus(data.message || "Failed to update password.", true);
+              return;
+            }
+            showStatus(
+              data.message ||
+              "Password updated successfully. You can now login with your new password."
+            );
+
+            // Fill login email, switch to login tab, hide reset form
+            document.getElementById("login-email").value = email;
+            document.getElementById("login-password").value = "";
+            if (resetForm) resetForm.style.display = "none";
+            switchTo("login");
+          } catch (err) {
+            console.error(err);
+            showStatus("Error updating password.", true);
+          }
+        });
+      }
+    });
+
+    // ---- Google login via Google Identity Services ----
+    window.handleGoogleCredentialResponse = async (response) => {
+      try {
+        showStatus("Signing in with Google...");
+        const res = await fetch("/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: response.credential }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          showStatus(data.message || "Google login failed.", true);
+          return;
+        }
+        showStatus("Google login successful. Redirecting...");
+        setTimeout(() => {
+          window.location.href = nextUrl;
+        }, 800);
+      } catch (err) {
+        console.error(err);
+        showStatus("Error with Google login.", true);
+      }
+    };
+
+    window.onload = () => {
+      // ✅ Your actual Google OAuth client ID
+      const clientId =
+        "730367097832-h0fj50vrsgav96a80vt6grkrubjo0nou.apps.googleusercontent.com";
+
+      if (window.google && clientId) {
+        google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCredentialResponse,
+        });
+        google.accounts.id.renderButton(
+          document.getElementById("google-login-btn"),
+          { theme: "outline", size: "large", width: "100%" }
+        );
+      } else if (document.getElementById("google-login-btn")) {
+        document.getElementById("google-login-btn").innerHTML =
+          '<button class="btn secondary" type="button" disabled>Google login not configured</button>';
+      }
+    };
+  </script>
+</body>
+</html>

@@ -39,16 +39,6 @@
       "createdAt": "2025-12-01T04:41:04.939Z"
     },
     {
-      "title": "book3",
-      "description": "book3",
-      "file": "pdfs/ebooks/1764564120640-vdoc.pub_lucent-s-general-knowledge.pdf",
-      "subject": "Logical Reasoning",
-      "exam": "Compitative, Non Compitative",
-      "year": "2014",
-      "downloads": 0,
-      "createdAt": "2025-12-01T04:42:01.135Z"
-    },
-    {
       "title": "book4",
       "description": "book4",
       "file": "pdfs/ebooks/1764564164038-physics_cbse_&_state_boards_unsolved_papers_question_bank.pdf",
@@ -77,6 +67,16 @@
       "year": "2024",
       "createdAt": "2025-12-02T03:25:40.454Z",
       "downloads": 37
+    },
+    {
+      "title": "Maths",
+      "description": "descrition",
+      "file": "pdfs/ebooks/1764922146674-apinter2ndyrsanskrit2024.pdf",
+      "subject": "Maths",
+      "exam": "INTER",
+      "year": "2024",
+      "createdAt": "2025-12-05T08:09:06.729Z",
+      "downloads": 0
     }
   ],
   "questionPapers": [
