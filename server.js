@@ -13,7 +13,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const { OAuth2Client } = require("google-auth-library");
-const { MongoClient, ObjectId } = require("mongodb");
+const { MongoClient } = require("mongodb");
 
 const app = express();
 
@@ -38,7 +38,7 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
-let db; // will be set after connecting
+let db; // set after connecting
 
 function usersCollection() {
   return db.collection("users");
@@ -92,7 +92,6 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
 function signToken(user) {
   return jwt.sign(
     {
-      // prefer Mongo _id if present
       id: user._id ? user._id.toString() : user.id,
       email: user.email,
       name: user.name,
@@ -216,7 +215,7 @@ app.post("/api/auth/register", async (req, res) => {
       expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
     };
 
-    // Send or log OTP
+    // Try to send email – BUT do not fail registration if SMTP breaks
     if (mailTransporter) {
       const mailOptions = {
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
@@ -224,22 +223,38 @@ app.post("/api/auth/register", async (req, res) => {
         subject: "StudentHub – Email verification code",
         text: `Your verification code is: ${code}\n\nThis code is valid for 10 minutes.`,
       };
-      await mailTransporter.sendMail(mailOptions);
-      console.log("[EMAIL] Verification email sent to:", emailLower);
+
+      mailTransporter
+        .sendMail(mailOptions)
+        .then(() =>
+          console.log("[EMAIL] Verification email sent to:", emailLower)
+        )
+        .catch((err) => {
+          console.error(
+            "[EMAIL] Failed to send verification email (non-fatal):",
+            err.message
+          );
+          console.log(
+            "[EMAIL] Verification code for",
+            emailLower,
+            "is:",
+            code
+          );
+        });
     } else {
       console.log(
         "[OTP] Verification code for",
         emailLower,
         "is:",
         code,
-        "(no SMTP; logged only)"
+        "(no SMTP configured; logged only)"
       );
     }
 
     return res.json({
       ok: true,
       message:
-        "Registered successfully. We've sent a verification code to your email.",
+        "Registered successfully. If you don't see the email, please check spam or try again later.",
     });
   } catch (err) {
     console.error("Register error:", err);
@@ -378,7 +393,6 @@ app.post("/api/auth/google", async (req, res) => {
     let user = await usersCollection().findOne({ email: emailLower });
 
     if (!user) {
-      // auto-create user from Google
       const newUser = {
         name,
         email: emailLower,
@@ -475,21 +489,32 @@ app.post("/api/auth/request-reset", async (req, res) => {
         .then(() =>
           console.log("[EMAIL] Password reset email sent to:", emailLower)
         )
-        .catch((err) => console.error("Reset email error:", err));
+        .catch((err) => {
+          console.error(
+            "[EMAIL] Failed to send reset email (non-fatal):",
+            err.message
+          );
+          console.log(
+            "[RESET OTP] Code for",
+            emailLower,
+            "is:",
+            code
+          );
+        });
     } else {
       console.log(
         "[RESET OTP] Code for",
         emailLower,
         "is:",
         code,
-        "(no SMTP; logged only)"
+        "(no SMTP configured; logged only)"
       );
     }
 
     return res.json({
       ok: true,
       message:
-        "If this email exists, we've sent a reset code. Please check your inbox.",
+        "If this email exists, we've sent a reset code. Please check your inbox or spam.",
     });
   } catch (err) {
     console.error("request-reset error:", err);
