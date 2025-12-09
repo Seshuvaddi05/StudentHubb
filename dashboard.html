@@ -72,7 +72,7 @@
     .dash-section-title {
       font-size: 1rem;
       font-weight: 600;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.35rem;
     }
 
     .dash-list {
@@ -97,6 +97,14 @@
     .dash-list-item-meta {
       font-size: 0.8rem;
       color: #6b7280;
+      margin-bottom: 0.3rem;
+    }
+
+    .dash-list-item-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.2rem;
     }
 
     body.dark .dash-list-item {
@@ -126,13 +134,35 @@
   </style>
 </head>
 <body>
-  <!-- Navbar -->
+  <!-- Navbar (same structure as index / library / read-later) -->
   <header class="navbar">
     <div class="logo">StudentHub</div>
+
+    <!-- Mobile hamburger -->
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
     <nav class="nav-links" id="nav-links">
       <a href="/">Home</a>
-      <a href="/dashboard.html" class="nav-link-active">My dashboard</a>
+      <a href="/#ebooks">E-Books</a>
+      <a href="/#question-papers">Question Papers</a>
+      <a href="/#about">About</a>
+      <a href="/#contact">Contact</a>
+      <a href="/library.html">My Library</a>
+      <a href="/read-later.html">Read Later</a>
+
+      <!-- Auth-aware -->
+      <a href="/dashboard.html" id="nav-dashboard-link" class="active">
+        My dashboard
+      </a>
+      <a href="/login.html" id="nav-login-link" style="display:none;">
+        Sign in
+      </a>
     </nav>
+
     <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
   </header>
 
@@ -162,6 +192,9 @@
         <div class="dash-card">
           <h3>Your account</h3>
           <div style="font-size:0.85rem;" id="account-info">—</div>
+          <div style="font-size:0.8rem; margin-top:0.35rem;" id="account-extra">
+            Purchased items: 0
+          </div>
           <div class="dash-links">
             <a href="/#ebooks" class="chip">Browse e-books</a>
             <a href="/#question-papers" class="chip">Browse question papers</a>
@@ -169,7 +202,18 @@
         </div>
       </div>
 
-      <!-- Recommended (most downloaded) -->
+      <!-- Your Library -->
+      <section style="margin-bottom:1.5rem;">
+        <h2 class="dash-section-title">Your purchased PDFs (My Library)</h2>
+        <p class="dash-subtitle" id="lib-subtitle" style="margin-bottom:0.4rem;">
+          Loading your purchases…
+        </p>
+        <div id="my-library-list" class="dash-list">
+          <!-- filled by JS -->
+        </div>
+      </section>
+
+      <!-- Popular materials -->
       <section style="margin-bottom:1.5rem;">
         <h2 class="dash-section-title">Popular materials on StudentHub</h2>
         <div id="popular-list" class="dash-list">
@@ -189,8 +233,10 @@
     <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
   </footer>
 
+  <button id="back-to-top" class="back-to-top">↑</button>
+
   <script>
-    // --- Theme helper (reuse style from main site) ---
+    // --------- shared helpers (theme / nav / auth / back-to-top) ---------
     function applyTheme(theme) {
       const body = document.body;
       const toggleBtn = document.getElementById("theme-toggle");
@@ -203,25 +249,95 @@
         body.classList.remove("dark");
         toggleBtn.textContent = "🌙";
       }
-
       localStorage.setItem("studenthub_theme", theme);
     }
 
+    function initThemeToggle() {
+      const savedTheme = localStorage.getItem("studenthub_theme") || "light";
+      applyTheme(savedTheme);
+      const btn = document.getElementById("theme-toggle");
+      if (!btn) return;
+      btn.addEventListener("click", () => {
+        const next = document.body.classList.contains("dark") ? "light" : "dark";
+        applyTheme(next);
+      });
+    }
+
+    function initMobileNav() {
+      const navToggle = document.getElementById("nav-toggle");
+      const navLinks = document.getElementById("nav-links");
+      if (!navToggle || !navLinks) return;
+
+      navToggle.addEventListener("click", () => {
+        navLinks.classList.toggle("open");
+        navToggle.classList.toggle("open");
+      });
+
+      navLinks.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => {
+          navLinks.classList.remove("open");
+          navToggle.classList.remove("open");
+        });
+      });
+    }
+
+    async function initAuthNavbarSimple() {
+      const dashLink = document.getElementById("nav-dashboard-link");
+      const loginLink = document.getElementById("nav-login-link");
+      if (!dashLink && !loginLink) return;
+
+      let user = null;
+      try {
+        const res = await fetch("/api/me");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && data.user) user = data.user;
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      if (user) {
+        if (dashLink) dashLink.style.display = "inline-block";
+        if (loginLink) loginLink.style.display = "none";
+      } else {
+        if (dashLink) dashLink.style.display = "none";
+        if (loginLink) loginLink.style.display = "inline-block";
+      }
+    }
+
+    function initBackToTop() {
+      const btn = document.getElementById("back-to-top");
+      if (!btn) return;
+
+      window.addEventListener("scroll", () => {
+        if (window.scrollY > 300) btn.classList.add("show");
+        else btn.classList.remove("show");
+      });
+
+      btn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
+    function slugify(text) {
+      return (text || "")
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    // ---------------- main dashboard logic ----------------
     document.addEventListener("DOMContentLoaded", async () => {
       const yearSpan = document.getElementById("year");
       if (yearSpan) yearSpan.textContent = new Date().getFullYear();
 
-      const savedTheme = localStorage.getItem("studenthub_theme") || "light";
-      applyTheme(savedTheme);
-      const themeToggleBtn = document.getElementById("theme-toggle");
-      if (themeToggleBtn) {
-        themeToggleBtn.addEventListener("click", () => {
-          const next = document.body.classList.contains("dark")
-            ? "light"
-            : "dark";
-          applyTheme(next);
-        });
-      }
+      initThemeToggle();
+      initMobileNav();
+      initAuthNavbarSimple();
+      initBackToTop();
 
       const dashTitle = document.getElementById("dash-title");
       const dashSubtitle = document.getElementById("dash-subtitle");
@@ -229,15 +345,18 @@
       const metricQ = document.getElementById("metric-qps");
       const metricT = document.getElementById("metric-total");
       const accountInfo = document.getElementById("account-info");
+      const accountExtra = document.getElementById("account-extra");
       const popularList = document.getElementById("popular-list");
+      const myLibList = document.getElementById("my-library-list");
+      const libSubtitle = document.getElementById("lib-subtitle");
       const logoutBtn = document.getElementById("btn-logout");
 
-      // 1) Fetch current user
+      // 1) Fetch current user (dashboard is protected, but double-check)
       try {
         const meRes = await fetch("/api/me");
         if (meRes.status === 401) {
-          // Just in case; server should redirect already
-          window.location.href = "/login.html?next=" + encodeURIComponent("/dashboard.html");
+          window.location.href =
+            "/login.html?next=" + encodeURIComponent("/dashboard.html");
           return;
         }
         const meData = await meRes.json();
@@ -261,22 +380,26 @@
       }
 
       // 2) Fetch materials for stats + popular list
+      let allEbooks = [];
+      let allQps = [];
       try {
         const res = await fetch("/api/materials");
         const data = await res.json();
-        const ebooks = data.ebooks || [];
-        const qps = data.questionPapers || [];
+        allEbooks = data.ebooks || [];
+        allQps = data.questionPapers || [];
 
-        const eLen = ebooks.length;
-        const qLen = qps.length;
+        const eLen = allEbooks.length;
+        const qLen = allQps.length;
         const tLen = eLen + qLen;
 
         metricE.textContent = eLen;
         metricQ.textContent = qLen;
         metricT.textContent = tLen;
 
-        const combined = [...ebooks.map(i => ({ ...i, type: "E-Book" })), 
-                          ...qps.map(i => ({ ...i, type: "Question paper" }))];
+        const combined = [
+          ...allEbooks.map((i) => ({ ...i, type: "E-Book" })),
+          ...allQps.map((i) => ({ ...i, type: "Question paper" })),
+        ];
 
         combined.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
         const top = combined.slice(0, 6);
@@ -292,9 +415,7 @@
             div.innerHTML = `
               <div class="dash-list-item-title">${item.title || "Untitled"}</div>
               <div class="dash-list-item-meta">
-                ${item.type} • ${item.exam || "—"} • Downloads: ${
-              item.downloads || 0
-            }
+                ${item.type} • ${item.exam || "—"} • Downloads: ${item.downloads || 0}
               </div>
             `;
             popularList.appendChild(div);
@@ -306,7 +427,61 @@
           '<p style="font-size:0.9rem;color:#b91c1c;">Error loading materials.</p>';
       }
 
-      // 3) Logout
+      // 3) Fetch user's library (purchased / unlocked)
+      try {
+        const libRes = await fetch("/api/my-library");
+        if (libRes.status === 401) {
+          libSubtitle.textContent = "Please login again to see your library.";
+          myLibList.innerHTML = "";
+        } else {
+          const libData = await libRes.json();
+          const items = libData.items || [];
+          const count = items.length;
+
+          accountExtra.textContent = "Purchased items: " + count;
+
+          myLibList.innerHTML = "";
+          if (!count) {
+            libSubtitle.textContent = "You haven't purchased any PDFs yet.";
+            myLibList.innerHTML =
+              '<p style="font-size:0.9rem;color:#6b7280;">Unlock any paid PDF in the reader and it will appear here.</p>';
+          } else {
+            libSubtitle.textContent =
+              "You can reopen any unlocked PDF from here.";
+            items.forEach((it) => {
+              const div = document.createElement("div");
+              const title = it.title || "Untitled";
+              const slug = slugify(title);
+              const itemId = it.itemId || "";
+
+              const openHref = itemId
+                ? `/view/${slug}?id=${encodeURIComponent(itemId)}`
+                : `/view/${slug}`;
+
+              div.className = "dash-list-item";
+              div.innerHTML = `
+                <div class="dash-list-item-title">${title}</div>
+                <div class="dash-list-item-meta">
+                  ${it.itemType === "questionPaper" ? "Question Paper" : "E-Book"}
+                  • ${it.exam || "—"} • ${it.year || "—"}
+                  • Price: ₹${Number(it.price || 0)}
+                </div>
+                <div class="dash-list-item-actions">
+                  <a href="${openHref}" class="btn small primary">Open reader</a>
+                </div>
+              `;
+              myLibList.appendChild(div);
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error loading my library:", err);
+        libSubtitle.textContent = "Error loading your library.";
+        myLibList.innerHTML =
+          '<p style="font-size:0.9rem;color:#b91c1c;">Unable to load your purchases.</p>';
+      }
+
+      // 4) Logout
       if (logoutBtn) {
         logoutBtn.addEventListener("click", async () => {
           try {

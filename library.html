@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>StudentHub – My Library</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta name="description"
+        content="View all the e-books and question papers you have unlocked or purchased on StudentHub." />
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    /* Page styles (existing) */
+    .library-container {
+      max-width: 1000px;
+      margin: 2rem auto;
+      background: #ffffff;
+      border-radius: 0.9rem;
+      padding: 1.5rem 1.75rem;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+    }
+    body.dark .library-container {
+      background: #020617;
+      border: 1px solid #1f2937;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
+    }
+
+    .library-heading {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+    .library-subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 1rem;
+    }
+    body.dark .library-subtitle { color: #9ca3af; }
+
+    .library-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .library-filters .filter-input { flex: 1 1 220px; }
+    .library-filters .filter-select { flex: 0 0 160px; }
+
+    .library-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 0.8rem;
+    }
+
+    .library-card {
+      border-radius: 0.8rem;
+      border: 1px solid #e5e7eb;
+      padding: 0.9rem 1rem;
+      background: #ffffff;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+      font-size: 0.9rem;
+    }
+    body.dark .library-card { background: #020617; border-color: #1f2937; box-shadow: 0 6px 16px rgba(15,23,42,0.7); }
+
+    .library-card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem; gap:0.4rem; }
+
+    .pill-owned {
+      display:inline-flex; align-items:center; padding:0.1rem 0.5rem; border-radius:999px; font-size:0.72rem;
+      background:#ecfdf5; color:#166534; border:1px solid #bbf7d0;
+    }
+    body.dark .pill-owned { background:#022c22; color:#bbf7d0; border-color:#065f46; }
+
+    .pill-type {
+      display:inline-flex; align-items:center; padding:0.1rem 0.5rem; border-radius:999px; font-size:0.72rem;
+      background:#eef2ff; color:#3730a3;
+    }
+    body.dark .pill-type { background:#111827; color:#c7d2fe; }
+
+    .library-card-title { font-weight:600; margin-bottom:0.2rem; }
+    .library-card-meta { font-size:0.78rem; color:#6b7280; margin-bottom:0.35rem; }
+    body.dark .library-card-meta { color:#9ca3af; }
+
+    .library-card-footer {
+      display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.4rem; margin-top:0.4rem;
+      font-size:0.78rem; color:#6b7280;
+    }
+    body.dark .library-card-footer { color:#9ca3af; }
+
+    .library-status { font-size:0.85rem; margin-top:0.75rem; color:#6b7280; }
+    .library-status.error { color:#b91c1c; }
+
+    @media (max-width: 640px) {
+      .library-container { margin-top: 1.25rem; padding: 1.25rem 1.1rem; }
+    }
+
+    /* ---------------------------
+       Navbar badge styles
+       Yellow rounded pill chosen as requested
+       --------------------------- */
+    /* Ensure nav-links have position for badge placement if needed */
+    .nav-links { position: relative; display: flex; gap: 0.75rem; align-items: center; }
+
+    /* Basic badge */
+    .nav-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.6rem;
+      height: 1.6rem;
+      padding: 0 0.45rem;
+      border-radius: 999px;
+      background: #f59e0b;   /* yellow pill */
+      color: #0f172a;        /* dark text */
+      font-weight: 600;
+      font-size: 0.78rem;
+      margin-left: 0.45rem;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+      vertical-align: middle;
+    }
+
+    /* Slightly smaller on small screens */
+    @media (max-width: 520px) {
+      .nav-badge { min-width: 1.4rem; height: 1.4rem; font-size: 0.72rem; padding: 0 0.35rem; }
+    }
+
+    /* Dark-theme friendly variant (keeps yellow but adjusts text/shadow) */
+    body.dark .nav-badge {
+      background: #f59e0b;
+      color: #021423;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    /* If you prefer to position the badge inside the link more tightly */
+    .nav-links a { display: inline-flex; align-items: center; gap: 0.35rem; }
+  </style>
+</head>
+<body>
+  <!-- Shared Navbar -->
+  <header class="navbar">
+    <div class="logo">StudentHub</div>
+
+    <!-- Mobile hamburger -->
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="nav-links" id="nav-links">
+      <a href="/">Home</a>
+      <a href="/#ebooks">E-Books</a>
+      <a href="/#question-papers">Question Papers</a>
+      <a href="/#about">About</a>
+      <a href="/#contact">Contact</a>
+      <a href="/library.html" class="active">My Library</a>
+      <a href="/read-later.html">Read Later</a>
+
+      <!-- one of these two will be visible based on auth -->
+      <a href="/dashboard.html" id="nav-dashboard-link" style="display:none;">
+        My dashboard
+      </a>
+      <a href="/login.html" id="nav-login-link">
+        Sign in
+      </a>
+    </nav>
+
+    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+  </header>
+
+  <main class="section">
+    <div class="library-container">
+      <h1 class="library-heading">My Library</h1>
+      <p class="library-subtitle">
+        All the e-books and question papers you’ve unlocked or purchased with this account.
+      </p>
+
+      <div class="library-filters">
+        <input
+          type="text"
+          id="library-search"
+          class="filter-input"
+          placeholder="Search in your library by title, exam, subject..."
+        />
+        <select id="library-type-filter" class="filter-select">
+          <option value="all">All types</option>
+          <option value="ebook">E-Books</option>
+          <option value="questionPaper">Question Papers</option>
+        </select>
+      </div>
+
+      <p id="library-summary" class="library-subtitle" style="margin-bottom:0.5rem;">
+        Loading your library…
+      </p>
+
+      <div id="library-list" class="library-list"></div>
+
+      <p id="library-status" class="library-status"></p>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
+  </footer>
+
+  <button id="back-to-top" class="back-to-top">↑</button>
+
+  <!-- Main logic for library cards -->
+  <script src="library.js"></script>
+
+  <!-- Small helpers: navbar auth, theme, mobile nav, back-to-top -->
+  <script>
+    function initMobileNav() {
+      const navToggle = document.getElementById("nav-toggle");
+      const navLinks = document.getElementById("nav-links");
+      if (!navToggle || !navLinks) return;
+
+      navToggle.addEventListener("click", () => {
+        navLinks.classList.toggle("open");
+        navToggle.classList.toggle("open");
+      });
+
+      navLinks.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => {
+          navLinks.classList.remove("open");
+          navToggle.classList.remove("open");
+        });
+      });
+    }
+
+    function initThemeToggle() {
+      const savedTheme = localStorage.getItem("studenthub_theme") || "light";
+      applyTheme(savedTheme);
+
+      const btn = document.getElementById("theme-toggle");
+      if (!btn) return;
+      btn.addEventListener("click", () => {
+        const next = document.body.classList.contains("dark") ? "light" : "dark";
+        applyTheme(next);
+      });
+    }
+
+    function applyTheme(theme) {
+      const body = document.body;
+      const toggleBtn = document.getElementById("theme-toggle");
+      if (!body || !toggleBtn) return;
+
+      if (theme === "dark") {
+        body.classList.add("dark");
+        toggleBtn.textContent = "☀️";
+      } else {
+        body.classList.remove("dark");
+        toggleBtn.textContent = "🌙";
+      }
+      localStorage.setItem("studenthub_theme", theme);
+    }
+
+    async function initAuthNavbarSimple() {
+      const dashLink = document.getElementById("nav-dashboard-link");
+      const loginLink = document.getElementById("nav-login-link");
+      if (!dashLink && !loginLink) return;
+
+      let user = null;
+      try {
+        const res = await fetch("/api/me");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && data.user) user = data.user;
+        }
+      } catch (e) { /* ignore */ }
+
+      if (user) {
+        if (dashLink) dashLink.style.display = "inline-block";
+        if (loginLink) loginLink.style.display = "none";
+      } else {
+        if (dashLink) dashLink.style.display = "none";
+        if (loginLink) loginLink.style.display = "inline-block";
+      }
+    }
+
+    function initBackToTop() {
+      const btn = document.getElementById("back-to-top");
+      if (!btn) return;
+
+      window.addEventListener("scroll", () => {
+        if (window.scrollY > 300) btn.classList.add("show");
+        else btn.classList.remove("show");
+      });
+
+      btn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const yearSpan = document.getElementById("year");
+      if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+
+      initMobileNav();
+      initThemeToggle();
+      initAuthNavbarSimple();
+      initBackToTop();
+    });
+  </script>
+
+  <!-- Page-specific: show only Library badge and hide Read Later badge -->
+  <script>
+    // On Library page -> create/update library nav badge from /api/my-library
+    document.addEventListener("DOMContentLoaded", async () => {
+      const libraryLink = document.querySelector('a[href="/library.html"]');
+      if (!libraryLink) return;
+
+      // Create or reuse .nav-badge element
+      let libBadge = libraryLink.querySelector(".nav-badge");
+      if (!libBadge) {
+        libBadge = document.createElement("span");
+        libBadge.className = "nav-badge";
+        libBadge.setAttribute("aria-hidden", "false");
+        libBadge.setAttribute("aria-label", "My Library item count");
+        libraryLink.appendChild(libBadge);
+      }
+
+      // Fetch library count (robust)
+      try {
+        const res = await fetch("/api/my-library");
+        if (res.ok) {
+          const data = await res.json();
+          const count = Array.isArray(data.items) ? data.items.length : 0;
+
+          if (count > 0) {
+            libBadge.textContent = String(count);
+            libBadge.style.display = "inline-flex";
+          } else {
+            libBadge.style.display = "none";
+          }
+        } else {
+          // If route isn't available, hide badge so UI remains clean
+          libBadge.style.display = "none";
+        }
+      } catch (err) {
+        console.warn("Unable to load library count for navbar:", err);
+        libBadge.style.display = "none";
+      }
+
+      // Hide any Read Later badge so only Library count shows on this page
+      const readLaterLink = document.querySelector('a[href="/read-later.html"]');
+      if (readLaterLink) {
+        const rlBadge = readLaterLink.querySelector(".nav-badge");
+        if (rlBadge) rlBadge.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>

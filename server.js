@@ -13,7 +13,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const { OAuth2Client } = require("google-auth-library");
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 
 const app = express();
 
@@ -38,7 +38,7 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
-let db; // set after connecting
+let db; // will be set after connecting
 
 function usersCollection() {
   return db.collection("users");
@@ -48,6 +48,13 @@ function ebooksCollection() {
 }
 function questionPapersCollection() {
   return db.collection("questionPapers");
+}
+function ordersCollection() {
+  return db.collection("orders");
+}
+// Read-later collection (one document per user+material)
+function readLaterCollection() {
+  return db.collection("readLater");
 }
 
 // -----------------------------
@@ -92,6 +99,7 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
 function signToken(user) {
   return jwt.sign(
     {
+      // prefer Mongo _id if present
       id: user._id ? user._id.toString() : user.id,
       email: user.email,
       name: user.name,
@@ -215,7 +223,7 @@ app.post("/api/auth/register", async (req, res) => {
       expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
     };
 
-    // Try to send email – BUT do not fail registration if SMTP breaks
+    // Send or log OTP
     if (mailTransporter) {
       const mailOptions = {
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
@@ -223,38 +231,22 @@ app.post("/api/auth/register", async (req, res) => {
         subject: "StudentHub – Email verification code",
         text: `Your verification code is: ${code}\n\nThis code is valid for 10 minutes.`,
       };
-
-      mailTransporter
-        .sendMail(mailOptions)
-        .then(() =>
-          console.log("[EMAIL] Verification email sent to:", emailLower)
-        )
-        .catch((err) => {
-          console.error(
-            "[EMAIL] Failed to send verification email (non-fatal):",
-            err.message
-          );
-          console.log(
-            "[EMAIL] Verification code for",
-            emailLower,
-            "is:",
-            code
-          );
-        });
+      await mailTransporter.sendMail(mailOptions);
+      console.log("[EMAIL] Verification email sent to:", emailLower);
     } else {
       console.log(
         "[OTP] Verification code for",
         emailLower,
         "is:",
         code,
-        "(no SMTP configured; logged only)"
+        "(no SMTP; logged only)"
       );
     }
 
     return res.json({
       ok: true,
       message:
-        "Registered successfully. If you don't see the email, please check spam or try again later.",
+        "Registered successfully. We've sent a verification code to your email.",
     });
   } catch (err) {
     console.error("Register error:", err);
@@ -393,6 +385,7 @@ app.post("/api/auth/google", async (req, res) => {
     let user = await usersCollection().findOne({ email: emailLower });
 
     if (!user) {
+      // auto-create user from Google
       const newUser = {
         name,
         email: emailLower,
@@ -489,32 +482,21 @@ app.post("/api/auth/request-reset", async (req, res) => {
         .then(() =>
           console.log("[EMAIL] Password reset email sent to:", emailLower)
         )
-        .catch((err) => {
-          console.error(
-            "[EMAIL] Failed to send reset email (non-fatal):",
-            err.message
-          );
-          console.log(
-            "[RESET OTP] Code for",
-            emailLower,
-            "is:",
-            code
-          );
-        });
+        .catch((err) => console.error("Reset email error:", err));
     } else {
       console.log(
         "[RESET OTP] Code for",
         emailLower,
         "is:",
         code,
-        "(no SMTP configured; logged only)"
+        "(no SMTP; logged only)"
       );
     }
 
     return res.json({
       ok: true,
       message:
-        "If this email exists, we've sent a reset code. Please check your inbox or spam.",
+        "If this email exists, we've sent a reset code. Please check your inbox.",
     });
   } catch (err) {
     console.error("request-reset error:", err);
@@ -580,6 +562,7 @@ async function getAllMaterials() {
     .toArray();
 
   const mapDoc = (doc) => ({
+    id: doc._id.toString(),
     title: doc.title || "",
     description: doc.description || "",
     file: doc.file,
@@ -588,6 +571,7 @@ async function getAllMaterials() {
     year: doc.year || "—",
     createdAt: doc.createdAt || new Date().toISOString(),
     downloads: doc.downloads || 0,
+    price: typeof doc.price === "number" ? doc.price : 0,
   });
 
   return {
@@ -619,6 +603,393 @@ function collectionByType(type) {
 }
 
 // -----------------------------
+// My Library (purchased items)
+// -----------------------------
+app.get("/api/my-library", requireAuth, async (req, res) => {
+  try {
+    const orders = await ordersCollection()
+      .find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    if (!orders.length) {
+      return res.json({ ok: true, items: [] });
+    }
+
+    const ebookIds = [];
+    const qpIds = [];
+    for (const o of orders) {
+      if (o.itemType === "ebook") ebookIds.push(new ObjectId(o.itemId));
+      else if (o.itemType === "questionPaper")
+        qpIds.push(new ObjectId(o.itemId));
+    }
+
+    const ebookMap = {};
+    const qpMap = {};
+
+    if (ebookIds.length) {
+      const docs = await ebooksCollection()
+        .find({ _id: { $in: ebookIds } })
+        .toArray();
+      docs.forEach((d) => {
+        ebookMap[d._id.toString()] = d;
+      });
+    }
+
+    if (qpIds.length) {
+      const docs = await questionPapersCollection()
+        .find({ _id: { $in: qpIds } })
+        .toArray();
+      docs.forEach((d) => {
+        qpMap[d._id.toString()] = d;
+      });
+    }
+
+    const items = orders
+      .map((o) => {
+        const sourceMap = o.itemType === "ebook" ? ebookMap : qpMap;
+        const doc = sourceMap[o.itemId];
+        if (!doc) return null;
+
+        return {
+          orderId: o._id.toString(),
+          orderedAt: o.createdAt,
+          itemType: o.itemType,
+          itemId: o.itemId,
+          title: doc.title || "",
+          description: doc.description || "",
+          subject: doc.subject || "",
+          exam: doc.exam || "",
+          year: doc.year || "—",
+          file: doc.file,
+          downloads: doc.downloads || 0,
+          price:
+            typeof doc.price === "number"
+              ? doc.price
+              : typeof o.price === "number"
+              ? o.price
+              : 0,
+        };
+      })
+      .filter(Boolean);
+
+    return res.json({ ok: true, items });
+  } catch (err) {
+    console.error("/api/my-library error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// -----------------------------
+// Add FREE items to library
+// -----------------------------
+app.post("/api/library/add", requireAuth, async (req, res) => {
+  try {
+    const { materialId } = req.body || {};
+    if (!materialId) {
+      return res
+        .status(400)
+        .json({ ok: false, message: "materialId is required." });
+    }
+
+    let _id;
+    try {
+      _id = new ObjectId(materialId);
+    } catch (e) {
+      return res.status(400).json({ ok: false, message: "Invalid materialId." });
+    }
+
+    let item = await ebooksCollection().findOne({ _id });
+    let itemType = "ebook";
+
+    if (!item) {
+      item = await questionPapersCollection().findOne({ _id });
+      itemType = "questionPaper";
+    }
+
+    if (!item) {
+      return res
+        .status(404)
+        .json({ ok: false, message: "Material not found." });
+    }
+
+    // Avoid duplicates
+    const existing = await ordersCollection().findOne({
+      userId: req.user.id,
+      itemType,
+      itemId: materialId,
+    });
+
+    if (existing) {
+      return res.json({ ok: true, already: true, message: "Already in library." });
+    }
+
+    await ordersCollection().insertOne({
+      userId: req.user.id,
+      userEmail: req.user.email,
+      itemType,
+      itemId: materialId,
+      price: 0,
+      status: "free",
+      paymentMethod: "library-add",
+      createdAt: new Date().toISOString(),
+    });
+
+    return res.json({ ok: true, message: "Added to your library." });
+  } catch (err) {
+    console.error("/api/library/add error:", err);
+    return res
+      .status(500)
+      .json({ ok: false, message: "Server error adding to library." });
+  }
+});
+
+// -----------------------------
+// READ-LATER APIs (single, final version)
+// -----------------------------
+
+// GET /api/read-later  -> { ok, ids: [...], items: [...] }
+app.get("/api/read-later", requireAuth, async (req, res) => {
+  try {
+    const docs = await readLaterCollection()
+      .find({ userId: req.user.id })
+      .sort({ updatedAt: -1, createdAt: -1, _id: -1 })
+      .toArray();
+
+    if (!docs.length) {
+      return res.json({ ok: true, ids: [], items: [] });
+    }
+
+    // Normalize materialId to STRING so it works whether stored as string or ObjectId
+    const materialIds = docs
+      .map((d) => d.materialId)
+      .filter(Boolean)
+      .map((id) => id.toString());
+
+    const uniqueIds = [...new Set(materialIds)];
+
+    // Build ObjectId list from the string ids
+    const objectIds = uniqueIds
+      .map((id) => {
+        try {
+          return new ObjectId(id);
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+
+    let ebookDocs = [];
+    let qpDocs = [];
+
+    if (objectIds.length) {
+      ebookDocs = await ebooksCollection()
+        .find({ _id: { $in: objectIds } })
+        .toArray();
+      qpDocs = await questionPapersCollection()
+        .find({ _id: { $in: objectIds } })
+        .toArray();
+    }
+
+    const ebookMap = {};
+    const qpMap = {};
+
+    ebookDocs.forEach((d) => {
+      ebookMap[d._id.toString()] = d;
+    });
+    qpDocs.forEach((d) => {
+      qpMap[d._id.toString()] = d;
+    });
+
+    // Build final items list in the SAME order as docs
+    const items = docs
+      .map((d) => {
+        const midStr = d.materialId ? d.materialId.toString() : "";
+        if (!midStr) return null;
+
+        const ebook = ebookMap[midStr];
+        const qp = qpMap[midStr];
+        const doc = ebook || qp;
+        if (!doc) return null;
+
+        const itemType = ebook ? "ebook" : "questionPaper";
+
+        return {
+          itemId: midStr,
+          itemType,
+          title: doc.title || "",
+          description: doc.description || "",
+          subject: doc.subject || "",
+          exam: doc.exam || "",
+          year: doc.year || "—",
+          file: doc.file,
+          downloads: doc.downloads || 0,
+          price: typeof doc.price === "number" ? doc.price : 0,
+          createdAt: doc.createdAt || d.createdAt || new Date().toISOString(),
+        };
+      })
+      .filter(Boolean);
+
+    return res.json({ ok: true, ids: materialIds, items });
+  } catch (err) {
+    console.error("/api/read-later GET error:", err);
+    return res
+      .status(500)
+      .json({ ok: false, message: "Server error loading Read Later." });
+  }
+});
+
+
+// POST /api/read-later/add  { materialId }
+app.post("/api/read-later/add", requireAuth, async (req, res) => {
+  try {
+    const { materialId } = req.body || {};
+    if (!materialId) {
+      return res
+        .status(400)
+        .json({ ok: false, message: "materialId is required." });
+    }
+
+    let _id;
+    try {
+      _id = new ObjectId(materialId);
+    } catch (e) {
+      return res.status(400).json({ ok: false, message: "Invalid materialId." });
+    }
+
+    // determine type (ebook or question paper)
+    let doc = await ebooksCollection().findOne({ _id });
+    let itemType = "ebook";
+    if (!doc) {
+      doc = await questionPapersCollection().findOne({ _id });
+      itemType = "questionPaper";
+    }
+    if (!doc) {
+      return res
+        .status(404)
+        .json({ ok: false, message: "Material not found." });
+    }
+
+    const nowIso = new Date().toISOString();
+
+    await readLaterCollection().updateOne(
+      { userId: req.user.id, materialId },
+      {
+        $set: {
+          itemType,
+          updatedAt: nowIso,
+        },
+        $setOnInsert: {
+          userId: req.user.id,
+          materialId,
+          createdAt: nowIso,
+        },
+      },
+      { upsert: true }
+    );
+
+    return res.json({ ok: true, message: "Saved to Read Later." });
+  } catch (err) {
+    console.error("/api/read-later/add error:", err);
+    return res
+      .status(500)
+      .json({ ok: false, message: "Server error updating Read Later." });
+  }
+});
+
+// POST /api/read-later/remove  { materialId }
+app.post("/api/read-later/remove", requireAuth, async (req, res) => {
+  try {
+    const { materialId } = req.body || {};
+    if (!materialId) {
+      return res
+        .status(400)
+        .json({ ok: false, message: "materialId is required." });
+    }
+
+    await readLaterCollection().deleteOne({
+      userId: req.user.id,
+      materialId,
+    });
+
+    return res.json({ ok: true, message: "Removed from Read Later." });
+  } catch (err) {
+    console.error("/api/read-later/remove error:", err);
+    return res
+      .status(500)
+      .json({ ok: false, message: "Server error updating Read Later." });
+  }
+});
+
+// -----------------------------
+// New: record purchases from view.js demo paywall
+// -----------------------------
+app.post("/api/purchases", requireAuth, async (req, res) => {
+  try {
+    const { materialId, amountPaid, paymentId } = req.body || {};
+
+    if (!materialId) {
+      return res.status(400).json({ ok: false, message: "materialId is required." });
+    }
+
+    let item = null;
+    let itemType = null;
+
+    try {
+      const _id = new ObjectId(materialId);
+      item = await ebooksCollection().findOne({ _id });
+      if (item) itemType = "ebook";
+      if (!item) {
+        item = await questionPapersCollection().findOne({ _id });
+        if (item) itemType = "questionPaper";
+      }
+    } catch (e) {
+      return res.status(400).json({ ok: false, message: "Invalid materialId." });
+    }
+
+    if (!item || !itemType) {
+      return res
+        .status(404)
+        .json({ ok: false, message: "Material not found for given id." });
+    }
+
+    const price =
+      typeof item.price === "number"
+        ? item.price
+        : Number(amountPaid) || 0;
+
+    const existing = await ordersCollection().findOne({
+      userId: req.user.id,
+      itemType,
+      itemId: materialId,
+    });
+
+    if (!existing) {
+      await ordersCollection().insertOne({
+        userId: req.user.id,
+        userEmail: req.user.email,
+        itemType,
+        itemId: materialId,
+        price,
+        status: "success",
+        paymentMethod: "demo-paywall",
+        paymentId: paymentId || null,
+        createdAt: new Date().toISOString(),
+      });
+
+      console.log(
+        `[ORDER] Created demo paywall purchase for ${req.user.email} on ${itemType} ${materialId} for ₹${price}`
+      );
+    }
+
+    return res.json({ ok: true, message: "Purchase recorded." });
+  } catch (err) {
+    console.error("/api/purchases error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// -----------------------------
 // Serve PDFs only for logged-in users
 // -----------------------------
 app.use("/pdfs", requireAuth, express.static(path.join(__dirname, "pdfs")));
@@ -647,7 +1018,7 @@ app.post("/api/upload", (req, res) => {
     }
 
     try {
-      const { type, title, description, subject, exam, year } = req.body;
+      const { type, title, description, subject, exam, year, price } = req.body;
 
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -664,6 +1035,12 @@ app.post("/api/upload", (req, res) => {
 
       const relativePath = req.file.path.replace(/\\/g, "/");
 
+      const numericPrice = Number(price);
+      const finalPrice =
+        Number.isFinite(numericPrice) && numericPrice > 0
+          ? numericPrice
+          : 0;
+
       const newItem = {
         title: (title || "").trim(),
         description: (description || "").trim(),
@@ -673,6 +1050,7 @@ app.post("/api/upload", (req, res) => {
         year: (year || "").trim() || "—",
         createdAt: new Date().toISOString(),
         downloads: 0,
+        price: finalPrice,
       };
 
       await col.insertOne(newItem);
@@ -729,7 +1107,50 @@ app.delete("/api/materials/:type/:index", async (req, res) => {
 });
 
 // -----------------------------
+// Track a "read" (view in reader)
+// -----------------------------
+app.post("/api/materials/:id/track-read", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ ok: false, message: "id is required." });
+    }
+
+    let _id;
+    try {
+      _id = new ObjectId(id);
+    } catch (e) {
+      return res.status(400).json({ ok: false, message: "Invalid id format." });
+    }
+
+    let col = ebooksCollection();
+    let doc = await col.findOne({ _id });
+
+    if (!doc) {
+      col = questionPapersCollection();
+      doc = await col.findOne({ _id });
+    }
+
+    if (!doc) {
+      return res.status(404).json({ ok: false, message: "Material not found." });
+    }
+
+    const current = doc.downloads || 0;
+    const next = current + 1;
+
+    await col.updateOne({ _id }, { $set: { downloads: next } });
+
+    return res.json({ ok: true, downloads: next });
+  } catch (err) {
+    console.error("/api/materials/:id/track-read error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// -----------------------------
 // Track a download (also requires login)
+// + record "purchase" for paid items
 // -----------------------------
 app.get("/api/download/:type/:index", requireAuth, async (req, res) => {
   try {
@@ -747,6 +1168,31 @@ app.get("/api/download/:type/:index", requireAuth, async (req, res) => {
 
     const item = list[i];
     const col = collectionByType(type);
+    const price = typeof item.price === "number" ? item.price : 0;
+
+    if (price > 0) {
+      const existingOrder = await ordersCollection().findOne({
+        userId: req.user.id,
+        itemType: type,
+        itemId: item._id.toString(),
+      });
+
+      if (!existingOrder) {
+        await ordersCollection().insertOne({
+          userId: req.user.id,
+          userEmail: req.user.email,
+          itemType: type,
+          itemId: item._id.toString(),
+          price,
+          status: "success",
+          paymentMethod: "test-free",
+          createdAt: new Date().toISOString(),
+        });
+        console.log(
+          `[ORDER] Created test purchase for user ${req.user.email} on ${type} ${item._id.toString()} for ₹${price}`
+        );
+      }
+    }
 
     await col.updateOne(
       { _id: item._id },
@@ -763,23 +1209,45 @@ app.get("/api/download/:type/:index", requireAuth, async (req, res) => {
 // -----------------------------
 // HTML page routes
 // -----------------------------
+
+// Home page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// Login page
 app.get("/login.html", (req, res) => {
   res.sendFile(path.join(__dirname, "login.html"));
 });
 
+// Dashboard (protected)
 app.get("/dashboard.html", requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, "dashboard.html"));
 });
 
+// Reader page (protected)
 app.get("/view/:slug", requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, "view.html"));
 });
 
+// My Library page (protected)
+app.get("/library.html", requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "library.html"));
+});
+
+// Read Later page (protected)
+app.get("/read-later.html", requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "read-later.html"));
+});
+
+// Admin page
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "admin.html"));
+});
+
+// -----------------------------
 // Static files (CSS, JS, images, admin.html, etc.)
+// -----------------------------
 app.use(express.static(__dirname));
 
 // Global error handler

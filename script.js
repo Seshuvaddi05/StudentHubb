@@ -1,9 +1,27 @@
 // script.js
 
+// =============================
+// GLOBAL STATE
+// =============================
 let ebooks = [];
 let questionPapers = [];
 
-// ====== SLUGIFY (for /view/<slug> links) ======
+// IDs of materials the user owns (purchased or library)
+let ownedMaterialIds = new Set();
+
+// IDs of materials saved to read-later list
+let readLaterIds = new Set();
+
+// Search history for recommendations (localStorage)
+let searchHistory = [];
+
+// We will attach these later inside DOMContentLoaded
+window.applyEbookFilters = window.applyEbookFilters || null;
+window.applyQPFilters = window.applyQPFilters || null;
+
+// =============================
+// UTIL: SLUGIFY
+// =============================
 function slugify(text) {
   return (text || "")
     .toString()
@@ -13,7 +31,9 @@ function slugify(text) {
     .replace(/^-+|-+$/g, "");
 }
 
-// ====== HIGHLIGHT HELPERS (for search matches) ======
+// =============================
+// UTIL: HIGHLIGHT FOR SEARCH
+// =============================
 function escapeRegExp(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -30,7 +50,9 @@ function highlightText(text, terms) {
   return result;
 }
 
-// ====== TOAST (Download notification) ======
+// =============================
+// TOAST
+// =============================
 let toastEl = null;
 let toastTimer = null;
 
@@ -67,12 +89,53 @@ function showToast(message) {
   }, 1800);
 }
 
-// ====== CARD CREATION ======
+// =============================
+// PRICE HELPERS
+// =============================
+function formatPrice(item) {
+  if (!item) return "Free";
+  const priceNum = Number(item.price) || 0;
+  if (priceNum > 0) {
+    return `₹${priceNum}`;
+  }
+  return "Free";
+}
+
+function createPriceBadge(item) {
+  const span = document.createElement("span");
+  span.className = "price-chip";
+  span.textContent = formatPrice(item);
+  return span;
+}
+
+function isPaidItem(item) {
+  const priceNum = Number(item?.price) || 0;
+  return priceNum > 0;
+}
+
+function isOwned(item) {
+  if (!item || !item.id) return false;
+  return ownedMaterialIds.has(item.id);
+}
+
+function isInReadLater(item) {
+  if (!item || !item.id) return false;
+  return readLaterIds.has(item.id);
+}
+
+// =============================
+// CARD CREATION
+// =============================
 function createCard(item, highlightTerms = []) {
   const article = document.createElement("article");
   article.className = "card";
 
-  // Title row with NEW badge
+  // visually highlight owned materials
+  if (isOwned(item)) {
+    article.classList.add("card-owned");
+  }
+
+  // Title row with NEW badge + price + owned
   const titleRow = document.createElement("div");
   titleRow.className = "card-title-row";
 
@@ -81,7 +144,7 @@ function createCard(item, highlightTerms = []) {
   h3.innerHTML = highlightText(titleText, highlightTerms);
   titleRow.appendChild(h3);
 
-  // Show NEW if created within last 7 days
+  // NEW badge
   if (item.createdAt) {
     const createdTime = new Date(item.createdAt).getTime();
     const now = Date.now();
@@ -93,6 +156,18 @@ function createCard(item, highlightTerms = []) {
       titleRow.appendChild(badge);
     }
   }
+
+  // OWNED badge
+  if (isOwned(item)) {
+    const ownedBadge = document.createElement("span");
+    ownedBadge.className = "new-badge";
+    ownedBadge.style.background = "#059669";
+    ownedBadge.textContent = "OWNED";
+    titleRow.appendChild(ownedBadge);
+  }
+
+  // Price badge
+  titleRow.appendChild(createPriceBadge(item));
 
   article.appendChild(titleRow);
 
@@ -108,64 +183,93 @@ function createCard(item, highlightTerms = []) {
   } | Year: ${item.year || "—"}`;
   article.appendChild(meta);
 
-  // DOWNLOAD COUNTER
+  // READ COUNTER
   const dcount = document.createElement("p");
   dcount.style = "font-size: 0.8rem; color: #374151; margin-bottom: 0.6rem;";
-  dcount.textContent = `Downloads: ${item.downloads || 0}`;
+  dcount.textContent = `Reads: ${item.downloads || 0}`;
   article.appendChild(dcount);
 
-  // Buttons row: Preview + Open page + Download
+  // Buttons row
   const btnRow = document.createElement("div");
   btnRow.style = "display:flex; flex-wrap:wrap; gap:0.5rem;";
 
-  // Preview in modal
+  // Quick preview
   const previewBtn = document.createElement("button");
   previewBtn.type = "button";
   previewBtn.className = "btn small secondary";
-  previewBtn.textContent = "Preview";
+  previewBtn.textContent = "Quick preview";
   previewBtn.addEventListener("click", () => openPdfPreview(item));
   btnRow.appendChild(previewBtn);
 
-  // Open dedicated /view/<slug> page
+  // Reader
   const viewLink = document.createElement("a");
-  viewLink.href = `/view/${slugify(item.title)}`;
+  viewLink.href = `/view/${slugify(item.title)}?id=${encodeURIComponent(
+    item.id
+  )}`;
   viewLink.target = "_blank";
   viewLink.rel = "noopener";
-  viewLink.className = "btn small secondary";
-  viewLink.textContent = "Open page";
+  viewLink.className = "btn small primary";
+  viewLink.textContent = isOwned(item) ? "Read again" : "Open reader";
   btnRow.appendChild(viewLink);
 
-  // Download (with tracking)
-  const link = document.createElement("a");
-  link.href = `/api/download/${item.type}/${item.index}`;
-  link.target = "_blank";
-  link.rel = "noopener";
-  link.className = "btn small primary";
-  link.textContent = "Download";
+  // Add to Library (only for FREE items, and only if not already owned)
+  if (!isPaidItem(item) && !isOwned(item)) {
+    const libBtn = document.createElement("button");
+    libBtn.type = "button";
+    libBtn.className = "btn small secondary";
+    libBtn.textContent = "Add to library";
+    libBtn.addEventListener("click", () => handleAddToLibrary(item));
+    btnRow.appendChild(libBtn);
+  } else if (isOwned(item)) {
+    const inLibTag = document.createElement("button");
+    inLibTag.type = "button";
+    inLibTag.disabled = true;
+    inLibTag.className = "btn small secondary";
+    inLibTag.style.opacity = "0.8";
+    inLibTag.textContent = "In your library";
+    btnRow.appendChild(inLibTag);
+  }
 
-  // 🔔 Show toast on download click
-  link.addEventListener("click", () => {
-    showToast("Download starting...");
-  });
-
-  btnRow.appendChild(link);
+  // Read later toggle
+  const readLaterBtn = document.createElement("button");
+  readLaterBtn.type = "button";
+  readLaterBtn.className = "btn small secondary";
+  updateReadLaterButton(readLaterBtn, item);
+  readLaterBtn.addEventListener("click", () => handleToggleReadLater(item));
+  btnRow.appendChild(readLaterBtn);
 
   article.appendChild(btnRow);
 
   return article;
 }
 
-// ====== RECENT CARD CREATION ======
+function updateReadLaterButton(btn, item) {
+  if (!btn) return;
+  if (isInReadLater(item)) {
+    btn.textContent = "Saved for later";
+    btn.style.opacity = "0.9";
+  } else {
+    btn.textContent = "Read later";
+    btn.style.opacity = "1";
+  }
+}
+
+// =============================
+// RECENT CARD CREATION
+// =============================
 function createRecentCard(item) {
   const article = document.createElement("article");
   article.className = "card";
+
+  if (isOwned(item)) {
+    article.classList.add("card-owned");
+  }
 
   const tag = document.createElement("div");
   tag.className = "recent-card-tag";
   tag.textContent = item.type === "ebook" ? "E-Book" : "Question Paper";
   article.appendChild(tag);
 
-  // Title row with NEW badge
   const titleRow = document.createElement("div");
   titleRow.className = "card-title-row";
 
@@ -173,7 +277,6 @@ function createRecentCard(item) {
   h3.textContent = item.title;
   titleRow.appendChild(h3);
 
-  // Show NEW if created within last 7 days
   if (item.createdAt) {
     const createdTime = new Date(item.createdAt).getTime();
     const now = Date.now();
@@ -186,6 +289,15 @@ function createRecentCard(item) {
     }
   }
 
+  if (isOwned(item)) {
+    const ownedBadge = document.createElement("span");
+    ownedBadge.className = "new-badge";
+    ownedBadge.style.background = "#059669";
+    ownedBadge.textContent = "OWNED";
+    titleRow.appendChild(ownedBadge);
+  }
+
+  titleRow.appendChild(createPriceBadge(item));
   article.appendChild(titleRow);
 
   const pDesc = document.createElement("p");
@@ -202,44 +314,31 @@ function createRecentCard(item) {
   const btnRow = document.createElement("div");
   btnRow.style = "display:flex; flex-wrap:wrap; gap:0.5rem;";
 
-  // Preview in modal
   const previewBtn = document.createElement("button");
   previewBtn.type = "button";
   previewBtn.className = "btn small secondary";
-  previewBtn.textContent = "Preview";
+  previewBtn.textContent = "Quick preview";
   previewBtn.addEventListener("click", () => openPdfPreview(item));
   btnRow.appendChild(previewBtn);
 
-  // Open dedicated /view/<slug> page
   const viewLink = document.createElement("a");
-  viewLink.href = `/view/${slugify(item.title)}`;
+  viewLink.href = `/view/${slugify(item.title)}?id=${encodeURIComponent(
+    item.id
+  )}`;
   viewLink.target = "_blank";
   viewLink.rel = "noopener";
-  viewLink.className = "btn small secondary";
-  viewLink.textContent = "Open page";
+  viewLink.className = "btn small primary";
+  viewLink.textContent = isOwned(item) ? "Read again" : "Open reader";
   btnRow.appendChild(viewLink);
-
-  // Download (with tracking)
-  const link = document.createElement("a");
-  link.href = `/api/download/${item.type}/${item.index}`;
-  link.target = "_blank";
-  link.rel = "noopener";
-  link.className = "btn small primary";
-  link.textContent = "Download";
-
-  // 🔔 Toast here too
-  link.addEventListener("click", () => {
-    showToast("Download starting...");
-  });
-
-  btnRow.appendChild(link);
 
   article.appendChild(btnRow);
 
   return article;
 }
 
-// ====== RENDER LISTS ======
+// =============================
+// RENDER LISTS
+// =============================
 function renderList(list, containerId, searchTerms = []) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -247,7 +346,6 @@ function renderList(list, containerId, searchTerms = []) {
   container.innerHTML = "";
 
   if (list.length === 0) {
-    // Friendly empty state + "Request this material" button
     let searchTerm = "";
     let contextLabel = "material";
 
@@ -276,7 +374,6 @@ function renderList(list, containerId, searchTerms = []) {
       </div>
     `;
 
-    // Hook up the "Request" button
     const btn = document.getElementById(btnId);
     if (btn) {
       btn.addEventListener("click", () => {
@@ -296,7 +393,6 @@ function renderList(list, containerId, searchTerms = []) {
 
         if (detailsInput && searchTerm) {
           const base = `Looking for a ${contextLabel} related to: ${searchTerm}`;
-          // Only override if empty
           if (!detailsInput.value.trim()) {
             detailsInput.value = base;
           }
@@ -324,7 +420,9 @@ function renderList(list, containerId, searchTerms = []) {
   );
 }
 
-// ====== RENDER RECENT (for Recent + Popular) ======
+// =============================
+// RENDER RECENT / POPULAR
+// =============================
 function renderRecent(items, containerId = "recent-list") {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -339,7 +437,9 @@ function renderRecent(items, containerId = "recent-list") {
   items.forEach((item) => container.appendChild(createRecentCard(item)));
 }
 
-// ====== POPULATE DROPDOWNS ======
+// =============================
+// DROPDOWN POPULATE
+// =============================
 function populateDropdown(list, field, dropdownId) {
   const dropdown = document.getElementById(dropdownId);
   if (!dropdown) return;
@@ -358,10 +458,12 @@ function populateDropdown(list, field, dropdownId) {
   });
 }
 
-// ====== FILTER FUNCTION (multi-keyword search) ======
+// =============================
+// FILTER FUNCTION
+// =============================
 function filterItems(list, search, examFilter, yearFilter = "") {
   const q = search.trim().toLowerCase();
-  const terms = q.split(/\s+/).filter(Boolean); // ["ssc","2024"]
+  const terms = q.split(/\s+/).filter(Boolean);
 
   return list.filter((item) => {
     const text =
@@ -377,7 +479,6 @@ function filterItems(list, search, examFilter, yearFilter = "") {
 
     const textLower = text.toLowerCase();
 
-    // every word must appear somewhere
     const matchesSearch =
       terms.length === 0 || terms.every((t) => textLower.includes(t));
 
@@ -388,7 +489,9 @@ function filterItems(list, search, examFilter, yearFilter = "") {
   });
 }
 
-// ====== SORT FUNCTION ======
+// =============================
+// SORT FUNCTION
+// =============================
 function sortItems(list, sortBy) {
   const arr = [...list];
 
@@ -397,12 +500,10 @@ function sortItems(list, sortBy) {
   } else if (sortBy === "downloads") {
     arr.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
   } else if (sortBy === "recent") {
-    // sort by createdAt if available, fallback to original order (index descending)
     arr.sort((a, b) => {
       const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       if (db !== da) return db - da;
-      // fallback: newer index first
       return (b.index ?? 0) - (a.index ?? 0);
     });
   }
@@ -410,7 +511,9 @@ function sortItems(list, sortBy) {
   return arr;
 }
 
-// ====== LOAD DATA FROM BACKEND ======
+// =============================
+// BACKEND LOADERS
+// =============================
 async function loadMaterials() {
   let ok = false;
   try {
@@ -421,7 +524,7 @@ async function loadMaterials() {
     ebooks = data.ebooks || [];
     questionPapers = data.questionPapers || [];
 
-    // Add type + index for download tracking + preview
+    // Add type + index
     ebooks = ebooks.map((item, i) => ({ ...item, type: "ebook", index: i }));
     questionPapers = questionPapers.map((item, i) => ({
       ...item,
@@ -438,7 +541,102 @@ async function loadMaterials() {
   return ok;
 }
 
-// ====== BUILD RECENT ITEMS ======
+async function loadOwnedMaterials() {
+  try {
+    const res = await fetch("/api/my-library");
+    if (!res.ok) return; // not logged in or route unavailable
+    const data = await res.json();
+    if (!data || data.ok === false || !Array.isArray(data.items)) return;
+
+    const ids = data.items
+      .map((item) => item.itemId || item.id)
+      .filter(Boolean);
+    ownedMaterialIds = new Set(ids);
+  } catch (err) {
+    console.warn("Unable to load owned materials:", err);
+  }
+}
+
+async function loadReadLater() {
+  try {
+    const res = await fetch("/api/read-later");
+    if (!res.ok) return;
+    const data = await res.json();
+    const ids =
+      data.ids ||
+      (Array.isArray(data.items)
+        ? data.items.map((it) => it.itemId || it.id)
+        : []);
+    readLaterIds = new Set(ids.filter(Boolean));
+  } catch (err) {
+    console.warn("Unable to load read-later list:", err);
+  }
+}
+
+// =============================
+// NAVBAR COUNTS (My Library + Read Later)
+// =============================
+function updateNavbarCounts() {
+  const libraryLink =
+    document.querySelector('a[href="/library.html"]') ||
+    document.querySelector('a[href="library.html"]');
+  const readLaterLink =
+    document.querySelector('a[href="/read-later.html"]') ||
+    document.querySelector('a[href="read-later.html"]');
+
+  const libraryCount = ownedMaterialIds.size || 0;
+  const readLaterCount = readLaterIds.size || 0;
+
+  function ensureBadge(link) {
+    if (!link) return null;
+    let badge = link.querySelector(".nav-count-badge");
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "nav-count-badge";
+      badge.style.display = "inline-flex";
+      badge.style.alignItems = "center";
+      badge.style.justifyContent = "center";
+      badge.style.marginLeft = "0.35rem";
+      badge.style.minWidth = "1.1rem";
+      badge.style.padding = "0 0.35rem";
+      badge.style.borderRadius = "999px";
+      badge.style.fontSize = "0.7rem";
+      badge.style.fontWeight = "600";
+      badge.style.backgroundColor = "#facc15"; // yellow pill
+      badge.style.color = "#111827";
+      badge.style.boxShadow = "0 0 0 1px rgba(0,0,0,0.04)";
+      link.appendChild(badge);
+    }
+    return badge;
+  }
+
+  const libBadge = ensureBadge(libraryLink);
+  const rlBadge = ensureBadge(readLaterLink);
+
+  if (libBadge) {
+    if (libraryCount > 0) {
+      libBadge.textContent = String(libraryCount);
+      libBadge.style.visibility = "visible";
+    } else {
+      libBadge.textContent = "";
+      libBadge.style.visibility = "hidden";
+    }
+  }
+
+  if (rlBadge) {
+    if (readLaterCount > 0) {
+      rlBadge.textContent = String(readLaterCount);
+      rlBadge.style.visibility = "visible";
+    } else {
+      rlBadge.textContent = "";
+      rlBadge.style.visibility = "hidden";
+    }
+  }
+}
+
+// =============================
+// RECENT & POPULAR BUILDERS
+// =============================
 function getRecentItems(limit = 6) {
   const combined = [];
 
@@ -454,14 +652,15 @@ function getRecentItems(limit = 6) {
   return combined.slice(0, limit);
 }
 
-// ====== MOST DOWNLOADED ======
 function getMostDownloaded(limit = 6) {
   const combined = [...ebooks, ...questionPapers];
   combined.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
   return combined.slice(0, limit);
 }
 
-// ====== THEME HANDLING ======
+// =============================
+// THEME
+// =============================
 function applyTheme(theme) {
   const body = document.body;
   const toggleBtn = document.getElementById("theme-toggle");
@@ -478,14 +677,60 @@ function applyTheme(theme) {
   localStorage.setItem("studenthub_theme", theme);
 }
 
-// ====== PDF PREVIEW MODAL ======
+// =============================
+// AUTH NAVBAR HELPER
+// =============================
+async function fetchCurrentUser() {
+  try {
+    const res = await fetch("/api/me");
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.ok || !data.user) return null;
+    return data.user;
+  } catch (err) {
+    console.warn("Unable to fetch current user:", err);
+    return null;
+  }
+}
+
+async function initAuthNavbar() {
+  let authLink =
+    document.getElementById("nav-auth-link") ||
+    document.querySelector("[data-auth-link]") ||
+    document.querySelector('a[href*="login.html"]');
+
+  if (!authLink) return;
+
+  const user = await fetchCurrentUser();
+
+  if (user) {
+    authLink.textContent = "My dashboard";
+    authLink.href = "/dashboard.html";
+  } else {
+    authLink.textContent = "Sign in";
+    authLink.href = "/login.html";
+  }
+}
+
+// =============================
+// PDF PREVIEW MODAL
+// =============================
 function openPdfPreview(item) {
+  if (isPaidItem(item)) {
+    const readerUrl = `/view/${slugify(item.title)}?id=${encodeURIComponent(
+      item.id
+    )}`;
+    alert("This is a paid PDF. Opening the reader so you can unlock it.");
+    window.open(readerUrl, "_blank", "noopener");
+    return;
+  }
+
   const modal = document.getElementById("pdf-modal");
   const frame = document.getElementById("pdf-modal-frame");
   const titleEl = document.getElementById("pdf-modal-title");
   if (!modal || !frame || !titleEl) return;
 
-  frame.src = item.file; // direct file path
+  frame.src = item.file;
   titleEl.textContent = item.title || "PDF Preview";
   modal.classList.add("show");
   document.body.style.overflow = "hidden";
@@ -501,12 +746,351 @@ function closePdfPreview() {
   document.body.style.overflow = "";
 }
 
-// ====== INIT ======
+// =============================
+// LIBRARY & READ-LATER ACTIONS
+// =============================
+async function handleAddToLibrary(item) {
+  if (!item || !item.id) return;
+
+  try {
+    const res = await fetch("/api/library/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ materialId: item.id }),
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        showToast("Please sign in to save items to your library.");
+      } else {
+        showToast("Could not add to library. Try again.");
+      }
+      return;
+    }
+
+    const data = await res.json();
+    if (data.ok === false) {
+      showToast(data.message || "Could not add to library.");
+      return;
+    }
+
+    ownedMaterialIds.add(item.id);
+    showToast("Added to your library.");
+    refreshAllSections();
+  } catch (err) {
+    console.error("handleAddToLibrary error:", err);
+    showToast("Error adding to library.");
+  }
+}
+
+async function handleToggleReadLater(item) {
+  if (!item || !item.id) return;
+  const currentlySaved = isInReadLater(item);
+  const endpoint = currentlySaved
+    ? "/api/read-later/remove"
+    : "/api/read-later/add";
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ materialId: item.id }),
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        showToast("Please sign in to use Read Later.");
+      } else {
+        showToast("Could not update Read Later.");
+      }
+      return;
+    }
+
+    const data = await res.json();
+    if (data.ok === false) {
+      showToast(data.message || "Could not update Read Later.");
+      return;
+    }
+
+    if (currentlySaved) {
+      readLaterIds.delete(item.id);
+      showToast("Removed from Read Later.");
+    } else {
+      readLaterIds.add(item.id);
+      showToast("Saved to Read Later.");
+    }
+
+    refreshAllSections();
+  } catch (err) {
+    console.error("handleToggleReadLater error:", err);
+    showToast("Error updating Read Later.");
+  }
+}
+
+// Safely refresh UI sections after state changes
+function refreshAllSections() {
+  // Re-apply filters & re-render sections so Owned/Read-later UI updates
+  if (typeof window.applyEbookFilters === "function") {
+    window.applyEbookFilters();
+  }
+  if (typeof window.applyQPFilters === "function") {
+    window.applyQPFilters();
+  }
+
+  const recentItems = getRecentItems(6);
+  renderRecent(recentItems, "recent-list");
+
+  const popularItems = getMostDownloaded(6);
+  renderRecent(popularItems, "popular-list");
+
+  renderRecommendations();
+  updateNavbarCounts();
+}
+
+// =============================
+// SEARCH HISTORY & RECOMMENDATIONS
+// =============================
+function loadSearchHistory() {
+  try {
+    const raw = localStorage.getItem("studenthub_search_history");
+    if (!raw) {
+      searchHistory = [];
+      return;
+    }
+    const parsed = JSON.parse(raw);
+    searchHistory = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    searchHistory = [];
+  }
+}
+
+function saveSearchHistory() {
+  try {
+    localStorage.setItem(
+      "studenthub_search_history",
+      JSON.stringify(searchHistory.slice(-20))
+    );
+  } catch {
+    // ignore
+  }
+}
+
+function trackSearch(term) {
+  const t = term.trim().toLowerCase();
+  if (!t || t.length < 3) return;
+  searchHistory.push(t);
+  searchHistory = searchHistory.slice(-20);
+  saveSearchHistory();
+}
+
+function buildRecommendations(limit = 6) {
+  const combined = [...ebooks, ...questionPapers];
+  if (!combined.length) return [];
+
+  const historyText = searchHistory.join(" ");
+  const historyTerms = historyText.split(/\s+/).filter(Boolean);
+
+  const scored = combined.map((item) => {
+    let score = 0;
+
+    if (isOwned(item)) score += 4;
+    if (isInReadLater(item)) score += 3;
+
+    if (item.downloads) {
+      score += Math.min(item.downloads, 200) / 40; // up to +5
+    }
+
+    if (item.createdAt) {
+      const days =
+        (Date.now() - new Date(item.createdAt).getTime()) /
+        (1000 * 60 * 60 * 24);
+      if (days < 7) score += 2;
+      else if (days < 30) score += 1;
+    }
+
+    const combinedText = `${item.exam || ""} ${item.subject || ""} ${
+      item.title || ""
+    }`.toLowerCase();
+
+    historyTerms.forEach((t) => {
+      if (!t) return;
+      if (combinedText.includes(t)) score += 0.8;
+    });
+
+    return { item, score };
+  });
+
+  const filtered = scored.filter((x) => x.score > 0.5);
+  filtered.sort((a, b) => b.score - a.score);
+
+  return filtered.slice(0, limit).map((x) => x.item);
+}
+
+function renderRecommendations() {
+  const container =
+    document.getElementById("reco-list") ||
+    document.getElementById("recommended-list");
+  const summary = document.getElementById("reco-summary");
+
+  if (!container) return;
+
+  const recos = buildRecommendations(6);
+  container.innerHTML = "";
+
+  if (!recos.length) {
+    container.innerHTML =
+      '<p style="color:#6b7280; font-size:0.9rem;">Start searching or opening PDFs and we’ll show smart recommendations here.</p>';
+    if (summary) summary.textContent = "No recommendations yet.";
+    return;
+  }
+
+  recos.forEach((item) => container.appendChild(createRecentCard(item)));
+
+  if (summary) {
+    summary.textContent =
+      "Recommended for you based on your searches, reads and library.";
+  }
+}
+
+// =============================
+// SMART SEARCH SUGGESTIONS
+// =============================
+function initSearchSuggestions() {
+  const ebookSearch = document.getElementById("ebook-search");
+  const qpSearch = document.getElementById("qp-search");
+
+  const allItemsSupplier = () => [...ebooks, ...questionPapers];
+
+  function setupSuggestForInput(config) {
+    const { input, mode } = config;
+    if (!input) return;
+
+    const parent = input.parentElement || input;
+    parent.style.position = "relative";
+
+    const box = document.createElement("div");
+    box.className = "suggest-box";
+    box.id = `${mode}-suggest-box`;
+    parent.appendChild(box);
+
+    function hideBox() {
+      box.style.display = "none";
+      box.innerHTML = "";
+    }
+
+    function showSuggestions(value) {
+      const q = value.trim().toLowerCase();
+      if (!q || q.length < 2) {
+        hideBox();
+        return;
+      }
+
+      const items = allItemsSupplier();
+      const tokens = new Set();
+
+      items.forEach((item) => {
+        [item.title, item.exam, item.subject, item.year].forEach((field) => {
+          if (!field) return;
+          field
+            .toString()
+            .split(/\s+/)
+            .forEach((w) => {
+              const clean = w.toLowerCase();
+              if (clean.length >= 3) tokens.add(clean);
+            });
+        });
+      });
+
+      searchHistory.forEach((term) => {
+        term
+          .split(/\s+/)
+          .filter((x) => x.length >= 3)
+          .forEach((x) => tokens.add(x));
+      });
+
+      const candidates = Array.from(tokens);
+
+      const scored = candidates
+        .map((t) => {
+          let score = 0;
+          if (t.startsWith(q)) score += 3;
+          else if (t.includes(q)) score += 1;
+
+          let usage = 0;
+          items.forEach((item) => {
+            const full = `${item.exam || ""} ${item.subject || ""}`.toLowerCase();
+            if (full.includes(t)) usage += 1;
+          });
+          score += Math.min(usage, 5) * 0.2;
+
+          return { text: t, score };
+        })
+        .filter((x) => x.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 7);
+
+      if (!scored.length) {
+        hideBox();
+        return;
+      }
+
+      box.innerHTML = "";
+      scored.forEach(({ text }) => {
+        const itemEl = document.createElement("div");
+        itemEl.className = "suggest-item";
+        const regex = new RegExp(escapeRegExp(q), "i");
+        const highlighted = text.replace(regex, (m) => `<strong>${m}</strong>`);
+        itemEl.innerHTML = highlighted;
+        itemEl.addEventListener("click", () => {
+          input.value = text;
+          hideBox();
+          if (mode === "ebook") window.applyEbookFilters?.();
+          else window.applyQPFilters?.();
+        });
+        box.appendChild(itemEl);
+      });
+
+      box.style.display = "block";
+    }
+
+    input.addEventListener("input", (e) => {
+      showSuggestions(e.target.value || "");
+    });
+
+    input.addEventListener("focus", (e) => {
+      if (e.target.value && e.target.value.length >= 2) {
+        showSuggestions(e.target.value);
+      }
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        hideBox();
+        input.blur();
+      } else if (e.key === "Enter") {
+        hideBox();
+      }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!box.contains(e.target) && e.target !== input) {
+        hideBox();
+      }
+    });
+  }
+
+  setupSuggestForInput({ input: ebookSearch, mode: "ebook" });
+  setupSuggestForInput({ input: qpSearch, mode: "qp" });
+}
+
+// =============================
+// INIT
+// =============================
 document.addEventListener("DOMContentLoaded", async () => {
   const yearSpan = document.getElementById("year");
   if (yearSpan) yearSpan.textContent = new Date().getFullYear();
 
-  // 🔹 Mobile nav toggle
+  // Mobile nav
   const navToggle = document.getElementById("nav-toggle");
   const navLinks = document.getElementById("nav-links");
 
@@ -516,7 +1100,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       navToggle.classList.toggle("open");
     });
 
-    // Close menu when a link is clicked
     navLinks.querySelectorAll("a").forEach((link) => {
       link.addEventListener("click", () => {
         navLinks.classList.remove("open");
@@ -525,7 +1108,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Theme initial load
+  // Theme
   const savedTheme = localStorage.getItem("studenthub_theme") || "light";
   applyTheme(savedTheme);
 
@@ -537,101 +1120,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ================================
-  // Navbar: Login / Dashboard / Logout
-  // ================================
-  async function setupAuthNav() {
-    const header = document.querySelector(".navbar");
-    if (!header || !themeToggleBtn) return;
+  // Auth navbar
+  initAuthNavbar();
 
-    // Container for auth buttons
-    const authContainer = document.createElement("div");
-    authContainer.id = "nav-auth";
-    authContainer.style.display = "none";
-    authContainer.style.alignItems = "center";
-    authContainer.style.gap = "0.5rem";
-    authContainer.style.marginLeft = "0.75rem";
+  // Search history
+  loadSearchHistory();
 
-    // Insert just before theme toggle button
-    header.insertBefore(authContainer, themeToggleBtn);
-
-    // Helpers to render states
-    function renderLoggedOut() {
-      authContainer.innerHTML = "";
-      const loginLink = document.createElement("a");
-      loginLink.className = "btn small secondary";
-      loginLink.textContent = "Login";
-      loginLink.href = "/login.html?next=" + encodeURIComponent("/dashboard.html");
-      authContainer.appendChild(loginLink);
-      authContainer.style.display = "flex";
-    }
-
-    function renderLoggedIn(userName) {
-      authContainer.innerHTML = "";
-
-      const dashLink = document.createElement("a");
-      dashLink.className = "btn small secondary";
-      dashLink.textContent = "My dashboard";
-      dashLink.href = "/dashboard.html";
-
-      const logoutBtn = document.createElement("button");
-      logoutBtn.type = "button";
-      logoutBtn.className = "btn small tertiary-logout";
-      logoutBtn.textContent = "Logout";
-
-      logoutBtn.style.background = "transparent";
-      logoutBtn.style.border = "1px solid rgba(156,163,175,0.5)";
-      logoutBtn.style.color = "#f9fafb";
-      logoutBtn.style.padding = "0.3rem 0.75rem";
-      logoutBtn.style.borderRadius = "999px";
-      logoutBtn.style.fontSize = "0.8rem";
-      logoutBtn.style.cursor = "pointer";
-
-      // Improve colors in light mode
-      if (!document.body.classList.contains("dark")) {
-        logoutBtn.style.color = "#111827";
-        logoutBtn.style.borderColor = "rgba(156,163,175,0.9)";
-      }
-
-      logoutBtn.addEventListener("click", async () => {
-        try {
-          await fetch("/api/auth/logout", { method: "POST" });
-        } catch (e) {
-          console.error("Logout error:", e);
-        }
-        window.location.href = "/";
-      });
-
-      authContainer.appendChild(dashLink);
-      authContainer.appendChild(logoutBtn);
-      authContainer.style.display = "flex";
-    }
-
-    // Try to fetch current user
-    try {
-      const res = await fetch("/api/me", {
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) {
-        renderLoggedOut();
-        return;
-      }
-      const data = await res.json();
-      if (data && data.ok && data.user) {
-        renderLoggedIn(data.user.name || "User");
-      } else {
-        renderLoggedOut();
-      }
-    } catch (err) {
-      console.error("Error checking auth status:", err);
-      renderLoggedOut();
-    }
-  }
-
-  // Call auth nav setup (don’t block rest of page if it fails)
-  setupAuthNav().catch((e) => console.error(e));
-
-  // Load status bar
+  // Load status
   const loadStatus = document.getElementById("load-status");
   if (loadStatus) {
     loadStatus.style.display = "block";
@@ -639,27 +1134,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadStatus.textContent = "⏳ Loading materials...";
   }
 
-  // PDF modal close handlers
+  // PDF modal events
   const modalCloseBtn = document.getElementById("pdf-modal-close");
   const modalBackdrop = document.querySelector(".pdf-modal-backdrop");
-  if (modalCloseBtn) {
-    modalCloseBtn.addEventListener("click", closePdfPreview);
-  }
-  if (modalBackdrop) {
-    modalBackdrop.addEventListener("click", closePdfPreview);
-  }
-
-  // ESC key closes modal
+  if (modalCloseBtn) modalCloseBtn.addEventListener("click", closePdfPreview);
+  if (modalBackdrop) modalBackdrop.addEventListener("click", closePdfPreview);
   document.addEventListener("keyup", (e) => {
-    if (e.key === "Escape") {
-      closePdfPreview();
-    }
+    if (e.key === "Escape") closePdfPreview();
   });
 
-  // Load materials
+  // 1) Load materials
   const ok = await loadMaterials();
 
-  // Update load status based on result
+  // 2) Load owned + read-later (if logged in)
+  await loadOwnedMaterials();
+  await loadReadLater();
+
+  // Initial navbar counts
+  updateNavbarCounts();
+
+  // Update load status
   if (loadStatus) {
     if (!ok) {
       loadStatus.classList.add("error");
@@ -672,7 +1166,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       loadStatus.classList.remove("error");
       loadStatus.textContent = `✅ Loaded ${ebooks.length} e-books and ${questionPapers.length} question papers.`;
-      // hide after 3 seconds
       setTimeout(() => {
         loadStatus.style.display = "none";
       }, 3000);
@@ -684,17 +1177,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   populateDropdown(questionPapers, "exam", "qp-exam-filter");
   populateDropdown(questionPapers, "year", "qp-year-filter");
 
-  // Render lists (default: recent sort)
+  // Render main lists
   const initialEbooksSorted = sortItems(ebooks, "recent");
   const initialQPsorted = sortItems(questionPapers, "recent");
   renderList(initialEbooksSorted, "ebooks-list");
   renderList(initialQPsorted, "qp-list");
 
-  // Recently Added
+  // Recent & Popular
   const recentItems = getRecentItems(6);
   renderRecent(recentItems, "recent-list");
 
-  // Most Downloaded
   const popularItems = getMostDownloaded(6);
   renderRecent(popularItems, "popular-list");
 
@@ -715,12 +1207,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (ebooksStatEl) ebooksStatEl.textContent = ebooksLen.toString();
   if (qpStatEl) qpStatEl.textContent = qpLen.toString();
 
-  // ====== E-BOOK Filters + Sort + Summary ======
+  // ====== E-BOOK Filters + Sort + Summary + Price filter ======
   const ebookSearch = document.getElementById("ebook-search");
   const ebookExam = document.getElementById("ebook-exam-filter");
   const ebookSort = document.getElementById("ebook-sort");
+  const ebookPriceFilter = document.getElementById("ebook-price-filter"); // "all", "free", "paid"
 
-  // Create dynamic summary row under ebook filter bar
   let ebookSummaryText = null;
   let ebookClearBtn = null;
   const ebookSection = document.getElementById("ebooks");
@@ -755,11 +1247,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const searchVal = ebookSearch ? ebookSearch.value.trim() : "";
     const examVal = ebookExam ? ebookExam.value : "";
     const sortVal = ebookSort ? ebookSort.value : "recent";
+    const priceVal = ebookPriceFilter ? ebookPriceFilter.value : "all";
 
     if (searchVal) extras.push(`Search: "${searchVal}"`);
     if (examVal) extras.push(`Exam: ${examVal}`);
+    if (priceVal === "free") extras.push("Free only");
+    if (priceVal === "paid") extras.push("Paid only");
     if (sortVal && sortVal !== "recent") {
-      const label = sortVal === "title" ? "Title A–Z" : "Most downloaded";
+      const label = sortVal === "title" ? "Title A–Z" : "Most read";
       extras.push(`Sort: ${label}`);
     }
 
@@ -774,14 +1269,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function applyEbookFilters() {
+  // Make filters globally callable
+  window.applyEbookFilters = function () {
     const searchVal = ebookSearch ? ebookSearch.value : "";
-    const filtered = filterItems(
-      ebooks,
-      searchVal,
-      ebookExam ? ebookExam.value : ""
-    );
-    const sorted = sortItems(filtered, ebookSort ? ebookSort.value : "recent");
+    const examVal = ebookExam ? ebookExam.value : "";
+    const sortVal = ebookSort ? ebookSort.value : "recent";
+    const priceVal = ebookPriceFilter ? ebookPriceFilter.value : "all";
+
+    if (searchVal) trackSearch(searchVal);
+
+    let filtered = filterItems(ebooks, searchVal, examVal);
+
+    if (priceVal === "free") {
+      filtered = filtered.filter((item) => !isPaidItem(item));
+    } else if (priceVal === "paid") {
+      filtered = filtered.filter((item) => isPaidItem(item));
+    }
+
+    const sorted = sortItems(filtered, sortVal);
 
     const terms = searchVal
       .trim()
@@ -791,39 +1296,37 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     renderList(sorted, "ebooks-list", terms);
     updateEbookFilterSummary(filtered.length);
-  }
+    renderRecommendations();
+  };
 
-  function applyEebookFiltersWrapper() {
-    applyEbookFilters();
-  }
-
-  if (ebookSearch) ebookSearch.addEventListener("input", applyEebookFiltersWrapper);
-  if (ebookExam) ebookExam.addEventListener("change", applyEebookFiltersWrapper);
+  if (ebookSearch)
+    ebookSearch.addEventListener("input", () => window.applyEbookFilters());
+  if (ebookExam)
+    ebookExam.addEventListener("change", () => window.applyEbookFilters());
   if (ebookSort)
-    ebookSort.addEventListener("change", () => {
-      applyEbookFilters();
-    });
+    ebookSort.addEventListener("change", () => window.applyEbookFilters());
+  if (ebookPriceFilter)
+    ebookPriceFilter.addEventListener("change", () => window.applyEbookFilters());
 
-  // Clear filters button for ebooks
   if (ebookClearBtn && ebookSearch && ebookExam && ebookSort) {
     ebookClearBtn.addEventListener("click", () => {
       ebookSearch.value = "";
       ebookExam.value = "";
       ebookSort.value = "recent";
-      applyEbookFilters();
+      if (ebookPriceFilter) ebookPriceFilter.value = "all";
+      window.applyEbookFilters();
     });
   }
 
-  // Initialize ebook summary once data is loaded
   updateEbookFilterSummary(ebooks.length);
 
-  // ====== QUESTION PAPER Filters + Sort + Summary ======
+  // ====== QUESTION PAPER Filters + Sort + Summary + Price filter ======
   const qpSearch = document.getElementById("qp-search");
   const qpExam = document.getElementById("qp-exam-filter");
   const qpYear = document.getElementById("qp-year-filter");
   const qpSort = document.getElementById("qp-sort");
+  const qpPriceFilter = document.getElementById("qp-price-filter");
 
-  // Dynamic summary row under question paper filter bar
   let qpSummaryText = null;
   let qpClearBtn = null;
   const qpSection = document.getElementById("question-papers");
@@ -859,12 +1362,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     const examVal = qpExam ? qpExam.value : "";
     const yearVal = qpYear ? qpYear.value : "";
     const sortVal = qpSort ? qpSort.value : "recent";
+    const priceVal = qpPriceFilter ? qpPriceFilter.value : "all";
 
     if (searchVal) extras.push(`Search: "${searchVal}"`);
     if (examVal) extras.push(`Exam: ${examVal}`);
     if (yearVal) extras.push(`Year: ${yearVal}`);
+    if (priceVal === "free") extras.push("Free only");
+    if (priceVal === "paid") extras.push("Paid only");
     if (sortVal && sortVal !== "recent") {
-      const label = sortVal === "title" ? "Title A–Z" : "Most downloaded";
+      const label = sortVal === "title" ? "Title A–Z" : "Most read";
       extras.push(`Sort: ${label}`);
     }
 
@@ -879,15 +1385,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function applyQPFilters() {
+  window.applyQPFilters = function () {
     const searchVal = qpSearch ? qpSearch.value : "";
-    const filtered = filterItems(
-      questionPapers,
-      searchVal,
-      qpExam ? qpExam.value : "",
-      qpYear ? qpYear.value : ""
-    );
-    const sorted = sortItems(filtered, qpSort ? qpSort.value : "recent");
+    const examVal = qpExam ? qpExam.value : "";
+    const yearVal = qpYear ? qpYear.value : "";
+    const sortVal = qpSort ? qpSort.value : "recent";
+    const priceVal = qpPriceFilter ? qpPriceFilter.value : "all";
+
+    if (searchVal) trackSearch(searchVal);
+
+    let filtered = filterItems(questionPapers, searchVal, examVal, yearVal);
+
+    if (priceVal === "free") {
+      filtered = filtered.filter((item) => !isPaidItem(item));
+    } else if (priceVal === "paid") {
+      filtered = filtered.filter((item) => isPaidItem(item));
+    }
+
+    const sorted = sortItems(filtered, sortVal);
 
     const terms = searchVal
       .trim()
@@ -897,28 +1412,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     renderList(sorted, "qp-list", terms);
     updateQPFilterSummary(filtered.length);
-  }
+    renderRecommendations();
+  };
 
-  if (qpSearch) qpSearch.addEventListener("input", applyQPFilters);
-  if (qpExam) qpExam.addEventListener("change", applyQPFilters);
-  if (qpYear) qpYear.addEventListener("change", applyQPFilters);
-  if (qpSort) qpSort.addEventListener("change", applyQPFilters);
+  if (qpSearch) qpSearch.addEventListener("input", window.applyQPFilters);
+  if (qpExam) qpExam.addEventListener("change", window.applyQPFilters);
+  if (qpYear) qpYear.addEventListener("change", window.applyQPFilters);
+  if (qpSort) qpSort.addEventListener("change", window.applyQPFilters);
+  if (qpPriceFilter)
+    qpPriceFilter.addEventListener("change", window.applyQPFilters);
 
-  // Clear filters for question papers
   if (qpClearBtn && qpSearch && qpExam && qpYear && qpSort) {
     qpClearBtn.addEventListener("click", () => {
       qpSearch.value = "";
       qpExam.value = "";
       qpYear.value = "";
       qpSort.value = "recent";
-      applyQPFilters();
+      if (qpPriceFilter) qpPriceFilter.value = "all";
+      window.applyQPFilters();
     });
   }
 
-  // Initialize qp summary
   updateQPFilterSummary(questionPapers.length);
 
-  // Back to top button
+  // Back to top
   const backToTopBtn = document.getElementById("back-to-top");
   if (backToTopBtn) {
     window.addEventListener("scroll", () => {
@@ -977,12 +1494,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       input.value = text;
 
-      if (targetId === "ebook-search") applyEbookFilters();
-      else applyQPFilters();
+      if (targetId === "ebook-search") window.applyEbookFilters?.();
+      else window.applyQPFilters?.();
     });
   });
 
-  // --- Share StudentHub section ---
+  // Share section
   const shareCopyBtn = document.getElementById("share-copy");
   const shareStatus = document.getElementById("share-status");
   const shareWhatsApp = document.getElementById("share-whatsapp");
@@ -992,9 +1509,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     const siteUrl = window.location.origin + "/";
     const shareText =
-      "Free E-Books & Previous Year Question Papers – StudentHub: " + siteUrl;
+      "Free & premium E-Books & Previous Year Question Papers – StudentHub: " +
+      siteUrl;
 
-    // Update links dynamically
     if (shareWhatsApp) {
       shareWhatsApp.href =
         "https://wa.me/?text=" + encodeURIComponent(shareText);
@@ -1005,7 +1522,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         "https://t.me/share/url?url=" +
         encodeURIComponent(siteUrl) +
         "&text=" +
-        encodeURIComponent("StudentHub – Free exam materials");
+        encodeURIComponent("StudentHub – Free & paid exam materials");
     }
 
     if (shareFacebook) {
@@ -1014,12 +1531,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         encodeURIComponent(siteUrl);
     }
 
-    // Copy link button
     if (shareCopyBtn && shareStatus) {
       shareCopyBtn.addEventListener("click", async () => {
         const textToCopy = siteUrl;
 
-        // Try modern clipboard API first
         if (navigator.clipboard && window.isSecureContext) {
           try {
             await navigator.clipboard.writeText(textToCopy);
@@ -1030,7 +1545,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             fallbackCopy(textToCopy, shareStatus);
           }
         } else {
-          // Not a secure context (e.g. 192.168.x.x) → fallback
           fallbackCopy(textToCopy, shareStatus);
         }
 
@@ -1064,11 +1578,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.body.removeChild(dummy);
   }
 
-  // ============================
   // Keyboard shortcut for search
-  // ============================
   document.addEventListener("keydown", (e) => {
-    // Don't trigger if user is already typing in a field
     const active = document.activeElement;
     const tag = active && active.tagName;
     if (
@@ -1094,7 +1605,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!ebookSearchInput && !qpSearchInput) return;
 
-    // If only one search exists, just focus that
     if (!ebookSectionEl || !qpSectionEl || !ebookSearchInput || !qpSearchInput) {
       const targetInput = ebookSearchInput || qpSearchInput;
       targetInput.focus();
@@ -1115,4 +1625,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       qpSearchInput.select();
     }
   });
+
+  // Initialize suggestions & recommendations
+  initSearchSuggestions();
+  renderRecommendations();
 });

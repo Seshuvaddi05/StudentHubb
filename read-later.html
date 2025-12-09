@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Read Later – StudentHub</title>
+
+  <meta name="description" content="All the e-books and question papers you saved to read later on StudentHub." />
+
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <!-- Shared Navbar -->
+  <header class="navbar">
+    <div class="logo">StudentHub</div>
+
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="nav-links" id="nav-links">
+      <a href="/">Home</a>
+      <a href="/#ebooks">E-Books</a>
+      <a href="/#question-papers">Question Papers</a>
+      <a href="/#about">About</a>
+      <a href="/#contact">Contact</a>
+      <a href="/library.html">My Library</a>
+      <!-- Mark Read Later as active on this page -->
+      <a href="/read-later.html" class="active">Read Later</a>
+
+      <a href="/dashboard.html" id="nav-dashboard-link" style="display:none;">
+        My dashboard
+      </a>
+      <a href="/login.html" id="nav-login-link">
+        Sign in
+      </a>
+    </nav>
+
+    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+  </header>
+
+  <!-- Main content -->
+  <main class="section" style="max-width: 1000px; margin: 0 auto;">
+    <h2>Read Later</h2>
+    <p class="section-subtitle">
+      Books & papers you saved for later reading.
+    </p>
+
+    <!-- Small summary (filtered vs total) -->
+    <p id="read-later-summary" class="section-subtitle" style="margin-top: 0; font-size: 0.85rem;">
+      Loading your saved items...
+    </p>
+
+    <!-- NEW: stats for free/paid and total value -->
+    <p id="read-later-stats" class="section-subtitle" style="margin-top: 0.15rem; font-size: 0.8rem; color:#6b7280;">
+    </p>
+
+    <!-- Filters row (Type / Price / Sort + Clear all) -->
+    <div id="read-later-filters"
+      style="display:none; margin:0.75rem 0 0.9rem; display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
+      <label style="font-size:0.85rem;">
+        Type
+        <select id="rl-type-filter" class="filter-select" style="margin-left:0.25rem;">
+          <option value="all">All</option>
+          <option value="ebook">E-Books</option>
+          <option value="questionPaper">Question Papers</option>
+        </select>
+      </label>
+
+      <label style="font-size:0.85rem;">
+        Price
+        <select id="rl-price-filter" class="filter-select" style="margin-left:0.25rem;">
+          <option value="all">All prices</option>
+          <option value="free">Free only</option>
+          <option value="paid">Paid only</option>
+        </select>
+      </label>
+
+      <label style="font-size:0.85rem;">
+        Sort by
+        <select id="rl-sort" class="filter-select" style="margin-left:0.25rem;">
+          <option value="recent">Newest</option>
+          <option value="title">Title A–Z</option>
+          <option value="reads">Most read</option>
+        </select>
+      </label>
+
+      <button id="read-later-clear" class="btn small secondary" style="margin-left:auto; display:none;">
+        Clear all
+      </button>
+    </div>
+
+    <!-- Cards grid -->
+    <div class="cards-grid" id="read-later-list">
+      <!-- Filled by read-later.js -->
+    </div>
+
+    <!-- Empty state -->
+    <div id="read-later-empty" class="card"
+      style="display:none; margin-top:1rem; border:1px dashed #d1d5db; background:#f9fafb;">
+      <h3 style="font-size:1rem; margin-bottom:0.4rem;">Nothing saved yet.</h3>
+      <p style="font-size:0.9rem; color:#6b7280; margin-bottom:0.6rem;">
+        Use the <strong>“Read later”</strong> button on any ebook or question paper to save it here.
+      </p>
+      <a href="/#ebooks" class="btn primary small">Browse materials</a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
+  </footer>
+
+  <button id="back-to-top" class="back-to-top">↑</button>
+
+  <!-- Main page logic -->
+  <script src="read-later.js"></script>
+
+  <!-- Auth-aware navbar for this page -->
+  <script>
+    async function initAuthNavbarSimple() {
+      const dashLink = document.getElementById("nav-dashboard-link");
+      const loginLink = document.getElementById("nav-login-link");
+      if (!dashLink && !loginLink) return;
+
+      let user = null;
+      try {
+        const res = await fetch("/api/me");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && data.user) user = data.user;
+        }
+      } catch (e) { }
+
+      if (user) {
+        if (dashLink) dashLink.style.display = "inline-block";
+        if (loginLink) loginLink.style.display = "none";
+      } else {
+        if (dashLink) dashLink.style.display = "none";
+        if (loginLink) loginLink.style.display = "inline-block";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", initAuthNavbarSimple);
+  </script>
+</body>
+
+</html>

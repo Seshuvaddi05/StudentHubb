@@ -112,7 +112,7 @@
       margin-top: 0.4rem;
       font-size: 0.8rem;
       color: #16a34a;
-      font-weight: 500; /* a bit bolder so it’s clearer in light mode */
+      font-weight: 500;
     }
 
     .auth-status.error {
@@ -523,6 +523,24 @@
           }
         });
       }
+
+      // ---- If already logged in, auto-redirect ----
+      (async () => {
+        try {
+          const res = await fetch("/api/me");
+          if (!res.ok) return; // not logged in
+          const data = await res.json();
+          if (data && data.ok && data.user) {
+            showStatus("You are already logged in. Redirecting...");
+            setTimeout(() => {
+              window.location.href = nextUrl;
+            }, 800);
+          }
+        } catch (err) {
+          // ignore – user not logged in or server error
+          console.warn("Auto-login check failed:", err);
+        }
+      })();
     });
 
     // ---- Google login via Google Identity Services ----

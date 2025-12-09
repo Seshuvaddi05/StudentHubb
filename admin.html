@@ -1,820 +1,319 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <title>StudentHub – Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Reuse main site styles -->
-  <link rel="stylesheet" href="/styles.css" />
-
+  <link rel="stylesheet" href="styles.css" />
   <style>
-    body {
-      background: #f4f5fb;
-    }
-
-    .admin-wrapper {
-      max-width: 1100px;
+    .admin-container {
+      max-width: 980px;
       margin: 2rem auto;
-      padding: 1.5rem;
-      border-radius: 0.75rem;
       background: #ffffff;
-      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+      border-radius: 0.9rem;
+      padding: 1.5rem 1.75rem;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
     }
-
-    body.dark .admin-wrapper {
+    body.dark .admin-container {
       background: #020617;
       border: 1px solid #1f2937;
-      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.7);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
     }
 
-    .admin-title {
-      font-size: 1.5rem;
+    .admin-heading {
+      font-size: 1.4rem;
       font-weight: 600;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.4rem;
     }
-
     .admin-subtitle {
       font-size: 0.9rem;
       color: #6b7280;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
     }
-
     body.dark .admin-subtitle {
       color: #9ca3af;
     }
 
-    .admin-section {
-      margin-top: 1.5rem;
-      padding-top: 1.25rem;
-      border-top: 1px solid #e5e7eb;
+    .price-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .price-row .form-row {
+      flex: 1 1 140px;
+      margin-bottom: 0;
+    }
+    .price-row small {
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+    body.dark .price-row small {
+      color: #9ca3af;
+    }
+    .price-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: #fef3c7;
+      color: #92400e;
+    }
+    body.dark .price-chip {
+      background: #4b5563;
+      color: #f9fafb;
     }
 
-    body.dark .admin-section {
+    /* Manage materials section */
+    .admin-section-divider {
+      margin: 1.75rem 0 1.25rem;
+      border-top: 1px dashed #e5e7eb;
+    }
+    body.dark .admin-section-divider {
       border-top-color: #1f2937;
     }
-
-    .admin-section h2 {
-      font-size: 1.1rem;
-      margin-bottom: 0.4rem;
-    }
-
-    .admin-section p {
-      font-size: 0.85rem;
-      color: #6b7280;
-      margin-bottom: 0.75rem;
-    }
-
-    body.dark .admin-section p {
-      color: #9ca3af;
-    }
-
-    .admin-form-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .admin-form-row>div {
-      flex: 1 1 180px;
-      min-width: 160px;
-    }
-
-    .admin-form-row label {
-      display: block;
-      font-size: 0.85rem;
-      margin-bottom: 0.2rem;
-      color: #374151;
-    }
-
-    body.dark .admin-form-row label {
-      color: #e5e7eb;
-    }
-
-    .admin-form-row input,
-    .admin-form-row select,
-    .admin-form-row textarea {
-      width: 100%;
-      padding: 0.45rem 0.7rem;
-      border-radius: 0.5rem;
-      border: 1px solid #d1d5db;
-      font-size: 0.9rem;
-    }
-
-    body.dark .admin-form-row input,
-    body.dark .admin-form-row select,
-    body.dark .admin-form-row textarea {
-      background: #020617;
-      border-color: #1f2937;
-      color: #e5e7eb;
-    }
-
-    .admin-form-row textarea {
-      min-height: 60px;
-      resize: vertical;
-    }
-
-    .admin-helper {
-      font-size: 0.8rem;
-      color: #6b7280;
-      margin-top: 0.25rem;
-    }
-
-    body.dark .admin-helper {
-      color: #9ca3af;
-    }
-
-    .admin-login-box {
-      max-width: 420px;
-      margin: 2.5rem auto;
-      padding: 1.5rem;
-      border-radius: 0.75rem;
-      background: #ffffff;
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
-    }
-
-    body.dark .admin-login-box {
-      background: #020617;
-      border: 1px solid #1f2937;
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.8);
-    }
-
-    .admin-login-title {
-      font-size: 1.3rem;
+    .admin-subheading {
+      font-size: 1.05rem;
       font-weight: 600;
       margin-bottom: 0.4rem;
     }
-
-    .admin-login-subtitle {
+    .admin-subtext {
       font-size: 0.85rem;
       color: #6b7280;
-      margin-bottom: 0.9rem;
-    }
-
-    body.dark .admin-login-subtitle {
-      color: #9ca3af;
-    }
-
-    .admin-login-row {
-      margin-bottom: 0.8rem;
-    }
-
-    .admin-login-row label {
-      display: block;
-      font-size: 0.85rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .admin-login-row input {
-      width: 100%;
-      padding: 0.45rem 0.7rem;
-      border-radius: 0.5rem;
-      border: 1px solid #d1d5db;
-      font-size: 0.9rem;
-    }
-
-    body.dark .admin-login-row input {
-      background: #020617;
-      border-color: #1f2937;
-      color: #e5e7eb;
-    }
-
-    .admin-login-status {
-      font-size: 0.8rem;
-      margin-top: 0.3rem;
-      color: #b91c1c;
-    }
-
-    .admin-badge {
-      display: inline-block;
-      padding: 0.15rem 0.5rem;
-      font-size: 0.75rem;
-      border-radius: 999px;
-      background: #eef2ff;
-      color: #4f46e5;
-      margin-left: 0.4rem;
-    }
-
-    body.dark .admin-badge {
-      background: #1d4ed8;
-      color: #e5e7eb;
-    }
-
-    /* Search + list area */
-    .admin-search-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: center;
       margin-bottom: 0.75rem;
     }
-
-    .admin-search-row input {
-      flex: 1 1 220px;
-      max-width: 360px;
-      padding: 0.5rem 0.8rem;
-      border-radius: 999px;
-      border: 1px solid #d1d5db;
-      font-size: 0.9rem;
-    }
-
-    .admin-search-row select {
-      padding: 0.45rem 0.9rem;
-      border-radius: 999px;
-      border: 1px solid #d1d5db;
-      font-size: 0.9rem;
-      background: #ffffff;
-    }
-
-    body.dark .admin-search-row input,
-    body.dark .admin-search-row select {
-      background: #020617;
-      border-color: #1f2937;
-      color: #e5e7eb;
-    }
-
-    .admin-search-summary {
-      font-size: 0.8rem;
-      color: #6b7280;
-      margin-bottom: 0.4rem;
-    }
-
-    body.dark .admin-search-summary {
+    body.dark .admin-subtext {
       color: #9ca3af;
+    }
+
+    .admin-filter-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+    .admin-filter-row .filter-input {
+      flex: 1 1 220px;
+    }
+    .admin-filter-row .filter-select {
+      flex: 0 0 160px;
     }
 
     .admin-table-wrapper {
-      margin-top: 0.4rem;
-      border-radius: 0.75rem;
-      overflow: hidden;
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
+      width: 100%;
+      overflow-x: auto;
     }
-
-    body.dark .admin-table-wrapper {
-      border-color: #1f2937;
-      background: #020617;
-    }
-
-    table.admin-table {
+    .admin-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.85rem;
     }
-
-    table.admin-table thead {
-      background: #111827;
-      color: #f9fafb;
-    }
-
-    body.dark table.admin-table thead {
-      background: #020617;
-    }
-
-    table.admin-table th,
-    table.admin-table td {
-      padding: 0.45rem 0.6rem;
-      text-align: left;
+    .admin-table th,
+    .admin-table td {
+      padding: 0.4rem 0.5rem;
       border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      vertical-align: middle;
     }
-
-    body.dark table.admin-table th,
-    body.dark table.admin-table td {
+    .admin-table th {
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #6b7280;
+    }
+    .admin-table td {
+      color: #111827;
+    }
+    body.dark .admin-table th {
       border-bottom-color: #1f2937;
+      color: #9ca3af;
     }
-
-    table.admin-table tbody tr:nth-child(even) {
-      background: #f3f4f6;
-    }
-
-    body.dark table.admin-table tbody tr:nth-child(even) {
-      background: #020617;
-    }
-
-    table.admin-table td .btn.small {
-      padding: 0.25rem 0.7rem;
-      font-size: 0.78rem;
-    }
-
-    .type-pill {
-      display: inline-block;
-      font-size: 0.75rem;
-      padding: 0.1rem 0.5rem;
-      border-radius: 999px;
-      background: #eff6ff;
-      color: #1d4ed8;
-    }
-
-    body.dark .type-pill {
-      background: #1d4ed8;
+    body.dark .admin-table td {
+      border-bottom-color: #1f2937;
       color: #e5e7eb;
     }
 
-    @media (max-width: 720px) {
-      .admin-table-wrapper {
-        overflow-x: auto;
-      }
-
-      table.admin-table {
-        min-width: 650px;
-      }
+    .admin-pill {
+      display: inline-flex;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      background: #eef2ff;
+      color: #3730a3;
+    }
+    body.dark .admin-pill {
+      background: #111827;
+      color: #c7d2fe;
     }
 
-    /* Fix: Admin delete button visibility in light mode */
-    .admin-table td .btn.small.secondary {
-      background: #f3f4f6 !important;
-      color: #1f2937 !important;
-      border: 1px solid #d1d5db !important;
+    .btn-danger {
+      background: #b91c1c;
+      color: #f9fafb;
+      border: none;
+      border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .btn-danger:hover {
+      background: #991b1b;
     }
 
-    /* On hover */
-    .admin-table td .btn.small.secondary:hover {
-      background: #e5e7eb !important;
-      border-color: #cbd5e1 !important;
+    .admin-status-text {
+      font-size: 0.8rem;
+      margin-top: 0.35rem;
+    }
+    .admin-status-text.muted {
+      color: #6b7280;
+    }
+    body.dark .admin-status-text.muted {
+      color: #9ca3af;
+    }
+
+    @media (max-width: 640px) {
+      .admin-container {
+        margin-top: 1.25rem;
+        padding: 1.25rem 1.1rem;
+      }
     }
   </style>
 </head>
-
 <body>
-  <!-- Navbar -->
   <header class="navbar">
-    <div class="logo">StudentHub</div>
-    <nav class="nav-links" id="nav-links">
-      <a href="/">Home</a>
+    <div class="logo">StudentHub Admin</div>
+    <nav class="nav-links">
+      <a href="/">View site</a>
     </nav>
     <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
   </header>
 
-  <!-- LOGIN SCREEN -->
-  <main id="admin-login-screen">
-    <div class="admin-login-box">
-      <h1 class="admin-login-title">
-        Admin Login
-        <span class="admin-badge">Private</span>
-      </h1>
-      <p class="admin-login-subtitle">
-        Enter the admin password you configured on the server to manage uploads and deletions.
+  <main class="section">
+    <div class="admin-container">
+      <!-- Upload section -->
+      <h1 class="admin-heading">Upload material</h1>
+      <p class="admin-subtitle">
+        Upload e-books or question papers. Leave it as
+        <span class="price-chip">0 = Free</span>, or mark it as paid and set a price.
       </p>
 
-      <div class="admin-login-row">
-        <label for="admin-password">Admin password</label>
-        <input type="password" id="admin-password" autocomplete="current-password" />
-      </div>
+      <form id="upload-form" class="request-form">
+        <div class="form-row">
+          <label>Type</label>
+          <select id="type" required>
+            <option value="ebook">E-Book</option>
+            <option value="questionPaper">Question Paper</option>
+          </select>
+        </div>
 
-      <button id="admin-login-btn" class="btn primary">Login as Admin</button>
-      <p id="admin-login-status" class="admin-login-status"></p>
-    </div>
-  </main>
+        <div class="form-row">
+          <label>Title</label>
+          <input type="text" id="title" required />
+        </div>
 
-  <!-- ADMIN PANEL -->
-  <main id="admin-panel" class="admin-wrapper" style="display:none;">
-    <h1 class="admin-title">
-      StudentHub Admin
-      <span class="admin-badge">Online</span>
-    </h1>
-    <p class="admin-subtitle">
-      Upload new PDFs and quickly search / delete existing ones.
-    </p>
+        <div class="form-row">
+          <label>Description</label>
+          <textarea id="description" rows="3"></textarea>
+        </div>
 
-    <!-- Upload section -->
-    <section class="admin-section">
-      <h2>Upload new material</h2>
-      <p>Fill the details and upload a single PDF. It will appear on the main site automatically.</p>
+        <div class="form-row">
+          <label>Exam</label>
+          <input type="text" id="exam" />
+        </div>
 
-      <form id="upload-form">
-        <div class="admin-form-row">
-          <div>
-            <label for="up-type">Type</label>
-            <select id="up-type" required>
-              <option value="">Select type</option>
-              <option value="ebook">E-Book</option>
-              <option value="questionPaper">Question Paper</option>
-            </select>
+        <div class="form-row">
+          <label>Subject</label>
+          <input type="text" id="subject" />
+        </div>
+
+        <div class="form-row">
+          <label>Year</label>
+          <input type="text" id="year" placeholder="2024" />
+        </div>
+
+        <!-- Pricing -->
+        <div class="price-row" style="margin-bottom:0.75rem;">
+          <div class="form-row">
+            <label for="price">Price (₹)</label>
+            <input
+              type="number"
+              id="price"
+              min="0"
+              step="1"
+              placeholder="0 (Free material)"
+            />
           </div>
-          <div>
-            <label for="up-title">Title</label>
-            <input id="up-title" required placeholder="e.g. RS Aggarwal Quantitative Aptitude" />
+
+          <div class="form-row" style="flex:0 0 auto;">
+            <label style="display:block; margin-bottom:0.2rem;">Paid?</label>
+            <label style="display:flex; align-items:center; gap:0.4rem;">
+              <input type="checkbox" id="isPaid" />
+              <span>Mark as paid material</span>
+            </label>
+            <small>
+              If unchecked, this stays free (price = 0). When checked, you should enter a price greater than 0.
+            </small>
           </div>
         </div>
 
-        <div class="admin-form-row">
-          <div>
-            <label for="up-exam">Exam</label>
-            <input id="up-exam" placeholder="RRB NTPC / SSC / Placement / etc." />
-          </div>
-          <div>
-            <label for="up-subject">Subject</label>
-            <input id="up-subject" placeholder="Quant, Reasoning, English..." />
-          </div>
-          <div>
-            <label for="up-year">Year</label>
-            <input id="up-year" placeholder="2024 / 2023 / etc." />
-          </div>
+        <div class="form-row">
+          <label>PDF file</label>
+          <input type="file" id="file" accept="application/pdf" required />
         </div>
 
-        <div class="admin-form-row">
-          <div style="flex:2 1 240px;">
-            <label for="up-desc">Short description</label>
-            <textarea id="up-desc" placeholder="Optional small description"></textarea>
-          </div>
-          <div style="flex:1 1 200px;">
-            <label for="up-file">PDF file</label>
-            <input type="file" id="up-file" accept="application/pdf" required />
-            <p class="admin-helper">Max size depends on Render free limits.</p>
-          </div>
-        </div>
-
-        <button type="submit" class="btn primary">Upload PDF</button>
-        <span id="upload-status" class="admin-helper"></span>
+        <button type="submit" class="btn primary">Upload</button>
+        <p id="upload-status" style="font-size:0.85rem; margin-top:0.4rem;"></p>
       </form>
-    </section>
 
-    <!-- Search & delete section -->
-    <section class="admin-section">
-      <h2>Search & delete materials</h2>
-      <p>Use the search box to filter by <strong>title, exam, subject, or year</strong>, then delete if needed.</p>
+      <!-- Divider -->
+      <div class="admin-section-divider"></div>
 
-      <div class="admin-search-row">
-        <input type="text" id="admin-search" placeholder="Search by title, exam, subject, or year..." />
-        <select id="admin-type-filter">
+      <!-- Manage materials section -->
+      <h2 class="admin-subheading">Manage existing materials</h2>
+      <p class="admin-subtitle admin-subtext">
+        Search, filter and delete uploaded e-books and question papers.
+      </p>
+
+      <div class="admin-filter-row">
+        <input
+          type="text"
+          id="materials-search"
+          class="filter-input"
+          placeholder="Search by title, exam, subject..."
+        />
+        <select id="materials-type-filter" class="filter-select">
           <option value="">All types</option>
-          <option value="ebook">E-Books only</option>
-          <option value="questionPaper">Question papers only</option>
+          <option value="ebook">E-Books</option>
+          <option value="questionPaper">Question Papers</option>
         </select>
       </div>
-
-      <p id="admin-search-summary" class="admin-search-summary">
-        Loading materials…
-      </p>
 
       <div class="admin-table-wrapper">
         <table class="admin-table">
           <thead>
             <tr>
-              <th>Type</th>
+              <th>#</th>
               <th>Title</th>
-              <th>Exam / Subject</th>
+              <th>Type</th>
+              <th>Exam</th>
               <th>Year</th>
+              <th>Price</th>
               <th>Downloads</th>
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="admin-table-body">
-            <!-- Filled by JS -->
+          <tbody id="materials-table-body">
+            <!-- Filled by admin.js -->
           </tbody>
         </table>
       </div>
-    </section>
+      <p id="materials-list-status" class="admin-status-text muted">
+        Loading materials…
+      </p>
+    </div>
   </main>
 
-  <footer class="footer">
-    <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
-  </footer>
-
-  <script>
-    // ---------- Theme helper ----------
-    function applyTheme(theme) {
-      const body = document.body;
-      const toggleBtn = document.getElementById("theme-toggle");
-      if (!body || !toggleBtn) return;
-
-      if (theme === "dark") {
-        body.classList.add("dark");
-        toggleBtn.textContent = "☀️";
-      } else {
-        body.classList.remove("dark");
-        toggleBtn.textContent = "🌙";
-      }
-
-      localStorage.setItem("studenthub_theme", theme);
-    }
-
-    let allMaterials = []; // combined array used for search & delete
-
-    // Load list from backend
-    async function fetchMaterialsAndRender() {
-      const tbody = document.getElementById("admin-table-body");
-      const summaryEl = document.getElementById("admin-search-summary");
-      const searchInput = document.getElementById("admin-search");
-      const typeFilter = document.getElementById("admin-type-filter");
-
-      if (summaryEl) {
-        summaryEl.textContent = "Loading materials from server…";
-      }
-
-      try {
-        const res = await fetch("/api/materials");
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const data = await res.json();
-
-        allMaterials = [];
-
-        (data.ebooks || []).forEach((item, i) => {
-          allMaterials.push({
-            type: "ebook",
-            index: i,
-            title: item.title || "",
-            exam: item.exam || "",
-            subject: item.subject || "",
-            year: item.year || "",
-            downloads: item.downloads || 0,
-            createdAt: item.createdAt || "",
-          });
-        });
-
-        (data.questionPapers || []).forEach((item, i) => {
-          allMaterials.push({
-            type: "questionPaper",
-            index: i,
-            title: item.title || "",
-            exam: item.exam || "",
-            subject: item.subject || "",
-            year: item.year || "",
-            downloads: item.downloads || 0,
-            createdAt: item.createdAt || "",
-          });
-        });
-
-        // sort newest first by createdAt if available
-        allMaterials.sort((a, b) => {
-          const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return db - da;
-        });
-
-        renderAdminTable(searchInput.value, typeFilter.value);
-      } catch (err) {
-        console.error("Error loading materials for admin:", err);
-        if (tbody) {
-          tbody.innerHTML =
-            '<tr><td colspan="6">Error loading materials.</td></tr>';
-        }
-        if (summaryEl) {
-          summaryEl.textContent =
-            "Error loading materials. Please check server logs.";
-        }
-      }
-    }
-
-    // Render table with filters
-    function renderAdminTable(searchText = "", typeFilter = "") {
-      const tbody = document.getElementById("admin-table-body");
-      const summaryEl = document.getElementById("admin-search-summary");
-      if (!tbody || !summaryEl) return;
-
-      const q = (searchText || "").toLowerCase().trim();
-      const terms = q.split(/\s+/).filter(Boolean);
-
-      let filtered = allMaterials.filter((item) => {
-        if (typeFilter && item.type !== typeFilter) return false;
-
-        if (terms.length === 0) return true;
-
-        const haystack =
-          (item.title + " " + item.exam + " " + item.subject + " " + item.year)
-            .toLowerCase();
-
-        return terms.every((t) => haystack.includes(t));
-      });
-
-      summaryEl.textContent = `Showing ${filtered.length} of ${allMaterials.length} materials.`;
-
-      if (!filtered.length) {
-        tbody.innerHTML =
-          '<tr><td colspan="6">No materials match your search.</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = "";
-
-      filtered.forEach((item) => {
-        const tr = document.createElement("tr");
-
-        // type
-        const tdType = document.createElement("td");
-        const pill = document.createElement("span");
-        pill.className = "type-pill";
-        pill.textContent = item.type === "ebook" ? "E-Book" : "Question Paper";
-        tdType.appendChild(pill);
-        tr.appendChild(tdType);
-
-        // title
-        const tdTitle = document.createElement("td");
-        tdTitle.textContent = item.title || "—";
-        tr.appendChild(tdTitle);
-
-        // exam / subject
-        const tdES = document.createElement("td");
-        tdES.textContent =
-          (item.exam || "—") + " | " + (item.subject || "—");
-        tr.appendChild(tdES);
-
-        // year
-        const tdYear = document.createElement("td");
-        tdYear.textContent = item.year || "—";
-        tr.appendChild(tdYear);
-
-        // downloads
-        const tdDown = document.createElement("td");
-        tdDown.textContent = item.downloads.toString();
-        tr.appendChild(tdDown);
-
-        // actions
-        const tdAct = document.createElement("td");
-        const delBtn = document.createElement("button");
-        delBtn.className = "btn small secondary";
-        delBtn.textContent = "Delete";
-        delBtn.addEventListener("click", () => {
-          handleDelete(item.type, item.index, item.title);
-        });
-        tdAct.appendChild(delBtn);
-        tr.appendChild(tdAct);
-
-        tbody.appendChild(tr);
-      });
-    }
-
-    async function handleDelete(type, index, title) {
-      const ok = confirm(
-        `Delete this ${type === "ebook" ? "E-Book" : "Question paper"}?\n\nTitle: ${title}`
-      );
-      if (!ok) return;
-
-      try {
-        const res = await fetch(`/api/materials/${type}/${index}`, {
-          method: "DELETE",
-        });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          alert(
-            "Delete failed: " +
-            (data.error || `HTTP ${res.status}`)
-          );
-          return;
-        }
-        await fetchMaterialsAndRender();
-      } catch (err) {
-        console.error("Delete error:", err);
-        alert("Error while deleting item. Check console/logs.");
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      // Year in footer
-      const yearSpan = document.getElementById("year");
-      if (yearSpan) yearSpan.textContent = new Date().getFullYear();
-
-      // Theme
-      const savedTheme = localStorage.getItem("studenthub_theme") || "light";
-      applyTheme(savedTheme);
-      const themeToggleBtn = document.getElementById("theme-toggle");
-      if (themeToggleBtn) {
-        themeToggleBtn.addEventListener("click", () => {
-          const next = document.body.classList.contains("dark")
-            ? "light"
-            : "dark";
-          applyTheme(next);
-        });
-      }
-
-      // Admin login
-      const loginBtn = document.getElementById("admin-login-btn");
-      const pwInput = document.getElementById("admin-password");
-      const loginStatus = document.getElementById("admin-login-status");
-      const loginScreen = document.getElementById("admin-login-screen");
-      const adminPanel = document.getElementById("admin-panel");
-
-      async function doLogin() {
-        if (!pwInput.value) {
-          loginStatus.textContent = "Please enter the admin password.";
-          return;
-        }
-        loginStatus.textContent = "Checking password…";
-
-        try {
-          const res = await fetch("/api/admin/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ password: pwInput.value }),
-          });
-
-          const data = await res.json().catch(() => ({}));
-
-          if (!res.ok || !data.ok) {
-            loginStatus.textContent = data.message || "Invalid password.";
-            return;
-          }
-
-          // Simple client-side flag
-          localStorage.setItem("studenthub_admin", "1");
-          loginScreen.style.display = "none";
-          adminPanel.style.display = "block";
-
-          await fetchMaterialsAndRender();
-        } catch (err) {
-          console.error("Admin login error:", err);
-          loginStatus.textContent =
-            "Error contacting server. Check console/logs.";
-        }
-      }
-
-      if (loginBtn) {
-        loginBtn.addEventListener("click", doLogin);
-      }
-      if (pwInput) {
-        pwInput.addEventListener("keyup", (e) => {
-          if (e.key === "Enter") doLogin();
-        });
-      }
-
-      // Auto-login if localStorage flag exists (simple convenience)
-      if (localStorage.getItem("studenthub_admin") === "1") {
-        loginScreen.style.display = "none";
-        adminPanel.style.display = "block";
-        fetchMaterialsAndRender();
-      }
-
-      // Upload handler
-      const uploadForm = document.getElementById("upload-form");
-      const upStatus = document.getElementById("upload-status");
-      if (uploadForm) {
-        uploadForm.addEventListener("submit", async (e) => {
-          e.preventDefault();
-
-          const type = document.getElementById("up-type").value;
-          const title = document.getElementById("up-title").value.trim();
-          const exam = document.getElementById("up-exam").value.trim();
-          const subject = document.getElementById("up-subject").value.trim();
-          const year = document.getElementById("up-year").value.trim();
-          const description = document
-            .getElementById("up-desc")
-            .value.trim();
-          const fileInput = document.getElementById("up-file");
-
-          if (!type || !title || !fileInput.files.length) {
-            upStatus.textContent =
-              "Type, title, and PDF file are required.";
-            return;
-          }
-
-          const formData = new FormData();
-          formData.append("type", type);
-          formData.append("title", title);
-          formData.append("exam", exam);
-          formData.append("subject", subject);
-          formData.append("year", year);
-          formData.append("description", description);
-          formData.append("file", fileInput.files[0]);
-
-          upStatus.textContent = "Uploading…";
-
-          try {
-            const res = await fetch("/api/upload", {
-              method: "POST",
-              body: formData,
-            });
-            const data = await res.json().catch(() => ({}));
-
-            if (!res.ok) {
-              upStatus.textContent =
-                data.error || `Upload failed (HTTP ${res.status})`;
-              return;
-            }
-
-            upStatus.textContent = "Uploaded successfully!";
-            uploadForm.reset();
-
-            // refresh list
-            await fetchMaterialsAndRender();
-
-            setTimeout(() => {
-              upStatus.textContent = "";
-            }, 3000);
-          } catch (err) {
-            console.error("Upload error:", err);
-            upStatus.textContent =
-              "Error uploading. Please check console/logs.";
-          }
-        });
-      }
-
-      // Search + filter events
-      const searchInput = document.getElementById("admin-search");
-      const typeFilter = document.getElementById("admin-type-filter");
-
-      if (searchInput) {
-        searchInput.addEventListener("input", () => {
-          renderAdminTable(searchInput.value, typeFilter.value);
-        });
-      }
-      if (typeFilter) {
-        typeFilter.addEventListener("change", () => {
-          renderAdminTable(searchInput.value, typeFilter.value);
-        });
-      }
-    });
-  </script>
+  <script src="admin.js"></script>
 </body>
-
 </html>

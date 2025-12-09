@@ -421,6 +421,26 @@ body.dark .new-badge {
   border-color: #15803d;
 }
 
+/* OWNED badge style */
+.owned-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #ecfdf5;       /* light green background */
+  color: #047857;            /* dark green text */
+  border: 1px solid #6ee7b7; /* soft green border */
+}
+
+body.dark .owned-badge {
+  background: #022c22;
+  color: #a7f3d0;
+  border-color: #10b981;
+}
+
 .badge-pill {
   display: inline-flex;
   align-items: center;

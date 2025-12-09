@@ -1,319 +1,330 @@
 // admin.js
-// Works with admin.html (login-section, admin-panel, mat-* ids)
+// Admin upload + list + search + delete for StudentHub
 
-function $(id) {
-  return document.getElementById(id);
-}
+(function () {
+  const BASE_URL = window.location.origin;
 
-// =============== VIEW SWITCH ===============
+  const uploadForm = document.getElementById("upload-form");
+  const uploadStatus = document.getElementById("upload-status");
 
-function showAdminPanel() {
-  const loginSection = $("login-section");
-  const adminPanel = $("admin-panel");
-  if (loginSection) loginSection.style.display = "none";
-  if (adminPanel) adminPanel.style.display = "block";
-  loadMaterialsList();
-}
+  const materialsSearch = document.getElementById("materials-search");
+  const materialsTypeFilter = document.getElementById("materials-type-filter");
+  const materialsTableBody = document.getElementById("materials-table-body");
+  const materialsListStatus = document.getElementById("materials-list-status");
 
-function showLogin() {
-  const loginSection = $("login-section");
-  const adminPanel = $("admin-panel");
-  if (adminPanel) adminPanel.style.display = "none";
-  if (loginSection) loginSection.style.display = "block";
-  localStorage.removeItem("studenthub_admin_logged");
-}
+  const themeToggleBtn = document.getElementById("theme-toggle");
 
-// =============== LOGIN ===============
+  // local in-memory list: each item = { id, title, exam, year, price, downloads, type, index }
+  let allMaterials = [];
 
-async function handleAdminLogin(e) {
-  e.preventDefault();
-
-  const pwdInput = $("admin-password");
-  const errorEl = $("admin-login-error");
-  if (errorEl) {
-    errorEl.style.display = "none";
-  }
-
-  if (!pwdInput) {
-    alert("Password input not found.");
-    return;
-  }
-
-  const password = pwdInput.value.trim();
-  if (!password) {
-    if (errorEl) {
-      errorEl.textContent = "Please enter the admin password.";
-      errorEl.style.display = "block";
+  // -----------------------------
+  // Theme toggle (same behaviour as main site)
+  // -----------------------------
+  function applyTheme(theme) {
+    if (theme === "dark") {
+      document.body.classList.add("dark");
+      if (themeToggleBtn) themeToggleBtn.textContent = "☀️";
     } else {
-      alert("Please enter the admin password.");
+      document.body.classList.remove("dark");
+      if (themeToggleBtn) themeToggleBtn.textContent = "🌙";
     }
-    return;
   }
 
-  try {
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password })
-    });
+  function initTheme() {
+    const saved = localStorage.getItem("studenthub-theme") || "light";
+    applyTheme(saved);
 
-    const data = await res.json().catch(() => ({}));
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener("click", () => {
+        const nowDark = !document.body.classList.contains("dark");
+        const next = nowDark ? "dark" : "light";
+        localStorage.setItem("studenthub-theme", next);
+        applyTheme(next);
+      });
+    }
+  }
 
-    if (!res.ok || data.ok === false) {
-      const msg = data.message || data.error || "Invalid password. Please try again.";
-      if (errorEl) {
-        errorEl.textContent = msg;
-        errorEl.style.display = "block";
-      } else {
-        alert(msg);
+  // -----------------------------
+  // Upload handling
+  // -----------------------------
+  async function handleUpload(e) {
+    e.preventDefault();
+    if (!uploadForm) return;
+
+    uploadStatus.textContent = "";
+    uploadStatus.style.color = "";
+
+    const type = document.getElementById("type").value;
+    const title = document.getElementById("title").value.trim();
+    const description = document.getElementById("description").value.trim();
+    const exam = document.getElementById("exam").value.trim();
+    const subject = document.getElementById("subject").value.trim();
+    const year = document.getElementById("year").value.trim();
+    const priceInput = document.getElementById("price");
+    const isPaidCheckbox = document.getElementById("isPaid");
+    const fileInput = document.getElementById("file");
+
+    if (!title || !fileInput.files.length) {
+      uploadStatus.textContent = "Title and PDF file are required.";
+      uploadStatus.style.color = "#b91c1c";
+      return;
+    }
+
+    let price = 0;
+    const rawPrice = Number(priceInput.value || "0");
+    if (isPaidCheckbox.checked) {
+      if (!Number.isFinite(rawPrice) || rawPrice <= 0) {
+        uploadStatus.textContent =
+          "For paid material, please enter a price greater than 0.";
+        uploadStatus.style.color = "#b91c1c";
+        return;
       }
-      return;
+      price = rawPrice;
     }
 
-    // success
-    localStorage.setItem("studenthub_admin_logged", "1");
-    pwdInput.value = "";
-    showAdminPanel();
-  } catch (err) {
-    console.error("Login error:", err);
-    if (errorEl) {
-      errorEl.textContent = "Could not reach server for login.";
-      errorEl.style.display = "block";
-    } else {
-      alert("Could not reach server for login.");
-    }
-  }
-}
+    const formData = new FormData();
+    formData.append("type", type);
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("exam", exam);
+    formData.append("subject", subject);
+    formData.append("year", year);
+    formData.append("price", String(price));
+    formData.append("file", fileInput.files[0]);
 
-// =============== LOAD MATERIALS LIST ===============
+    uploadStatus.textContent = "Uploading...";
+    uploadStatus.style.color = "";
 
-async function loadMaterialsList() {
-  const listEl = $("materials-list");
-  const statsEl = $("admin-stats");
-  if (!listEl) return;
-
-  listEl.innerHTML = "Loading...";
-  if (statsEl) statsEl.textContent = "Loading materials...";
-
-  try {
-    const res = await fetch("/api/materials");
-    if (!res.ok) throw new Error("Failed to load materials");
-
-    const data = await res.json();
-    const ebooks = data.ebooks || [];
-    const qps = data.questionPapers || [];
-
-    if (statsEl) {
-      statsEl.textContent =
-        "E-Books: " +
-        ebooks.length +
-        " | Question Papers: " +
-        qps.length +
-        " | Total: " +
-        (ebooks.length + qps.length);
-    }
-
-    if (!ebooks.length && !qps.length) {
-      listEl.innerHTML = "<p>No materials uploaded yet.</p>";
-      return;
-    }
-
-    const wrapper = document.createElement("div");
-
-    function buildSection(title, list, type) {
-      if (!list.length) return;
-      const section = document.createElement("div");
-
-      const h3 = document.createElement("h3");
-      h3.textContent = title;
-      h3.style.margin = "0.75rem 0 0.4rem";
-      section.appendChild(h3);
-
-      list.forEach(function (item, index) {
-        const row = document.createElement("div");
-        row.style.display = "flex";
-        row.style.justifyContent = "space-between";
-        row.style.alignItems = "center";
-        row.style.border = "1px solid #e5e7eb";
-        row.style.borderRadius = "0.5rem";
-        row.style.padding = "0.5rem 0.75rem";
-        row.style.marginBottom = "0.35rem";
-
-        const label = document.createElement("div");
-        label.innerHTML =
-          "<strong>" +
-          (item.title || "(no title)") +
-          "</strong><br/>" +
-          "<span style='font-size:0.8rem;color:#6b7280;'>" +
-          (item.exam || "—") +
-          " | " +
-          (item.subject || "—") +
-          " | Year: " +
-          (item.year || "—") +
-          " | Downloads: " +
-          (item.downloads || 0) +
-          "</span>";
-        row.appendChild(label);
-
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "Delete";
-        delBtn.className = "btn small";
-        delBtn.style.background = "#ef4444";
-        delBtn.style.color = "#ffffff";
-        delBtn.addEventListener("click", function () {
-          handleDelete(type, index);
-        });
-        row.appendChild(delBtn);
-
-        section.appendChild(row);
+    try {
+      const res = await fetch(`${BASE_URL}/api/upload`, {
+        method: "POST",
+        body: formData,
       });
 
-      wrapper.appendChild(section);
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || "Upload failed");
+      }
+
+      uploadStatus.textContent = "Uploaded successfully!";
+      uploadStatus.style.color = "#16a34a";
+
+      // Clear form
+      uploadForm.reset();
+      priceInput.value = "";
+      isPaidCheckbox.checked = false;
+
+      // Refresh materials list so admin can see new item
+      await fetchMaterials();
+    } catch (err) {
+      console.error("Upload error:", err);
+      uploadStatus.textContent =
+        "Upload failed: " + (err.message || "Unexpected error");
+      uploadStatus.style.color = "#b91c1c";
+    }
+  }
+
+  // -----------------------------
+  // Fetch & render materials
+  // -----------------------------
+  async function fetchMaterials() {
+    if (!materialsTableBody) return;
+
+    materialsTableBody.innerHTML = "";
+    if (materialsListStatus) {
+      materialsListStatus.textContent = "Loading materials…";
+      materialsListStatus.classList.add("muted");
     }
 
-    buildSection("E-Books", ebooks, "ebook");
-    buildSection("Question Papers", qps, "questionPaper");
+    try {
+      const res = await fetch(`${BASE_URL}/api/materials`);
+      if (!res.ok) throw new Error("Failed to load materials");
+      const data = await res.json();
 
-    listEl.innerHTML = "";
-    listEl.appendChild(wrapper);
-  } catch (err) {
-    console.error("Error loading materials:", err);
-    listEl.innerHTML =
-      "<p style='color:#b91c1c;'>Failed to load materials from server.</p>";
-    if (statsEl) statsEl.textContent = "Error loading materials.";
+      const list = [];
+      const ebooks = Array.isArray(data.ebooks) ? data.ebooks : [];
+      const qps = Array.isArray(data.questionPapers) ? data.questionPapers : [];
+
+      // Store index from each type array so we can call DELETE /api/materials/:type/:index
+      ebooks.forEach((m, idx) => {
+        list.push({
+          id: m.id,
+          title: m.title || "",
+          exam: m.exam || "",
+          year: m.year || "—",
+          price: typeof m.price === "number" ? m.price : 0,
+          downloads: m.downloads || 0,
+          type: "ebook",
+          typeLabel: "E-Book",
+          index: idx,
+        });
+      });
+
+      qps.forEach((m, idx) => {
+        list.push({
+          id: m.id,
+          title: m.title || "",
+          exam: m.exam || "",
+          year: m.year || "—",
+          price: typeof m.price === "number" ? m.price : 0,
+          downloads: m.downloads || 0,
+          type: "questionPaper",
+          typeLabel: "Question Paper",
+          index: idx,
+        });
+      });
+
+      allMaterials = list;
+      renderMaterials();
+    } catch (err) {
+      console.error("Fetch materials error:", err);
+      if (materialsListStatus) {
+        materialsListStatus.textContent =
+          "Failed to load materials. Please refresh the page.";
+        materialsListStatus.classList.remove("muted");
+        materialsListStatus.style.color = "#b91c1c";
+      }
+    }
   }
-}
 
-// =============== DELETE ===============
+  function renderMaterials() {
+    if (!materialsTableBody) return;
 
-async function handleDelete(type, index) {
-  if (!confirm("Are you sure you want to delete this item?")) return;
+    const searchTerm = (materialsSearch?.value || "").toLowerCase().trim();
+    const typeFilter = materialsTypeFilter?.value || "";
 
-  try {
-    const res = await fetch("/api/materials/" + type + "/" + index, {
-      method: "DELETE"
-    });
+    let filtered = allMaterials.slice();
 
-    const data = await res.json().catch(function () {
-      return {};
-    });
-    if (!res.ok) {
-      alert(data.error || "Delete failed.");
-      return;
+    if (typeFilter) {
+      filtered = filtered.filter((m) => m.type === typeFilter);
     }
 
-    alert("Deleted successfully.");
-    loadMaterialsList();
-  } catch (err) {
-    console.error("Delete error:", err);
-    alert("Server error while deleting.");
-  }
-}
+    if (searchTerm) {
+      filtered = filtered.filter((m) => {
+        const text =
+          `${m.title} ${m.exam} ${m.year}`.toLowerCase();
+        return text.includes(searchTerm);
+      });
+    }
 
-// =============== UPLOAD ===============
+    materialsTableBody.innerHTML = "";
 
-async function handleUpload(e) {
-  e.preventDefault();
+    if (!filtered.length) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 8;
+      td.textContent = "No materials found.";
+      materialsTableBody.appendChild(tr);
+      tr.appendChild(td);
 
-  const typeEl = $("mat-type");
-  const titleEl = $("mat-title");
-  const descEl = $("mat-description");
-  const subjEl = $("mat-subject");
-  const examEl = $("mat-exam");
-  const yearEl = $("mat-year");
-  const fileEl = $("mat-file");
-  const statusEl = $("upload-status");
-
-  if (statusEl) {
-    statusEl.textContent = "";
-    statusEl.style.color = "#6b7280";
-  }
-
-  if (!typeEl || !titleEl || !fileEl) {
-    alert("Form elements not found in HTML.");
-    return;
-  }
-
-  const type = typeEl.value;
-  const title = titleEl.value.trim();
-
-  if (!title || !fileEl.files.length) {
-    alert("Title and PDF file are required.");
-    return;
-  }
-
-  const fd = new FormData();
-  fd.append("type", type);
-  fd.append("title", title);
-  fd.append("description", descEl ? descEl.value.trim() : "");
-  fd.append("subject", subjEl ? subjEl.value.trim() : "");
-  fd.append("exam", examEl ? examEl.value.trim() : "");
-  fd.append("year", yearEl ? yearEl.value.trim() : "");
-  fd.append("file", fileEl.files[0]);
-
-  try {
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: fd
-    });
-
-    const data = await res.json().catch(function () {
-      return {};
-    });
-
-    if (!res.ok) {
-      const msg = data.error || "Upload failed.";
-      if (statusEl) {
-        statusEl.style.color = "#b91c1c";
-        statusEl.textContent = msg;
-      } else {
-        alert(msg);
+      if (materialsListStatus) {
+        materialsListStatus.textContent = "No materials match your filters.";
+        materialsListStatus.classList.remove("muted");
+        materialsListStatus.style.color = "#6b7280";
       }
       return;
     }
 
-    if (statusEl) {
-      statusEl.style.color = "#16a34a";
-      statusEl.textContent = "Uploaded successfully!";
-    } else {
-      alert("Uploaded successfully!");
-    }
+    filtered.forEach((m, i) => {
+      const tr = document.createElement("tr");
 
-    const uploadFormEl = $("upload-form");
-    if (uploadFormEl) uploadFormEl.reset();
+      const priceLabel = m.price > 0 ? `₹${m.price}` : "Free";
 
-    loadMaterialsList();
-  } catch (err) {
-    console.error("Upload error:", err);
-    if (statusEl) {
-      statusEl.style.color = "#b91c1c";
-      statusEl.textContent = "Server error while uploading.";
-    } else {
-      alert("Server error while uploading.");
-    }
-  }
-}
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${m.title}</td>
+        <td><span class="admin-pill">${m.typeLabel}</span></td>
+        <td>${m.exam || "—"}</td>
+        <td>${m.year || "—"}</td>
+        <td>${priceLabel}</td>
+        <td>${m.downloads}</td>
+        <td>
+          <button
+            class="btn-danger"
+            data-action="delete"
+            data-type="${m.type}"
+            data-index="${m.index}"
+          >
+            Delete
+          </button>
+        </td>
+      `;
 
-// =============== INIT ===============
-
-document.addEventListener("DOMContentLoaded", function () {
-  const loginForm = $("admin-login-form");
-  if (loginForm) loginForm.addEventListener("submit", handleAdminLogin);
-
-  const uploadForm = $("upload-form");
-  if (uploadForm) uploadForm.addEventListener("submit", handleUpload);
-
-  const logoutBtn = $("admin-logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", function () {
-      showLogin();
+      materialsTableBody.appendChild(tr);
     });
+
+    if (materialsListStatus) {
+      materialsListStatus.textContent = `${filtered.length} material(s) shown.`;
+      materialsListStatus.classList.add("muted");
+      materialsListStatus.style.color = "";
+    }
   }
 
-  const logged = localStorage.getItem("studenthub_admin_logged") === "1";
-  if (logged) {
-    showAdminPanel();
-  } else {
-    showLogin();
+  // -----------------------------
+  // Delete handler (event delegation)
+  // -----------------------------
+  async function handleTableClick(e) {
+    const btn = e.target.closest("button[data-action='delete']");
+    if (!btn) return;
+
+    const type = btn.getAttribute("data-type");
+    const indexStr = btn.getAttribute("data-index");
+    const index = Number(indexStr);
+
+    if (!type || Number.isNaN(index)) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this material? This cannot be undone."
+    );
+    if (!confirmed) return;
+
+    btn.disabled = true;
+    const oldLabel = btn.textContent;
+    btn.textContent = "Deleting…";
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/materials/${encodeURIComponent(type)}/${index}`,
+        { method: "DELETE" }
+      );
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Delete failed");
+      }
+
+      await fetchMaterials();
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete material: " + (err.message || "Unexpected error"));
+      btn.disabled = false;
+      btn.textContent = oldLabel;
+    }
   }
-});
+
+  // -----------------------------
+  // Init
+  // -----------------------------
+  function init() {
+    initTheme();
+
+    if (uploadForm) {
+      uploadForm.addEventListener("submit", handleUpload);
+    }
+
+    if (materialsSearch) {
+      materialsSearch.addEventListener("input", () => renderMaterials());
+    }
+    if (materialsTypeFilter) {
+      materialsTypeFilter.addEventListener("change", () => renderMaterials());
+    }
+    if (materialsTableBody) {
+      materialsTableBody.addEventListener("click", handleTableClick);
+    }
+
+    fetchMaterials();
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
