@@ -3,36 +3,6 @@
 
 let myLibraryItems = [];
 
-// -------- THEME ----------
-function applyLibraryTheme(theme) {
-  const body = document.body;
-  const toggleBtn = document.getElementById("theme-toggle");
-  if (!body || !toggleBtn) return;
-
-  if (theme === "dark") {
-    body.classList.add("dark");
-    toggleBtn.textContent = "☀️";
-  } else {
-    body.classList.remove("dark");
-    toggleBtn.textContent = "🌙";
-  }
-
-  localStorage.setItem("studenthub_theme", theme);
-}
-
-function initTheme() {
-  const saved = localStorage.getItem("studenthub_theme") || "light";
-  applyLibraryTheme(saved);
-
-  const toggleBtn = document.getElementById("theme-toggle");
-  if (toggleBtn) {
-    toggleBtn.addEventListener("click", () => {
-      const next = document.body.classList.contains("dark") ? "light" : "dark";
-      applyLibraryTheme(next);
-    });
-  }
-}
-
 // -------- HELPERS ----------
 function slugify(text) {
   return (text || "")
@@ -187,7 +157,14 @@ function renderLibrary() {
     const openBtn = document.createElement("a");
     openBtn.className = "btn small primary";
     openBtn.textContent = "Open in reader";
-    openBtn.href = `/view/${slugify(item.title)}`;
+
+    const materialId = item.itemId || item.id;
+    let readerUrl = `/view/${slugify(item.title)}`;
+    if (materialId) {
+      readerUrl += `?id=${encodeURIComponent(materialId)}`;
+    }
+    openBtn.href = readerUrl;
+
     openBtn.target = "_blank";
     openBtn.rel = "noopener";
     btnRow.appendChild(openBtn);
@@ -266,7 +243,7 @@ function initLibraryFilters() {
 
 // ------ INIT ------
 document.addEventListener("DOMContentLoaded", () => {
-  initTheme();
+  // Theme + navbar are handled globally in script.js
   initLibraryFilters();
   loadMyLibrary();
 });
