@@ -1245,14 +1245,21 @@ app.use("/pdfs", requireAuth, express.static(path.join(__dirname, "pdfs")));
 // -----------------------------
 // Materials API (public listing; files still protected by /pdfs above)
 // -----------------------------
-app.get("/api/materials", async (req, res) => {
-  try {
-    const data = await getAllMaterials();
-    res.json(data);
-  } catch (err) {
-    console.error("/api/materials error:", err);
-    res.status(500).json({ error: "Failed to load materials" });
+// Secure PDF serving (works with iframe/pdf viewer)
+app.get("/pdfs/*", requireAuth, (req, res) => {
+  const filePath = path.join(__dirname, req.path);
+
+  if (!filePath.startsWith(path.join(__dirname, "pdfs"))) {
+    return res.status(403).send("Forbidden");
   }
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("File not found");
+  }
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", "inline"); // 👈 IMPORTANT
+  res.sendFile(filePath);
 });
 
 // -----------------------------
