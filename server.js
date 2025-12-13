@@ -14,6 +14,7 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const { OAuth2Client } = require("google-auth-library");
 const { MongoClient, ObjectId } = require("mongodb");
+const mongoose = require("mongoose");
 
 const app = express();
 
@@ -39,6 +40,7 @@ if (!MONGODB_URI) {
 }
 
 let db; // will be set after connecting
+let mongoClientInstance = null; // keep reference for graceful shutdown
 
 function usersCollection() {
   return db.collection("users");
@@ -52,24 +54,74 @@ function questionPapersCollection() {
 function ordersCollection() {
   return db.collection("orders");
 }
-// Read-later collection (one document per user+material)
 function readLaterCollection() {
   return db.collection("readLater");
 }
+function submissionsCollection() {
+  return db.collection("submissions");
+}
 
 // -----------------------------
-// Middleware
+// Middleware (global)
 // -----------------------------
-app.use(cors());
+app.use(
+  cors({
+    origin: true, // reflect request origin
+    credentials: true, // allow cookies
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
 // -----------------------------
+// Auth helpers
+// -----------------------------
+function signToken(user) {
+  return jwt.sign(
+    {
+      id: user._id ? user._id.toString() : user.id,
+      email: user.email,
+      name: user.name,
+    },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+}
+
+// attach req.user if token cookie present
+function attachUserFromCookie(req, res, next) {
+  const token = req.cookies && req.cookies.token;
+  if (!token) return next();
+
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = payload; // { id, email, name }
+  } catch (err) {
+    // ignore invalid token
+  }
+  next();
+}
+
+app.use(attachUserFromCookie);
+
+// require auth middleware (for protected routes)
+function requireAuth(req, res, next) {
+  if (req.user) return next();
+
+  const accept = req.headers.accept || "";
+  if (accept.includes("text/html")) {
+    const redirectTo =
+      "/login.html?next=" + encodeURIComponent(req.originalUrl || "/");
+    return res.redirect(redirectTo);
+  }
+
+  return res.status(401).json({ ok: false, error: "Not authenticated" });
+}
+
+// -----------------------------
 // In-memory OTP stores
 // -----------------------------
-// email verification: { [email]: { code, expiresAt } }
 const emailOtps = {};
-// password reset: { [email]: { code, expiresAt } }
 const resetOtps = {};
 
 // -----------------------------
@@ -94,77 +146,6 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
 }
 
 // -----------------------------
-// Auth helpers
-// -----------------------------
-function signToken(user) {
-  return jwt.sign(
-    {
-      // prefer Mongo _id if present
-      id: user._id ? user._id.toString() : user.id,
-      email: user.email,
-      name: user.name,
-    },
-    JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-}
-
-// attach req.user if token cookie present
-function attachUserFromCookie(req, res, next) {
-  const token = req.cookies && req.cookies.token;
-  if (!token) return next();
-
-  try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    req.user = payload;
-  } catch (err) {
-    // ignore invalid token
-  }
-  next();
-}
-
-app.use(attachUserFromCookie);
-
-// require auth middleware (for protected routes)
-function requireAuth(req, res, next) {
-  if (req.user) return next();
-
-  const accept = req.headers.accept || "";
-  if (accept.includes("text/html")) {
-    const redirectTo =
-      "/login.html?next=" + encodeURIComponent(req.originalUrl || "/");
-    return res.redirect(redirectTo);
-  }
-
-  return res.status(401).json({ ok: false, error: "Not authenticated" });
-}
-
-// -----------------------------
-// Multer storage (for PDFs)
-// -----------------------------
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const type = req.body.type; // "ebook" or "questionPaper"
-    let dest = "pdfs/others";
-
-    if (type === "ebook") {
-      dest = "pdfs/ebooks";
-    } else if (type === "questionPaper") {
-      dest = "pdfs/question-papers";
-    }
-
-    fs.mkdirSync(dest, { recursive: true });
-    cb(null, dest);
-  },
-  filename: function (req, file, cb) {
-    const original = file.originalname.toLowerCase().replace(/\s+/g, "-");
-    cb(null, Date.now() + "-" + original);
-  },
-});
-
-const upload = multer({ storage });
-
-// -----------------------------
 // Simple admin login route
 // -----------------------------
 app.post("/api/admin/login", (req, res) => {
@@ -182,10 +163,8 @@ app.post("/api/admin/login", (req, res) => {
 });
 
 // -----------------------------
-// USER AUTH ROUTES
+// USER AUTH ROUTES (unchanged)
 // -----------------------------
-
-// Register user + send OTP
 app.post("/api/auth/register", async (req, res) => {
   try {
     const { name, email, password } = req.body || {};
@@ -211,6 +190,8 @@ app.post("/api/auth/register", async (req, res) => {
       emailVerified: false,
       provider: "local",
       createdAt: new Date().toISOString(),
+      walletCoins: 0,
+      notifications: [],
     };
 
     const insertRes = await usersCollection().insertOne(newUser);
@@ -254,7 +235,6 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// Verify email with OTP
 app.post("/api/auth/verify-email", async (req, res) => {
   try {
     const { email, code } = req.body || {};
@@ -293,7 +273,6 @@ app.post("/api/auth/verify-email", async (req, res) => {
   }
 });
 
-// Normal email/password login
 app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body || {};
@@ -346,13 +325,11 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// Logout
 app.post("/api/auth/logout", (req, res) => {
   res.clearCookie("token");
   return res.json({ ok: true });
 });
 
-// Google login with Google Identity Services (ID token)
 app.post("/api/auth/google", async (req, res) => {
   try {
     const { idToken } = req.body || {};
@@ -393,6 +370,8 @@ app.post("/api/auth/google", async (req, res) => {
         emailVerified: true,
         provider: "google",
         createdAt: new Date().toISOString(),
+        walletCoins: 0,
+        notifications: [],
       };
       const insertRes = await usersCollection().insertOne(newUser);
       newUser._id = insertRes.insertedId;
@@ -417,7 +396,6 @@ app.post("/api/auth/google", async (req, res) => {
   }
 });
 
-// return current logged-in user
 app.get("/api/me", requireAuth, async (req, res) => {
   try {
     const user = await usersCollection().findOne({ email: req.user.email });
@@ -549,13 +527,290 @@ app.post("/api/auth/reset-password", async (req, res) => {
 });
 
 // -----------------------------
-// Materials helpers (Mongo)
+// Submissions: support file upload + legacy URL
 // -----------------------------
+const submissionsUploadDir = path.join(__dirname, "pdfs", "submissions");
+fs.mkdirSync(submissionsUploadDir, { recursive: true });
+
+const submissionsStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, submissionsUploadDir);
+  },
+  filename: function (req, file, cb) {
+    const safe = (file.originalname || "file")
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9.\-_\(\)]/g, "");
+    cb(null, Date.now() + "-" + safe);
+  },
+});
+const uploadSubmission = multer({
+  storage: submissionsStorage,
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB limit
+});
+
+// POST create submission (supports either file upload or JSON with pdfUrl)
+// NOTE: call multer middleware directly. multer will only parse if request
+// is multipart/form-data; no need for manual content-type checks.
+app.post(
+  "/api/user-submissions",
+  requireAuth,
+  uploadSubmission.single("file"),
+  async (req, res) => {
+    try {
+      // Debug logs to inspect what arrived (helpful for troubleshooting)
+      console.log("[SUBMISSION] POST /api/user-submissions hit");
+      console.log("  content-type:", req.headers["content-type"] || "(none)");
+      console.log("  body keys:", req.body ? Object.keys(req.body) : "(no body)");
+      console.log("  file:", req.file ? {
+        originalname: req.file.originalname,
+        filename: req.file.filename,
+        path: req.file.path,
+        size: req.file.size
+      } : "(none uploaded)");
+
+      // Accept either fields from form-data or JSON body
+      const title =
+        (req.body && (req.body.title || req.body.pdfTitle)) ||
+        (req.body && req.body.name) ||
+        "";
+      const description = (req.body && req.body.description) || "";
+      const pdfUrlFromBody = (req.body && (req.body.pdfUrl || req.body.fileUrl)) || "";
+
+      const user = req.user || null;
+
+      if (!title || (!pdfUrlFromBody && !req.file)) {
+        return res
+          .status(400)
+          .json({ ok: false, message: "title and pdfUrl are required" });
+      }
+
+      // If file was uploaded via multer, build the relative web path
+      let storedFilePath = null; // relative like "pdfs/submissions/....pdf"
+      let publicFileUrl = null; // web path like "/pdfs/submissions/....pdf"
+
+      if (req.file && req.file.path) {
+        // req.file.path might be absolute on Windows; convert to relative web path
+        let rel = path.relative(__dirname, req.file.path);
+        rel = rel.split(path.sep).join("/"); // normalize to forward slashes
+        storedFilePath = rel; // e.g. "pdfs/submissions/12345-file.pdf"
+        publicFileUrl = "/" + storedFilePath; // e.g. "/pdfs/submissions/..."
+      } else if (pdfUrlFromBody) {
+        // Accept arbitrary URL (external links) - keep as-is
+        publicFileUrl = pdfUrlFromBody.trim();
+      }
+
+      const doc = {
+        title: (title || "").trim(),
+        description: (description || "").trim(),
+
+        // ✅ REQUIRED FIX: save these fields
+        exam: (req.body.exam || "").trim(),
+        subject: (req.body.subject || "").trim(),
+        year: (req.body.year || "").trim(),
+        type: (req.body.type || "").trim(), // ebook | questionPaper
+
+        // store both: 'file' stores the relative path when file uploaded
+        // 'pdfUrl' stores the original URL (if provided)
+        file: storedFilePath,
+        pdfUrl: storedFilePath ? null : (publicFileUrl || null),
+
+        userId: user ? user.id : null,
+        userEmail: user ? user.email : null,
+
+        status: "pending",
+        adminNote: "",
+        createdAt: new Date().toISOString(),
+        processedAt: null,
+      };
+
+
+      const result = await submissionsCollection().insertOne(doc);
+      doc._id = result.insertedId;
+
+      console.log("[SUBMISSION] stored id:", doc._id.toString(), "file:", doc.file, "pdfUrl:", doc.pdfUrl);
+
+      return res.json({
+        ok: true,
+        message: "Submitted",
+        submission: { id: doc._id.toString() },
+      });
+    } catch (err) {
+      console.error("/api/user-submissions (POST) error:", err);
+      return res.status(500).json({ ok: false, message: "Server error" });
+    }
+  }
+);
+
+// GET list submissions (admin). Returns fileUrl normalized for frontend.
+app.get("/api/user-submissions", requireAuth, async (req, res) => {
+  try {
+    const { status } = req.query; // optional ?status=approved|rejected|pending
+    const q = {};
+    if (status) q.status = status;
+
+    const docs = await submissionsCollection().find(q).sort({ createdAt: -1 }).toArray();
+
+    const mapped = docs.map((d) => {
+      // Build fileUrl for frontend:
+      let fileUrl = "";
+      if (d.file) {
+        const normalized = d.file.split(path.sep).join("/");
+        if (normalized.startsWith("/")) fileUrl = normalized;
+        else fileUrl = "/" + normalized;
+      } else if (d.pdfUrl) {
+        fileUrl = d.pdfUrl;
+      }
+
+      return {
+        id: d._id.toString(),
+        title: d.title || "",
+        description: d.description || "",
+        fileUrl: fileUrl || "",
+        userEmail: d.userEmail || "",
+        status: d.status || "pending",
+        adminNote: d.adminNote || "",
+        createdAt: d.createdAt || "",
+        processedAt: d.processedAt || null,
+        // optional extra fields (if you added exam/subject/year in future)
+        exam: d.exam || "",
+        subject: d.subject || "",
+        year: d.year || "",
+        type: d.type || "",
+      };
+    });
+
+    return res.json({ ok: true, submissions: mapped });
+  } catch (err) {
+    console.error("/api/user-submissions (GET) error:", err);
+    return res.status(500).json({ ok: false, message: "Server error loading submissions" });
+  }
+});
+
+// POST approve (admin)
+// NOTE: This handler marks submission as "approved" but DOES NOT auto-publish to ebooks.
+// Approved submissions remain in submissions collection and will be visible in the admin "Approved" page.
+// =============================
+// APPROVE SUBMISSION (ADMIN)
+// =============================
+app.post("/api/user-submissions/:id/approve", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ ok: false, message: "Missing id" });
+    }
+
+    const _id = new ObjectId(id);
+    const now = new Date().toISOString();
+
+    const adminNote =
+      req.body && typeof req.body.adminNote === "string"
+        ? req.body.adminNote.trim()
+        : "";
+
+    const coinsAwarded = Number.isFinite(Number(req.body?.coinsAwarded))
+      ? Number(req.body.coinsAwarded)
+      : 0;
+
+    // Update ONLY admin-related fields
+    const update = {
+      $set: {
+        status: "approved",
+        processedAt: now,
+        adminNote,
+      },
+    };
+
+    const result = await submissionsCollection().updateOne({ _id }, update);
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ ok: false, message: "Submission not found" });
+    }
+
+    // Fetch submission AFTER approval
+    const submission = await submissionsCollection().findOne({ _id });
+
+    // Award coins if applicable
+    if (coinsAwarded > 0 && submission?.userEmail) {
+      await usersCollection().updateOne(
+        { email: submission.userEmail },
+        { $inc: { walletCoins: coinsAwarded } }
+      );
+    }
+
+    // NOTE:
+    // exam / subject / year are intentionally NOT modified here
+    // They must already exist from submission time
+
+    return res.json({
+      ok: true,
+      message: "Submission approved successfully",
+    });
+  } catch (err) {
+    console.error("APPROVE submission error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+
+// =============================
+// REJECT SUBMISSION (ADMIN)
+// =============================
+app.post("/api/user-submissions/:id/reject", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ ok: false, message: "Missing id" });
+    }
+
+    const reason =
+      req.body && typeof req.body.reason === "string"
+        ? req.body.reason.trim()
+        : "";
+
+    const _id = new ObjectId(id);
+
+    const submission = await submissionsCollection().findOne({ _id });
+    if (!submission) {
+      return res.status(404).json({ ok: false, message: "Submission not found" });
+    }
+
+    // Remove uploaded file if exists
+    if (submission.file) {
+      try {
+        const filePath = path.join(__dirname, submission.file);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log("[SUBMISSION REJECT] File deleted:", filePath);
+        }
+      } catch (e) {
+        console.warn("[SUBMISSION REJECT] File delete failed:", e.message);
+      }
+    }
+
+    await submissionsCollection().deleteOne({ _id });
+
+    return res.json({
+      ok: true,
+      message: "Submission rejected and deleted",
+      reason,
+    });
+  } catch (err) {
+    console.error("REJECT submission error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+
+// =============================
+// MATERIAL HELPERS
+// =============================
 async function getAllMaterials() {
   const ebooks = await ebooksCollection()
     .find({})
     .sort({ createdAt: 1, _id: 1 })
     .toArray();
+
   const questionPapers = await questionPapersCollection()
     .find({})
     .sort({ createdAt: 1, _id: 1 })
@@ -566,8 +821,8 @@ async function getAllMaterials() {
     title: doc.title || "",
     description: doc.description || "",
     file: doc.file,
-    subject: doc.subject || "",
     exam: doc.exam || "",
+    subject: doc.subject || "",
     year: doc.year || "—",
     createdAt: doc.createdAt || new Date().toISOString(),
     downloads: doc.downloads || 0,
@@ -582,18 +837,20 @@ async function getAllMaterials() {
 
 async function getListByType(type) {
   if (type === "ebook") {
-    return await ebooksCollection()
+    return ebooksCollection()
       .find({})
       .sort({ createdAt: 1, _id: 1 })
       .toArray();
   }
+
   if (type === "questionPaper") {
-    return await questionPapersCollection()
+    return questionPapersCollection()
       .find({})
       .sort({ createdAt: 1, _id: 1 })
       .toArray();
   }
-  return null;
+
+  return [];
 }
 
 function collectionByType(type) {
@@ -667,8 +924,8 @@ app.get("/api/my-library", requireAuth, async (req, res) => {
             typeof doc.price === "number"
               ? doc.price
               : typeof o.price === "number"
-              ? o.price
-              : 0,
+                ? o.price
+                : 0,
         };
       })
       .filter(Boolean);
@@ -745,10 +1002,8 @@ app.post("/api/library/add", requireAuth, async (req, res) => {
 });
 
 // -----------------------------
-// READ-LATER APIs (single, final version)
+// READ-LATER APIs
 // -----------------------------
-
-// GET /api/read-later  -> { ok, ids: [...], items: [...] }
 app.get("/api/read-later", requireAuth, async (req, res) => {
   try {
     const docs = await readLaterCollection()
@@ -760,7 +1015,6 @@ app.get("/api/read-later", requireAuth, async (req, res) => {
       return res.json({ ok: true, ids: [], items: [] });
     }
 
-    // Normalize materialId to STRING so it works whether stored as string or ObjectId
     const materialIds = docs
       .map((d) => d.materialId)
       .filter(Boolean)
@@ -768,7 +1022,6 @@ app.get("/api/read-later", requireAuth, async (req, res) => {
 
     const uniqueIds = [...new Set(materialIds)];
 
-    // Build ObjectId list from the string ids
     const objectIds = uniqueIds
       .map((id) => {
         try {
@@ -798,10 +1051,9 @@ app.get("/api/read-later", requireAuth, async (req, res) => {
       ebookMap[d._id.toString()] = d;
     });
     qpDocs.forEach((d) => {
-      qpMap[d._id.toString()] = d;
+      qpMap[d._id.toString()] = d; // fixed typo here
     });
 
-    // Build final items list in the SAME order as docs
     const items = docs
       .map((d) => {
         const midStr = d.materialId ? d.materialId.toString() : "";
@@ -839,8 +1091,6 @@ app.get("/api/read-later", requireAuth, async (req, res) => {
   }
 });
 
-
-// POST /api/read-later/add  { materialId }
 app.post("/api/read-later/add", requireAuth, async (req, res) => {
   try {
     const { materialId } = req.body || {};
@@ -857,7 +1107,6 @@ app.post("/api/read-later/add", requireAuth, async (req, res) => {
       return res.status(400).json({ ok: false, message: "Invalid materialId." });
     }
 
-    // determine type (ebook or question paper)
     let doc = await ebooksCollection().findOne({ _id });
     let itemType = "ebook";
     if (!doc) {
@@ -897,7 +1146,6 @@ app.post("/api/read-later/add", requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/read-later/remove  { materialId }
 app.post("/api/read-later/remove", requireAuth, async (req, res) => {
   try {
     const { materialId } = req.body || {};
@@ -922,7 +1170,7 @@ app.post("/api/read-later/remove", requireAuth, async (req, res) => {
 });
 
 // -----------------------------
-// New: record purchases from view.js demo paywall
+// Purchases (unchanged)
 // -----------------------------
 app.post("/api/purchases", requireAuth, async (req, res) => {
   try {
@@ -960,8 +1208,8 @@ app.post("/api/purchases", requireAuth, async (req, res) => {
 
     const existing = await ordersCollection().findOne({
       userId: req.user.id,
-      itemType,
-      itemId: materialId,
+      itemType: itemType,
+      itemId: item._id.toString(),
     });
 
     if (!existing) {
@@ -995,7 +1243,7 @@ app.post("/api/purchases", requireAuth, async (req, res) => {
 app.use("/pdfs", requireAuth, express.static(path.join(__dirname, "pdfs")));
 
 // -----------------------------
-// Materials API (public listing; files still protected)
+// Materials API (public listing; files still protected by /pdfs above)
 // -----------------------------
 app.get("/api/materials", async (req, res) => {
   try {
@@ -1008,9 +1256,31 @@ app.get("/api/materials", async (req, res) => {
 });
 
 // -----------------------------
-// Upload a new PDF & add metadata
+// Admin upload route (unchanged)
 // -----------------------------
 app.post("/api/upload", (req, res) => {
+  const storage = multer.diskStorage({
+    destination: function (req2, file, cb) {
+      const type = req2.body.type; // "ebook" or "questionPaper"
+      let dest = "pdfs/others";
+
+      if (type === "ebook") {
+        dest = "pdfs/ebooks";
+      } else if (type === "questionPaper") {
+        dest = "pdfs/question-papers";
+      }
+
+      fs.mkdirSync(dest, { recursive: true });
+      cb(null, dest);
+    },
+    filename: function (req2, file, cb) {
+      const original = file.originalname.toLowerCase().replace(/\s+/g, "-");
+      cb(null, Date.now() + "-" + original);
+    },
+  });
+
+  const upload = multer({ storage });
+
   upload.single("file")(req, res, async (err) => {
     if (err) {
       console.error("Multer error:", err);
@@ -1149,8 +1419,7 @@ app.post("/api/materials/:id/track-read", requireAuth, async (req, res) => {
 });
 
 // -----------------------------
-// Track a download (also requires login)
-// + record "purchase" for paid items
+// Track download (login required)
 // -----------------------------
 app.get("/api/download/:type/:index", requireAuth, async (req, res) => {
   try {
@@ -1186,6 +1455,7 @@ app.get("/api/download/:type/:index", requireAuth, async (req, res) => {
           price,
           status: "success",
           paymentMethod: "test-free",
+          paymentId: null,
           createdAt: new Date().toISOString(),
         });
         console.log(
@@ -1199,7 +1469,15 @@ app.get("/api/download/:type/:index", requireAuth, async (req, res) => {
       { $set: { downloads: (item.downloads || 0) + 1 } }
     );
 
-    return res.redirect("/" + item.file);
+    // If file is stored as relative path, redirect to '/pdfs/...' else to given file path
+    if (item.file) {
+      // ensure leading slash
+      let url = item.file.split(path.sep).join("/");
+      if (!url.startsWith("/")) url = "/" + url;
+      return res.redirect(url);
+    }
+
+    return res.redirect("/" + (item.file || "").replace(/\\/g, "/"));
   } catch (err) {
     console.error("Download error:", err);
     res.status(500).json({ error: "Download tracking failed" });
@@ -1207,46 +1485,61 @@ app.get("/api/download/:type/:index", requireAuth, async (req, res) => {
 });
 
 // -----------------------------
-// HTML page routes
+// HTML page routes (user side)
 // -----------------------------
-
-// Home page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
-
-// Login page
 app.get("/login.html", (req, res) => {
   res.sendFile(path.join(__dirname, "login.html"));
 });
-
-// Dashboard (protected)
 app.get("/dashboard.html", requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, "dashboard.html"));
 });
-
-// Reader page (protected)
 app.get("/view/:slug", requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, "view.html"));
 });
-
-// My Library page (protected)
 app.get("/library.html", requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, "library.html"));
 });
-
-// Read Later page (protected)
 app.get("/read-later.html", requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, "read-later.html"));
 });
-
-// Admin page
-app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "admin.html"));
+app.get("/submit-pdf.html", requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "submit-pdf.html"));
+});
+app.get("/my-submissions.html", requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "my-submissions.html"));
+});
+app.get("/wallet.html", requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "wallet.html"));
 });
 
 // -----------------------------
-// Static files (CSS, JS, images, admin.html, etc.)
+// ADMIN PAGES
+// -----------------------------
+app.get("/admin.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "admin.html"));
+});
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "admin.html"));
+});
+app.get("/admin-materials.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "admin-materials.html"));
+});
+app.get("/admin-submissions.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "admin-submissions.html"));
+});
+app.get("/admin-withdrawals.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "admin-withdrawals.html"));
+});
+app.get("/admin-approved.html", (req, res) => {
+  // If you created admin-approved.html, this will serve it
+  res.sendFile(path.join(__dirname, "admin-approved.html"));
+});
+
+// -----------------------------
+// Static files
 // -----------------------------
 app.use(express.static(__dirname));
 
@@ -1261,20 +1554,118 @@ app.use((err, req, res, next) => {
 // -----------------------------
 async function startServer() {
   try {
+    // Create native MongoDB client
     const client = new MongoClient(MONGODB_URI);
+    mongoClientInstance = client;
+
     await client.connect();
     db = client.db(DB_NAME);
 
     console.log("[MongoDB] Connected to", DB_NAME);
 
+    // Make db accessible to routes and other code
+    app.locals.db = db;
+    app.locals.mongoClient = client;
+
+    // Mongoose connect (so models/* based on mongoose still work)
+    try {
+      await mongoose.connect(MONGODB_URI, {
+        dbName: DB_NAME,
+      });
+      console.log("[Mongoose] Connected to", DB_NAME);
+    } catch (mErr) {
+      console.warn(
+        "[Mongoose] Failed to connect (continuing, native driver connected):",
+        mErr && mErr.message ? mErr.message : mErr
+      );
+    }
+
+    // Try to mount optional route modules (if present)
+    try {
+      const userRewardsModule = require("./routes/userRewards");
+      if (typeof userRewardsModule === "function") {
+        try {
+          const router = userRewardsModule(db, {
+            requireAuth,
+            addNotification: require("./utils/notifications")?.addNotification,
+            ObjectId,
+          });
+          app.use("/api", router);
+          console.log("[Routes] Mounted routes/userRewards (factory)");
+        } catch (callErr) {
+          console.warn(
+            "[Routes] userRewards exported function but calling it failed:",
+            callErr.message || callErr
+          );
+          app.use("/api", userRewardsModule);
+          console.log("[Routes] Mounted routes/userRewards (fallback)");
+        }
+      } else {
+        app.use("/api", userRewardsModule);
+        console.log("[Routes] Mounted routes/userRewards");
+      }
+    } catch (err) {
+      console.warn("[Routes] Could not mount routes/userRewards:", err && err.message ? err.message : err);
+    }
+
+    try {
+      const adminRewards = require("./routes/adminRewards");
+      if (typeof adminRewards === "function") {
+        try {
+          const router = adminRewards(db, { requireAuth, ObjectId });
+          app.use("/api", router);
+          console.log("[Routes] Mounted routes/adminRewards (factory)");
+        } catch (callErr) {
+          console.warn(
+            "[Routes] adminRewards exported function but calling it failed:",
+            callErr.message || callErr
+          );
+          app.use("/api", adminRewards);
+          console.log("[Routes] Mounted routes/adminRewards (fallback)");
+        }
+      } else {
+        app.use("/api", adminRewards);
+        console.log("[Routes] Mounted routes/adminRewards");
+      }
+    } catch (err) {
+      console.warn("[Routes] Could not mount routes/adminRewards:", err && err.message ? err.message : err);
+    }
+
     app.listen(PORT, () => {
       console.log(`StudentHub server running at http://127.0.0.1:${PORT}`);
       console.log("ADMIN_SECRET:", ADMIN_SECRET);
     });
+
+    // Graceful shutdown
+    const gracefulClose = async () => {
+      console.log("\n[INFO] Graceful shutdown initiated.");
+      try {
+        if (mongoClientInstance) {
+          await mongoClientInstance.close();
+          console.log("[MongoDB] Native client closed.");
+        }
+      } catch (e) {
+        console.warn("[MongoDB] Error closing native client:", e && e.message ? e.message : e);
+      }
+      try {
+        await mongoose.disconnect();
+        console.log("[Mongoose] Disconnected.");
+      } catch (e) {
+        // ignore
+      }
+      process.exit(0);
+    };
+
+    process.on("SIGINT", gracefulClose);
+    process.on("SIGTERM", gracefulClose);
   } catch (err) {
     console.error("[FATAL] Failed to connect to MongoDB:", err);
+    try {
+      if (mongoClientInstance) await mongoClientInstance.close();
+    } catch (_) { }
     process.exit(1);
   }
 }
 
 startServer();
+

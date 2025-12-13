@@ -5,6 +5,7 @@
   <title>StudentHub – Reader</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="/styles.css" />
+
   <style>
     .reader-shell {
       max-width: 1100px;
@@ -19,177 +20,91 @@
       border: 1px solid #1f2937;
       box-shadow: 0 10px 30px rgba(15,23,42,0.7);
     }
-    .reader-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      align-items: flex-start;
-      margin-bottom: 0.75rem;
-    }
-    .reader-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 0.25rem;
-    }
-    .reader-meta {
-      font-size: 0.85rem;
-      color: #6b7280;
-    }
-    body.dark .reader-meta {
-      color: #9ca3af;
-    }
-    .reader-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      align-items: center;
-      justify-content: flex-end;
-      font-size: 0.8rem;
-    }
+
+    .reader-header { display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; margin-bottom:0.75rem; }
+    .reader-title { font-size:1.25rem; font-weight:600; margin-bottom:0.25rem; }
+    .reader-meta { font-size:0.85rem; color:#6b7280; }
+    body.dark .reader-meta { color:#9ca3af; }
+
+    .reader-badges { display:flex; flex-wrap:wrap; gap:0.4rem; align-items:center; }
+
     .price-chip {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.1rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      background: #fef3c7;
-      color: #92400e;
+      padding:0.1rem 0.6rem; border-radius:999px; font-size:0.8rem;
+      background:#fef3c7; color:#92400e;
     }
-    body.dark .price-chip {
-      background: #4b5563;
-      color: #f9fafb;
-    }
+    body.dark .price-chip { background:#4b5563; color:#f9fafb; }
+
     .pill {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.1rem 0.55rem;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      background: #e0f2fe;
-      color: #0369a1;
+      padding:0.1rem 0.55rem; border-radius:999px; font-size:0.75rem;
+      background:#e0f2fe; color:#0369a1;
     }
-    body.dark .pill {
-      background: #0f172a;
-      color: #60a5fa;
-    }
+    body.dark .pill { background:#0f172a; color:#60a5fa; }
 
     .reader-paywall {
-      margin: 1rem 0 1.25rem;
-      padding: 0.9rem 1rem;
-      border-radius: 0.8rem;
-      border: 1px dashed #e5e7eb;
-      background: #f9fafb;
-      font-size: 0.9rem;
+      margin:1rem 0 1.25rem; padding:0.9rem 1rem; border-radius:0.8rem;
+      border:1px dashed #e5e7eb; background:#f9fafb; font-size:0.9rem;
     }
-    body.dark .reader-paywall {
-      border-color: #1f2937;
-      background: #020617;
+    body.dark .reader-paywall { border-color:#1f2937; background:#020617; }
+
+    .paywall-field input {
+      width:100%; font-size:0.85rem; padding:0.4rem 0.55rem;
+      border-radius:0.5rem; border:1px solid #d1d5db;
     }
-    .paywall-title {
-      font-weight: 600;
-      margin-bottom: 0.25rem;
-    }
-    .paywall-steps {
-      font-size: 0.82rem;
-      color: #6b7280;
-      margin-bottom: 0.55rem;
-    }
-    body.dark .paywall-steps {
-      color: #9ca3af;
-    }
-    .paywall-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 0.75rem;
-      margin-bottom: 0.6rem;
-    }
-    .paywall-field label {
-      font-size: 0.8rem;
-      display: block;
-      margin-bottom: 0.15rem;
-    }
-    .paywall-field input[type="text"],
-    .paywall-field input[type="number"] {
-      width: 100%;
-      font-size: 0.85rem;
-      padding: 0.4rem 0.55rem;
-      border-radius: 0.5rem;
-      border: 1px solid #d1d5db;
-      outline: none;
-    }
-    body.dark .paywall-field input[type="text"],
-    body.dark .paywall-field input[type="number"] {
-      background: #020617;
-      border-color: #374151;
-      color: #f9fafb;
-    }
-    .paywall-confirm {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.8rem;
-      margin-bottom: 0.5rem;
-    }
-    .paywall-status {
-      font-size: 0.8rem;
-      margin-top: 0.2rem;
-    }
-    .paywall-status.error {
-      color: #b91c1c;
-    }
-    .paywall-status.ok {
-      color: #16a34a;
-    }
+    body.dark .paywall-field input { background:#020617; border-color:#374151; color:#f9fafb; }
 
     .reader-frame {
-      width: 100%;
-      min-height: 70vh;
-      border-radius: 0.75rem;
-      border: 1px solid #e5e7eb;
-      background: #111827;
+      width:100%; min-height:70vh; border-radius:0.75rem;
+      border:1px solid #e5e7eb; background:#111827;
     }
-    body.dark .reader-frame {
-      border-color: #1f2937;
-    }
+    body.dark .reader-frame { border-color:#1f2937; }
 
-    @media (max-width: 640px) {
-      .reader-shell {
-        margin: 1rem auto;
-        padding: 1rem 1rem 1.5rem;
-      }
-      .reader-header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .reader-badges {
-        justify-content: flex-start;
-      }
+    @media (max-width:640px) {
+      .reader-header { flex-direction:column; }
+      .reader-badges { justify-content:flex-start; }
     }
   </style>
 </head>
+
 <body>
+
+  <!-- ✅ Updated Navbar (matches entire site) -->
   <header class="navbar">
     <div class="logo">StudentHub</div>
+
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+
     <nav class="nav-links" id="nav-links">
       <a href="/">Home</a>
       <a href="/#ebooks">E-Books</a>
       <a href="/#question-papers">Question Papers</a>
-      <a href="/dashboard.html" id="nav-auth-link">Sign in</a>
+      <a href="/#about">About</a>
+      <a href="/#contact">Contact</a>
+
+      <!-- User features -->
+      <a href="/library.html">My Library</a>
+      <a href="/read-later.html">Read Later</a>
+
+      <!-- Auth-aware -->
+      <a href="/dashboard.html" id="nav-dashboard-link" style="display:none;">My dashboard</a>
+      <a href="/login.html" id="nav-login-link" style="display:none;">Sign in</a>
     </nav>
-    <button id="nav-toggle" class="nav-toggle" aria-label="Toggle navigation">
-      ☰
-    </button>
+
     <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
   </header>
 
+  <!-- ---------------------- MAIN ---------------------- -->
   <main class="section">
     <div class="reader-shell">
+      
       <div class="reader-header">
         <div>
           <div class="reader-meta" id="reader-breadcrumb">Loading material…</div>
           <h1 class="reader-title" id="reader-title"></h1>
           <p class="reader-meta" id="reader-meta-line"></p>
         </div>
+
         <div class="reader-badges">
           <span class="pill" id="reader-type-pill"></span>
           <span class="price-chip" id="reader-price-chip"></span>
@@ -197,13 +112,14 @@
         </div>
       </div>
 
-      <!-- Payment / unlock section -->
+      <!-- Unlock Paywall -->
       <div id="reader-paywall" class="reader-paywall" style="display:none;">
         <div class="paywall-title">Unlock this premium PDF</div>
+
         <div class="paywall-steps">
-          Step 1 – Send payment using your preferred method (UPI / bank).<br />
-          Step 2 – Enter the amount and any reference ID, tick confirmation and click <b>Unlock PDF</b>.<br />
-          <span style="font-size:0.78rem;">(Demo mode: no real payment is processed, but your purchase is stored in your account.)</span>
+          Step 1 – Send payment (UPI/Bank).<br>
+          Step 2 – Enter details below and confirm.<br>
+          <span style="font-size:0.78rem;">Demo mode: No real payment processed.</span>
         </div>
 
         <div class="paywall-grid">
@@ -213,32 +129,28 @@
           </div>
           <div class="paywall-field">
             <label>Amount you paid (₹)</label>
-            <input type="number" id="paywall-amount" min="1" />
+            <input type="number" id="paywall-amount" />
           </div>
           <div class="paywall-field">
-            <label>Payment reference (optional)</label>
-            <input type="text" id="paywall-reference" placeholder="UPI ref / transaction id" />
+            <label>Reference ID (optional)</label>
+            <input type="text" id="paywall-reference" placeholder="Transaction ID" />
           </div>
         </div>
 
-        <label class="paywall-confirm">
-          <input type="checkbox" id="paywall-confirm" />
-          <span>I confirm I’ve completed the payment for this PDF.</span>
+        <label style="font-size:0.8rem;">
+          <input type="checkbox" id="paywall-confirm" /> I confirm I paid for this PDF.
         </label>
 
-        <button type="button" class="btn primary" id="paywall-unlock-btn">
-          Unlock PDF
-        </button>
+        <button class="btn primary" id="paywall-unlock-btn">Unlock PDF</button>
         <div id="paywall-status" class="paywall-status"></div>
       </div>
 
-      <iframe id="pdf-frame" class="reader-frame" title="PDF reader"></iframe>
+      <iframe id="pdf-frame" class="reader-frame"></iframe>
+
     </div>
   </main>
 
-  <!-- If you use global script.js for theme/navbar etc, load it first -->
   <script src="/script.js"></script>
-  <!-- Page-specific logic -->
   <script src="/view.js"></script>
 </body>
 </html>

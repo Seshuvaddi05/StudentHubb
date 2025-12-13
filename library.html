@@ -158,18 +158,15 @@
 
     /* ---------------------------
        Navbar badge styles
-       Yellow rounded pill as requested
+       Yellow rounded pill (for notifications count)
        --------------------------- */
 
-    /* Do NOT override display here, let global CSS control show/hide.
-       This prevents the mobile menu from being stuck open. */
     .navbar .nav-links {
       position: relative;
       gap: 0.75rem;
       align-items: center;
     }
 
-    /* Basic badge */
     .nav-badge {
       display: inline-flex;
       align-items: center;
@@ -178,16 +175,15 @@
       height: 1.6rem;
       padding: 0 0.45rem;
       border-radius: 999px;
-      background: #f59e0b; /* yellow pill */
-      color: #0f172a; /* dark text */
+      background: #f59e0b;
+      color: #0f172a;
       font-weight: 600;
       font-size: 0.78rem;
-      margin-left: 0.45rem;
+      margin-left: 0.2rem;
       box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
       vertical-align: middle;
     }
 
-    /* Slightly smaller on small screens */
     @media (max-width: 520px) {
       .nav-badge {
         min-width: 1.4rem;
@@ -197,23 +193,39 @@
       }
     }
 
-    /* Dark-theme friendly variant */
     body.dark .nav-badge {
       background: #f59e0b;
       color: #021423;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     }
 
-    /* Keep links laid out nicely with badges */
     .nav-links a {
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
     }
+
+    /* simple icon button for notifications */
+    .nav-icon-btn {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+    }
+    .nav-icon-btn:hover {
+      background: rgba(148, 163, 184, 0.2);
+    }
+    body.dark .nav-icon-btn:hover {
+      background: rgba(148, 163, 184, 0.25);
+    }
   </style>
 </head>
 <body>
-  <!-- Shared Navbar -->
+  <!-- Shared user Navbar (final unified version) -->
   <header class="navbar">
     <div class="logo">StudentHub</div>
 
@@ -230,14 +242,34 @@
       <a href="/#question-papers">Question Papers</a>
       <a href="/#about">About</a>
       <a href="/#contact">Contact</a>
+
       <a href="/library.html" class="active">My Library</a>
       <a href="/read-later.html">Read Later</a>
+      <!-- removed permanently from navbar: Submit PDF, My Submissions, Wallet -->
 
-      <!-- one of these two will be visible based on auth (handled in script.js) -->
-      <a href="/dashboard.html" id="nav-auth-link" style="display: none;">
+      <!-- auth-aware links (script.js will toggle visibility) -->
+      <a href="/dashboard.html" id="nav-dashboard-link" style="display:none;">
         My dashboard
       </a>
+      <a href="/login.html" id="nav-login-link" style="display:none;">
+        Sign in
+      </a>
     </nav>
+
+    <!-- Notifications bell + badge (count is filled by JS if you add it later) -->
+    <button
+      id="notifications-btn"
+      class="nav-icon-btn"
+      type="button"
+      aria-label="Notifications"
+    >
+      <span>🔔</span>
+      <span
+        id="notifications-count"
+        class="nav-badge"
+        style="display:none;"
+      >0</span>
+    </button>
 
     <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
   </header>
@@ -283,7 +315,7 @@
 
   <button id="back-to-top" class="back-to-top">↑</button>
 
-  <!-- Global logic: navbar, theme, materials, counters, etc. -->
+  <!-- Global logic: navbar, theme, auth-aware nav, etc. -->
   <script src="script.js" defer></script>
 
   <!-- Page-specific logic: My Library list, filters, etc. -->

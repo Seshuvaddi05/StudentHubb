@@ -2,318 +2,311 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>StudentHub – Admin</title>
+  <title>StudentHub Admin – Upload</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <link rel="stylesheet" href="styles.css" />
+
   <style>
-    .admin-container {
-      max-width: 980px;
-      margin: 2rem auto;
-      background: #ffffff;
-      border-radius: 0.9rem;
-      padding: 1.5rem 1.75rem;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
-    }
-    body.dark .admin-container {
+    /* Page-specific admin upload styles (keeps look consistent with your UI) */
+    .admin-shell { min-height: 100vh; background: #f1f5f9; }
+    body.dark .admin-shell { background: #020617; }
+
+    .admin-header {
       background: #020617;
-      border: 1px solid #1f2937;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
-    }
-
-    .admin-heading {
-      font-size: 1.4rem;
-      font-weight: 600;
-      margin-bottom: 0.4rem;
-    }
-    .admin-subtitle {
-      font-size: 0.9rem;
-      color: #6b7280;
-      margin-bottom: 1rem;
-    }
-    body.dark .admin-subtitle {
-      color: #9ca3af;
-    }
-
-    .price-row {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .price-row .form-row {
-      flex: 1 1 140px;
-      margin-bottom: 0;
-    }
-    .price-row small {
-      font-size: 0.75rem;
-      color: #6b7280;
-    }
-    body.dark .price-row small {
-      color: #9ca3af;
-    }
-    .price-chip {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.15rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      background: #fef3c7;
-      color: #92400e;
-    }
-    body.dark .price-chip {
-      background: #4b5563;
-      color: #f9fafb;
-    }
-
-    /* Manage materials section */
-    .admin-section-divider {
-      margin: 1.75rem 0 1.25rem;
-      border-top: 1px dashed #e5e7eb;
-    }
-    body.dark .admin-section-divider {
-      border-top-color: #1f2937;
-    }
-    .admin-subheading {
-      font-size: 1.05rem;
-      font-weight: 600;
-      margin-bottom: 0.4rem;
-    }
-    .admin-subtext {
-      font-size: 0.85rem;
-      color: #6b7280;
-      margin-bottom: 0.75rem;
-    }
-    body.dark .admin-subtext {
-      color: #9ca3af;
-    }
-
-    .admin-filter-row {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin-bottom: 0.75rem;
-    }
-    .admin-filter-row .filter-input {
-      flex: 1 1 220px;
-    }
-    .admin-filter-row .filter-select {
-      flex: 0 0 160px;
-    }
-
-    .admin-table-wrapper {
-      width: 100%;
-      overflow-x: auto;
-    }
-    .admin-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-    .admin-table th,
-    .admin-table td {
-      padding: 0.4rem 0.5rem;
-      border-bottom: 1px solid #e5e7eb;
-      text-align: left;
-      vertical-align: middle;
-    }
-    .admin-table th {
-      font-weight: 600;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: #6b7280;
-    }
-    .admin-table td {
-      color: #111827;
-    }
-    body.dark .admin-table th {
-      border-bottom-color: #1f2937;
-      color: #9ca3af;
-    }
-    body.dark .admin-table td {
-      border-bottom-color: #1f2937;
       color: #e5e7eb;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.6);
+      position: sticky;
+      top: 0;
+      z-index: 40;
     }
-
-    .admin-pill {
-      display: inline-flex;
-      padding: 0.1rem 0.45rem;
+    .admin-header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0.7rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .admin-brand { font-weight: 600; letter-spacing: 0.02em; }
+    .admin-nav { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.88rem; }
+    .admin-nav a {
+      color: #e5e7eb;
+      text-decoration: none;
+      padding: 0.25rem 0.75rem;
       border-radius: 999px;
-      font-size: 0.7rem;
-      background: #eef2ff;
-      color: #3730a3;
+      border: 1px solid transparent;
     }
-    body.dark .admin-pill {
-      background: #111827;
-      color: #c7d2fe;
+    .admin-nav a:hover { background: rgba(148, 163, 184, 0.15); color: #fff; }
+    .admin-nav .active { background: #fbbf24; color: #1f2937; border-color: #fbbf24; font-weight: 600; }
+
+    .admin-actions { display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; }
+    .admin-view-link {
+      color: #e5e7eb; text-decoration: none; border-radius: 999px; padding: 0.25rem 0.75rem;
+      border: 1px solid rgba(148,163,184,0.6);
+    }
+    .admin-view-link:hover { background: rgba(148,163,184,0.18); }
+
+    .admin-main { max-width: 1100px; margin: 2rem auto; padding: 0 1.25rem 2rem; }
+    .admin-card {
+      background: #ffffff; border-radius: 0.9rem; padding: 1.5rem 1.75rem;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12); border: 1px solid #e5e7eb;
+    }
+    body.dark .admin-card { background: #020617; border-color: #1f2937; box-shadow: 0 10px 30px rgba(15,23,42,0.7); }
+
+    .admin-card h1 { font-size: 1.4rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .admin-card p.subtitle { font-size: 0.9rem; color: #6b7280; margin-bottom: 1.1rem; }
+    body.dark .admin-card p.subtitle { color: #9ca3af; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 0.85rem; }
+
+    .form-group label { display: block; font-size: 0.86rem; font-weight: 500; margin-bottom: 0.2rem; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 0.55rem 0.7rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; font-size: 0.9rem;
+    }
+    .form-group textarea { min-height: 110px; resize: vertical; }
+    body.dark .form-group input, body.dark .form-group select, body.dark .form-group textarea {
+      background: #020617; border-color: #1f2937; color: #e5e7eb;
     }
 
-    .btn-danger {
-      background: #b91c1c;
-      color: #f9fafb;
-      border: none;
-      border-radius: 999px;
-      padding: 0.25rem 0.7rem;
-      font-size: 0.75rem;
-      cursor: pointer;
-    }
-    .btn-danger:hover {
-      background: #991b1b;
-    }
+    .inline-row { display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center; }
+    .inline-row .form-group { flex: 1 1 180px; }
 
-    .admin-status-text {
-      font-size: 0.8rem;
-      margin-top: 0.35rem;
-    }
-    .admin-status-text.muted {
-      color: #6b7280;
-    }
-    body.dark .admin-status-text.muted {
-      color: #9ca3af;
-    }
+    .price-note { font-size: 0.78rem; color:#6b7280; margin-top:0.2rem; }
+    body.dark .price-note { color:#9ca3af; }
+
+    #file-selected { margin-top:0.35rem; font-size:0.9rem; color:#374151; }
+    body.dark #file-selected { color:#cbd5e1; }
+
+    .btn { display:inline-block; padding:.55rem .9rem; border-radius:.6rem; border:none; cursor:pointer; font-weight:600; }
+    .btn.primary { background:#f59e0b; color:#0f172a; }
+    .btn.primary:disabled { opacity:0.65; cursor:not-allowed; }
+
+    #upload-status { margin-top:0.7rem; font-size:0.95rem; color:#6b7280; }
+    body.dark #upload-status { color:#9ca3af; }
+
+    .help-inline { font-size:0.82rem; color:#6b7280; margin-top:0.25rem; }
+    body.dark .help-inline { color:#9ca3af; }
 
     @media (max-width: 640px) {
-      .admin-container {
-        margin-top: 1.25rem;
-        padding: 1.25rem 1.1rem;
-      }
+      .admin-header-inner { flex-wrap:wrap; justify-content:center; }
+      .admin-main { margin-top: 1.25rem; }
+      .admin-card { padding: 1.25rem 1.1rem; }
     }
   </style>
 </head>
 <body>
-  <header class="navbar">
-    <div class="logo">StudentHub Admin</div>
-    <nav class="nav-links">
-      <a href="/">View site</a>
-    </nav>
-    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
-  </header>
+  <div class="admin-shell">
+    <!-- Admin top bar shared by all admin pages -->
+    <header class="admin-header">
+      <div class="admin-header-inner">
+        <div class="admin-brand">StudentHub Admin</div>
 
-  <main class="section">
-    <div class="admin-container">
-      <!-- Upload section -->
-      <h1 class="admin-heading">Upload material</h1>
-      <p class="admin-subtitle">
-        Upload e-books or question papers. Leave it as
-        <span class="price-chip">0 = Free</span>, or mark it as paid and set a price.
-      </p>
+        <nav class="admin-nav" aria-label="Admin navigation">
+          <a href="/admin.html" class="active">Upload</a>
+          <a href="/admin-materials.html">Materials</a>
+          <a href="/admin-submissions.html">Submissions</a>
+          <a href="/admin-approved.html">Approved</a>
+          <a href="/admin-withdrawals.html">Withdrawals</a>
+        </nav>
 
-      <form id="upload-form" class="request-form">
-        <div class="form-row">
-          <label>Type</label>
-          <select id="type" required>
-            <option value="ebook">E-Book</option>
-            <option value="questionPaper">Question Paper</option>
-          </select>
+        <div class="admin-actions">
+          <a href="/" class="admin-view-link" title="View public site">View site</a>
+          <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">🌙</button>
         </div>
-
-        <div class="form-row">
-          <label>Title</label>
-          <input type="text" id="title" required />
-        </div>
-
-        <div class="form-row">
-          <label>Description</label>
-          <textarea id="description" rows="3"></textarea>
-        </div>
-
-        <div class="form-row">
-          <label>Exam</label>
-          <input type="text" id="exam" />
-        </div>
-
-        <div class="form-row">
-          <label>Subject</label>
-          <input type="text" id="subject" />
-        </div>
-
-        <div class="form-row">
-          <label>Year</label>
-          <input type="text" id="year" placeholder="2024" />
-        </div>
-
-        <!-- Pricing -->
-        <div class="price-row" style="margin-bottom:0.75rem;">
-          <div class="form-row">
-            <label for="price">Price (₹)</label>
-            <input
-              type="number"
-              id="price"
-              min="0"
-              step="1"
-              placeholder="0 (Free material)"
-            />
-          </div>
-
-          <div class="form-row" style="flex:0 0 auto;">
-            <label style="display:block; margin-bottom:0.2rem;">Paid?</label>
-            <label style="display:flex; align-items:center; gap:0.4rem;">
-              <input type="checkbox" id="isPaid" />
-              <span>Mark as paid material</span>
-            </label>
-            <small>
-              If unchecked, this stays free (price = 0). When checked, you should enter a price greater than 0.
-            </small>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <label>PDF file</label>
-          <input type="file" id="file" accept="application/pdf" required />
-        </div>
-
-        <button type="submit" class="btn primary">Upload</button>
-        <p id="upload-status" style="font-size:0.85rem; margin-top:0.4rem;"></p>
-      </form>
-
-      <!-- Divider -->
-      <div class="admin-section-divider"></div>
-
-      <!-- Manage materials section -->
-      <h2 class="admin-subheading">Manage existing materials</h2>
-      <p class="admin-subtitle admin-subtext">
-        Search, filter and delete uploaded e-books and question papers.
-      </p>
-
-      <div class="admin-filter-row">
-        <input
-          type="text"
-          id="materials-search"
-          class="filter-input"
-          placeholder="Search by title, exam, subject..."
-        />
-        <select id="materials-type-filter" class="filter-select">
-          <option value="">All types</option>
-          <option value="ebook">E-Books</option>
-          <option value="questionPaper">Question Papers</option>
-        </select>
       </div>
+    </header>
 
-      <div class="admin-table-wrapper">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Title</th>
-              <th>Type</th>
-              <th>Exam</th>
-              <th>Year</th>
-              <th>Price</th>
-              <th>Downloads</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="materials-table-body">
-            <!-- Filled by admin.js -->
-          </tbody>
-        </table>
+    <main class="admin-main">
+      <div class="admin-card" role="region" aria-labelledby="upload-heading">
+        <h1 id="upload-heading">Upload material</h1>
+        <p class="subtitle">
+          Upload e-books or question papers. Leave price as <strong>0 = Free</strong>, or mark it as paid and set a price.
+        </p>
+
+        <form id="upload-form" enctype="multipart/form-data" novalidate>
+          <div class="form-grid">
+
+            <div class="form-group">
+              <label for="type">Type</label>
+              <select id="type" name="type" required>
+                <option value="ebook">E-Book</option>
+                <option value="questionPaper">Question Paper</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="title">Title</label>
+              <input id="title" name="title" type="text" required placeholder="Example: Quantitative Aptitude Shortcut Guide" />
+            </div>
+
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea id="description" name="description" placeholder="Briefly describe what this PDF contains and which exam/subject it helps with."></textarea>
+              <div class="help-inline">A clear description increases discoverability and helps admins decide.</div>
+            </div>
+
+            <div class="inline-row">
+              <div class="form-group">
+                <label for="exam">Exam</label>
+                <input id="exam" name="exam" type="text" placeholder="eg. Semester / GATE / JEE" />
+              </div>
+              <div class="form-group">
+                <label for="subject">Subject</label>
+                <input id="subject" name="subject" type="text" placeholder="eg. Mathematics, Physics, etc." />
+              </div>
+              <div class="form-group">
+                <label for="year">Year</label>
+                <input id="year" name="year" type="number" min="1990" max="2100" placeholder="2025" />
+              </div>
+            </div>
+
+            <div class="inline-row" style="align-items:flex-start;">
+              <div class="form-group" style="flex:0 0 auto;">
+                <label>
+                  <input type="checkbox" id="isPaid" aria-describedby="price-note" />
+                  Mark as paid
+                </label>
+              </div>
+
+              <div class="form-group" style="max-width:200px;">
+                <label for="price">Price (₹)</label>
+                <input id="price" name="price" type="number" min="0" step="1" value="0" disabled aria-describedby="price-note" />
+                <div id="price-note" class="price-note">Set &gt; 0 only when "Mark as paid" is checked.</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="file">PDF file</label>
+              <input id="file" name="file" type="file" accept="application/pdf" required />
+              <div id="file-selected" aria-live="polite">No file chosen</div>
+              <div class="help-inline">Upload a PDF file (max 25 MB recommended). We store your submission for admin review.</div>
+            </div>
+
+            <div style="display:flex; gap:0.6rem; align-items:center;">
+              <button type="submit" class="btn primary" id="upload-btn">Upload</button>
+              <div id="upload-status" role="status" aria-live="polite"></div>
+            </div>
+          </div>
+        </form>
+
       </div>
-      <p id="materials-list-status" class="admin-status-text muted">
-        Loading materials…
-      </p>
-    </div>
-  </main>
+    </main>
+  </div>
 
-  <script src="admin.js"></script>
+  <!-- Keep your existing admin.js to handle the upload; inline helpers only improve UI -->
+  <script>
+    // Theme toggle (keeps parity with other admin pages)
+    (function () {
+      function applyTheme(t) {
+        const btn = document.getElementById("theme-toggle");
+        if (t === "dark") {
+          document.body.classList.add("dark");
+          btn.textContent = "☀️";
+        } else {
+          document.body.classList.remove("dark");
+          btn.textContent = "🌙";
+        }
+        localStorage.setItem("studenthub-theme", t);
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        applyTheme(localStorage.getItem("studenthub-theme") || "light");
+        const btn = document.getElementById("theme-toggle");
+        btn.addEventListener("click", () => {
+          applyTheme(document.body.classList.contains("dark") ? "light" : "dark");
+        });
+      });
+    })();
+
+    // Small UI helpers for upload form (no server logic here)
+    (function () {
+      const isPaid = document.getElementById("isPaid");
+      const priceInput = document.getElementById("price");
+      const fileInput = document.getElementById("file");
+      const fileSelected = document.getElementById("file-selected");
+      const uploadForm = document.getElementById("upload-form");
+      const uploadBtn = document.getElementById("upload-btn");
+      const uploadStatus = document.getElementById("upload-status");
+
+      // Toggle price input enabled state
+      function togglePrice() {
+        if (isPaid.checked) {
+          priceInput.disabled = false;
+          if (Number(priceInput.value) <= 0) priceInput.value = 50; // friendly default for paid items
+        } else {
+          priceInput.disabled = true;
+          priceInput.value = 0;
+        }
+      }
+      isPaid.addEventListener("change", togglePrice);
+      togglePrice();
+
+      // Show chosen filename
+      fileInput.addEventListener("change", () => {
+        const f = (fileInput.files && fileInput.files[0]) || null;
+        if (!f) {
+          fileSelected.textContent = "No file chosen";
+          return;
+        }
+        const sizeMB = (f.size / (1024 * 1024)).toFixed(2);
+        fileSelected.textContent = `${f.name} (${sizeMB} MB)`;
+      });
+
+      // Basic client-side validation before letting admin.js handle submission
+      // (prevents accidental upload when required client fields are missing)
+      uploadForm.addEventListener("submit", (ev) => {
+        uploadStatus.textContent = "";
+        const title = (document.getElementById("title") || {}).value || "";
+        const file = (fileInput && fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
+
+        if (!title.trim()) {
+          ev.preventDefault();
+          uploadStatus.style.color = "#b91c1c";
+          uploadStatus.textContent = "Please provide a title.";
+          document.getElementById("title").focus();
+          return;
+        }
+
+        if (!file) {
+          ev.preventDefault();
+          uploadStatus.style.color = "#b91c1c";
+          uploadStatus.textContent = "Please choose a PDF file to upload.";
+          fileInput.focus();
+          return;
+        }
+
+        // If price > 0 ensure the paid checkbox is checked
+        const priceVal = Number(priceInput.value || 0);
+        if (priceVal > 0 && !isPaid.checked) {
+          ev.preventDefault();
+          uploadStatus.style.color = "#b91c1c";
+          uploadStatus.textContent = "Please check 'Mark as paid' when setting a price greater than 0.";
+          isPaid.focus();
+          return;
+        }
+
+        // Provide feedback while admin.js handles the actual upload (if using XHR)
+        // Disable upload button to prevent double submits
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = "Uploading…";
+        uploadStatus.style.color = "#6b7280";
+        uploadStatus.textContent = "Uploading — please wait.";
+
+        // If admin.js uses XHR/fetch it should re-enable the button on completion.
+        // If not, keep it disabled for a short time and re-enable as a fallback.
+        setTimeout(() => {
+          if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = "Upload";
+          }
+        }, 12_000); // fallback re-enable in 12s (server should respond sooner)
+      });
+    })();
+  </script>
+
+  <!-- Your existing admin.js handles upload + DB calls — leave it as-is -->
+  <script src="admin.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>StudentHub Admin – Submissions</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ---- Layout + theme variables ---- */
+    :root{
+      --bg: #f6f8fa;
+      --card: #fff;
+      --muted: #6b7280;
+      --accent: #fbbf24;
+      --success: #16a34a;
+      --danger: #ef4444;
+      --radius: 12px;
+      --shadow: 0 12px 30px rgba(15,23,42,0.06);
+      --glass-border: rgba(226,232,240,0.9);
+      --gap: 16px;
+    }
+    body { margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:#0f172a; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+    body.dark { background:#071021; color:#e6eef8; }
+
+    /* header */
+    .admin-header { background:#050816; color:#e5e7eb; position:sticky; top:0; z-index:30; box-shadow:0 2px 14px rgba(2,6,23,0.45); }
+    .admin-header-inner { max-width:1200px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; }
+    .brand { font-weight:700; letter-spacing:0.2px; }
+    .nav { display:flex; gap:12px; align-items:center; }
+    .nav a { color:#e5e7eb; text-decoration:none; padding:8px 12px; border-radius:999px; font-weight:600; }
+    .nav a.active { background:var(--accent); color:#111827; box-shadow:0 6px 16px rgba(251,191,36,0.12); }
+
+    /* main card */
+    .container { max-width:1100px; margin:28px auto; padding:0 18px 60px; }
+    .panel { background:var(--card); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); border:1px solid var(--glass-border); }
+    body.dark .panel { background:#071021; border-color:#0f1724; box-shadow:none; }
+
+    h1 { margin:0 0 6px 0; font-size:1.3rem; }
+    .subtitle { color:var(--muted); margin-bottom:14px; }
+
+    /* Card grid for submissions */
+    .list { display:grid; gap:14px; }
+    .submission {
+      display:grid;
+      grid-template-columns: 1fr 240px; /* main content | actions */
+      gap:14px;
+      align-items:start;
+      padding:14px;
+      border-radius:10px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,250,251,0.98));
+      border:1px solid rgba(226,232,240,0.9);
+    }
+    body.dark .submission { background:linear-gradient(180deg, rgba(7,16,33,0.6), rgba(7,16,33,0.4)); border-color:#0f1724; }
+
+    /* left column: meta */
+    .meta { display:flex; gap:12px; align-items:flex-start; }
+    .meta-left { width:6px; border-radius:6px; background:linear-gradient(180deg,#10b981,#059669); margin-top:6px; }
+    .meta-body { flex:1; }
+    .title { font-weight:800; font-size:1.02rem; margin-bottom:6px; line-height:1.12; color:#0f172a; }
+    body.dark .title { color:#e6eef8; }
+    .byline { color:var(--muted); font-size:0.88rem; margin-bottom:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .tag { font-weight:700; padding:4px 8px; background:#f3f4f6; border-radius:999px; font-size:0.78rem; color:#374151; }
+    body.dark .tag { background:#0f1724; color:#e6eef8; border:1px solid #0f1724; }
+
+    .desc {
+      color:var(--muted);
+      font-size:0.92rem;
+      line-height:1.28;
+      white-space:normal;
+      word-break:break-word;
+      display:-webkit-box;
+      -webkit-line-clamp:4;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+
+    .meta-footer { margin-top:10px; color:var(--muted); font-size:0.86rem; display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+
+    /* right column: actions */
+    .actions { display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
+    .pdf-link { display:inline-block; font-weight:700; color:#6b21a8; text-decoration:underline; font-size:0.92rem; cursor:pointer; }
+    .status-pill { padding:6px 12px; border-radius:999px; font-weight:800; font-size:0.84rem; }
+    .pending { background:#fff7ed; color:#92400e; }
+    .approved { background:#ecfdf5; color:#166534; }
+    .rejected { background:#fee2e2; color:#b91c1c; }
+
+    .controls { display:flex; gap:8px; width:100%; justify-content:flex-end; align-items:center; }
+    .coins { width:86px; padding:8px 10px; border-radius:8px; border:1px solid #e6e9ee; font-weight:600; }
+    .note { width:100%; padding:8px 10px; border-radius:8px; border:1px solid #e6e9ee; min-height:44px; resize:vertical; font-size:0.9rem; }
+    body.dark .coins, body.dark .note { background:transparent; border-color:#0f1724; color:#e6eef8; }
+
+    .btn { padding:8px 12px; border-radius:999px; font-weight:800; cursor:pointer; border:none; }
+    .btn-approve { background:var(--success); color:white; }
+    .btn-reject { background:var(--danger); color:white; }
+
+    /* empty / loading */
+    .empty { padding:24px; color:var(--muted); text-align:center; }
+
+    /* modal */
+    .modal-backdrop { position:fixed; inset:0; background:rgba(2,6,23,0.5); display:flex; align-items:center; justify-content:center; z-index:80; }
+    .modal { background:var(--card); border-radius:10px; padding:18px; width:92%; max-width:720px; box-shadow:var(--shadow); border:1px solid var(--glass-border); }
+    .modal h3 { margin:0 0 8px 0; }
+    .modal .modal-body { color:var(--muted); max-height:60vh; overflow:auto; white-space:normal; line-height:1.4; }
+
+    /* responsive */
+    @media (max-width:960px) {
+      .submission { grid-template-columns: 1fr; }
+      .actions { align-items:stretch; width:100%; }
+      .controls { justify-content:space-between; gap:6px; }
+      .coins { width:120px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <div class="brand">StudentHub Admin</div>
+      <nav class="nav">
+        <a href="/admin.html">Upload</a>
+        <a href="/admin-materials.html">Materials</a>
+        <a href="/admin-submissions.html" class="active">Submissions</a>
+        <a href="/admin-withdrawals.html">Withdrawals</a>
+      </nav>
+      <div style="display:flex;gap:10px;align-items:center">
+        <a href="/" style="color:#e5e7eb;border:1px solid rgba(148,163,184,0.18);padding:8px 12px;border-radius:999px;text-decoration:none;font-weight:700">View site</a>
+        <button id="theme-toggle" style="background:transparent;border:none;color:#e5e7eb;font-size:18px;cursor:pointer">🌙</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel" aria-labelledby="panel-title">
+      <h1 id="panel-title">User PDF Submissions</h1>
+      <p class="subtitle">Review PDFs submitted by users. Approve or reject with notes. Click a card to preview description or open the PDF.</p>
+
+      <div id="list" class="list" aria-live="polite">
+        <div class="empty">Loading submissions…</div>
+      </div>
+
+      <p id="status" style="margin-top:12px;color:var(--muted);font-size:0.9rem;">Tip: add coins and an admin note before approving if needed.</p>
+    </section>
+  </main>
+
+  <!-- preview modal -->
+  <div id="modal-root" aria-hidden="true"></div>
+
+<script>
+(function () {
+  const listEl = document.getElementById('list');
+  const statusEl = document.getElementById('status');
+
+  function esc(s) {
+    if (s === undefined || s === null) return '';
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  }
+
+  function setStatus(txt) { if (statusEl) statusEl.textContent = txt; }
+
+  function createSubmissionNode(s) {
+    const container = document.createElement('div');
+    container.className = 'submission';
+
+    // left
+    const left = document.createElement('div');
+    left.className = 'meta';
+    left.innerHTML = `
+      <div class="meta-left" aria-hidden="true"></div>
+      <div class="meta-body">
+        <div class="title">${esc(s.title || 'Untitled')}</div>
+        <div class="byline">
+          <span>${esc(s.userEmail || 'Unknown')}</span>
+          <span class="tag">${esc(s.type || 'submission')}</span>
+        </div>
+        <div class="desc">${esc(s.description || '')}</div>
+        <div class="meta-footer">
+          <span>Submitted: ${esc(s.createdAt ? new Date(s.createdAt).toLocaleString() : '—')}</span>
+          <span>Exam: ${esc(s.exam || '—')}</span>
+          <span>Subject: ${esc(s.subject || '—')}</span>
+          <span>Year: ${esc(s.year || '—')}</span>
+        </div>
+      </div>
+    `;
+
+    // right
+    const right = document.createElement('div');
+    right.className = 'actions';
+
+    const pdfLinkHtml = s.fileUrl ? `<a href="${esc(s.fileUrl)}" target="_blank" rel="noopener" class="pdf-link">Open PDF</a>` : '<span class="pdf-link">No PDF</span>';
+    right.innerHTML = `
+      <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end">
+        ${pdfLinkHtml}
+      </div>
+      <div style="display:flex;gap:8px;flex-direction:column;align-items:flex-end;margin-top:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" min="0" class="coins" placeholder="Coins" aria-label="Coins">
+          <div style="min-width:8px"></div>
+          <span class="status-pill ${s.status === 'pending' ? 'pending' : s.status === 'approved' ? 'approved' : 'rejected'}">${esc(s.status)}</span>
+        </div>
+        <textarea class="note" placeholder="Admin note (optional)" rows="2" style="width:100%"></textarea>
+        <div class="controls" style="width:100%">
+          <button class="btn btn-approve" data-id="${esc(s.id)}">Approve</button>
+          <button class="btn btn-reject" data-id="${esc(s.id)}" style="background:#ef4444;color:#fff">Reject</button>
+        </div>
+      </div>
+    `;
+
+    // click to open preview modal
+    left.addEventListener('click', () => openPreviewModal(s));
+    const pdfAnchor = right.querySelector('.pdf-link');
+    if (pdfAnchor && s.fileUrl) {
+      pdfAnchor.addEventListener('click', (e) => {
+        // let it open in new tab — but prevent the left click from firing modal
+        e.stopPropagation();
+      });
+    }
+
+    // wire approve/reject
+    right.querySelector('.btn-approve').addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      const id = ev.currentTarget.getAttribute('data-id');
+      const coins = Number(right.querySelector('.coins').value || 0);
+      const note = right.querySelector('.note').value || '';
+      if (!confirm(`Approve submission?\nCoins: ${coins}\nNote: ${note || '(none)'}`)) return;
+      try {
+        const res = await fetch(`/api/user-submissions/${encodeURIComponent(id)}/approve`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ coinsAwarded: coins, adminNote: note })
+        });
+        const data = await res.json().catch(()=>({}));
+        if (!res.ok || !data.ok) throw new Error(data.message || 'Approve failed');
+        alert('Approved');
+        load();
+      } catch (err) {
+        alert('Approve error: ' + (err.message || err));
+        console.error(err);
+      }
+    });
+
+    right.querySelector('.btn-reject').addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      const id = ev.currentTarget.getAttribute('data-id');
+      const reason = prompt('Reason for rejection (optional):') || '';
+      if (!confirm('Reject this submission?')) return;
+      try {
+        const res = await fetch(`/api/user-submissions/${encodeURIComponent(id)}/reject`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason })
+        });
+        const data = await res.json().catch(()=>({}));
+        if (!res.ok || !data.ok) throw new Error(data.message || 'Reject failed');
+        alert('Rejected');
+        load();
+      } catch (err) {
+        alert('Reject error: ' + (err.message || err));
+        console.error(err);
+      }
+    });
+
+    container.appendChild(left);
+    container.appendChild(right);
+    return container;
+  }
+
+  // modal
+  function openPreviewModal(s) {
+    const root = document.getElementById('modal-root');
+    root.innerHTML = `
+      <div class="modal-backdrop" role="dialog" aria-modal="true">
+        <div class="modal" role="document">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h3>${esc(s.title || 'Untitled')}</h3>
+            <div style="display:flex;gap:8px;align-items:center">
+              ${s.fileUrl ? `<a href="${esc(s.fileUrl)}" target="_blank" rel="noopener" style="font-weight:700;color:#6b21a8;text-decoration:underline">Open PDF</a>` : ''}
+              <button id="modal-close" style="background:transparent;border:none;font-size:18px;cursor:pointer">✕</button>
+            </div>
+          </div>
+          <div class="modal-body">
+            <p style="color:var(--muted);margin-top:0">${esc(s.description || '(No description)')}</p>
+            <hr style="border:none;height:1px;background:rgba(0,0,0,0.06);margin:12px 0" />
+            <p style="font-size:0.9rem;color:var(--muted)"><strong>Submitted:</strong> ${esc(s.createdAt ? new Date(s.createdAt).toLocaleString() : '—')}</p>
+            <p style="font-size:0.9rem;color:var(--muted)"><strong>Type:</strong> ${esc(s.type || '—')} &nbsp;&nbsp; <strong>Exam:</strong> ${esc(s.exam || '—')} &nbsp;&nbsp; <strong>Subject:</strong> ${esc(s.subject || '—')} &nbsp;&nbsp; <strong>Year:</strong> ${esc(s.year || '—')}</p>
+          </div>
+        </div>
+      </div>
+    `;
+    root.setAttribute('aria-hidden', 'false');
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    root.querySelector('.modal-backdrop').addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-backdrop')) closeModal();
+    });
+  }
+  function closeModal() {
+    const root = document.getElementById('modal-root');
+    root.innerHTML = '';
+    root.setAttribute('aria-hidden', 'true');
+  }
+
+  // load and render
+  async function load() {
+    listEl.innerHTML = '<div class="empty">Loading submissions…</div>';
+    setStatus('Loading submissions…');
+    try {
+      const res = await fetch('/api/user-submissions?status=pending', { credentials:'include' });
+      const data = await res.json().catch(()=>({}));
+      if (!res.ok || !data.ok) throw new Error(data.message || 'Failed to load');
+      const list = data.submissions || [];
+      if (!list.length) {
+        listEl.innerHTML = '<div class="empty">No pending submissions.</div>';
+        setStatus('No pending submissions.');
+        return;
+      }
+      listEl.innerHTML = '';
+      list.forEach(s => {
+        // map older backend fields: ensure id, fileUrl present
+        const normalized = Object.assign({}, s, {
+          id: s.id || s._id || '',
+          fileUrl: s.fileUrl || s.pdfUrl || s.file || ''
+        });
+        listEl.appendChild(createSubmissionNode(normalized));
+      });
+      setStatus(`${list.length} submission(s) loaded.`);
+    } catch (err) {
+      console.error(err);
+      listEl.innerHTML = '<div class="empty" style="color:#ef4444">Error loading submissions.</div>';
+      setStatus('Error loading submissions.');
+    }
+  }
+
+  // theme toggle
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+  });
+
+  // start
+  load();
+})();
+</script>
+</body>
+</html>

@@ -1,57 +1,56 @@
 // admin.js
-// Admin upload + list + search + delete for StudentHub
+// Handles admin upload, materials listing, search, delete
 
 (function () {
   const BASE_URL = window.location.origin;
 
+  // Upload page elements
   const uploadForm = document.getElementById("upload-form");
   const uploadStatus = document.getElementById("upload-status");
 
+  // Materials page elements
   const materialsSearch = document.getElementById("materials-search");
   const materialsTypeFilter = document.getElementById("materials-type-filter");
   const materialsTableBody = document.getElementById("materials-table-body");
   const materialsListStatus = document.getElementById("materials-list-status");
 
-  const themeToggleBtn = document.getElementById("theme-toggle");
-
-  // local in-memory list: each item = { id, title, exam, year, price, downloads, type, index }
+  // Local cache of all materials
   let allMaterials = [];
 
   // -----------------------------
-  // Theme toggle (same behaviour as main site)
+  // THEME CONTROL
   // -----------------------------
   function applyTheme(theme) {
+    const btn = document.getElementById("theme-toggle");
     if (theme === "dark") {
       document.body.classList.add("dark");
-      if (themeToggleBtn) themeToggleBtn.textContent = "☀️";
+      if (btn) btn.textContent = "☀️";
     } else {
       document.body.classList.remove("dark");
-      if (themeToggleBtn) themeToggleBtn.textContent = "🌙";
+      if (btn) btn.textContent = "🌙";
     }
+    localStorage.setItem("studenthub-theme", theme);
   }
 
   function initTheme() {
-    const saved = localStorage.getItem("studenthub-theme") || "light";
-    applyTheme(saved);
-
-    if (themeToggleBtn) {
-      themeToggleBtn.addEventListener("click", () => {
-        const nowDark = !document.body.classList.contains("dark");
-        const next = nowDark ? "dark" : "light";
-        localStorage.setItem("studenthub-theme", next);
+    applyTheme(localStorage.getItem("studenthub-theme") || "light");
+    const btn = document.getElementById("theme-toggle");
+    if (btn) {
+      btn.addEventListener("click", () => {
+        const next = document.body.classList.contains("dark") ? "light" : "dark";
         applyTheme(next);
       });
     }
   }
 
   // -----------------------------
-  // Upload handling
+  // ADMIN UPLOAD HANDLING (FIXED)
   // -----------------------------
   async function handleUpload(e) {
     e.preventDefault();
     if (!uploadForm) return;
 
-    uploadStatus.textContent = "";
+    uploadStatus.textContent = "Uploading…";
     uploadStatus.style.color = "";
 
     const type = document.getElementById("type").value;
@@ -60,8 +59,8 @@
     const exam = document.getElementById("exam").value.trim();
     const subject = document.getElementById("subject").value.trim();
     const year = document.getElementById("year").value.trim();
-    const priceInput = document.getElementById("price");
-    const isPaidCheckbox = document.getElementById("isPaid");
+    const isPaid = document.getElementById("isPaid").checked;
+    const priceRaw = Number(document.getElementById("price").value || 0);
     const fileInput = document.getElementById("file");
 
     if (!title || !fileInput.files.length) {
@@ -71,15 +70,13 @@
     }
 
     let price = 0;
-    const rawPrice = Number(priceInput.value || "0");
-    if (isPaidCheckbox.checked) {
-      if (!Number.isFinite(rawPrice) || rawPrice <= 0) {
-        uploadStatus.textContent =
-          "For paid material, please enter a price greater than 0.";
+    if (isPaid) {
+      if (priceRaw <= 0 || !Number.isFinite(priceRaw)) {
+        uploadStatus.textContent = "Please enter a valid price.";
         uploadStatus.style.color = "#b91c1c";
         return;
       }
-      price = rawPrice;
+      price = priceRaw;
     }
 
     const formData = new FormData();
@@ -92,9 +89,6 @@
     formData.append("price", String(price));
     formData.append("file", fileInput.files[0]);
 
-    uploadStatus.textContent = "Uploading...";
-    uploadStatus.style.color = "";
-
     try {
       const res = await fetch(`${BASE_URL}/api/upload`, {
         method: "POST",
@@ -103,132 +97,112 @@
 
       const data = await res.json().catch(() => ({}));
 
+      // ✅ FIX: ONLY check HTTP status (backend does not return data.ok)
       if (!res.ok) {
-        throw new Error(data.error || "Upload failed");
+        throw new Error(data.message || "Upload failed");
       }
 
       uploadStatus.textContent = "Uploaded successfully!";
       uploadStatus.style.color = "#16a34a";
 
-      // Clear form
       uploadForm.reset();
-      priceInput.value = "";
-      isPaidCheckbox.checked = false;
 
-      // Refresh materials list so admin can see new item
-      await fetchMaterials();
+      if (materialsTableBody) {
+        fetchMaterials();
+      }
     } catch (err) {
-      console.error("Upload error:", err);
-      uploadStatus.textContent =
-        "Upload failed: " + (err.message || "Unexpected error");
+      uploadStatus.textContent = "Upload failed: " + err.message;
       uploadStatus.style.color = "#b91c1c";
     }
   }
 
   // -----------------------------
-  // Fetch & render materials
+  // FETCH MATERIALS
   // -----------------------------
   async function fetchMaterials() {
     if (!materialsTableBody) return;
 
-    materialsTableBody.innerHTML = "";
-    if (materialsListStatus) {
-      materialsListStatus.textContent = "Loading materials…";
-      materialsListStatus.classList.add("muted");
-    }
+    materialsTableBody.innerHTML =
+      `<tr><td colspan="8">Loading materials…</td></tr>`;
+    materialsListStatus.textContent = "Loading materials…";
 
     try {
       const res = await fetch(`${BASE_URL}/api/materials`);
-      if (!res.ok) throw new Error("Failed to load materials");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
-      const list = [];
+      if (!res.ok) throw new Error("Failed to load");
+
       const ebooks = Array.isArray(data.ebooks) ? data.ebooks : [];
       const qps = Array.isArray(data.questionPapers) ? data.questionPapers : [];
 
-      // Store index from each type array so we can call DELETE /api/materials/:type/:index
-      ebooks.forEach((m, idx) => {
-        list.push({
-          id: m.id,
-          title: m.title || "",
-          exam: m.exam || "",
-          year: m.year || "—",
-          price: typeof m.price === "number" ? m.price : 0,
-          downloads: m.downloads || 0,
+      allMaterials = [];
+
+      ebooks.forEach((m, i) => {
+        allMaterials.push({
+          index: i,
           type: "ebook",
           typeLabel: "E-Book",
-          index: idx,
-        });
-      });
-
-      qps.forEach((m, idx) => {
-        list.push({
-          id: m.id,
           title: m.title || "",
           exam: m.exam || "",
-          year: m.year || "—",
-          price: typeof m.price === "number" ? m.price : 0,
+          year: m.year || "",
+          price: m.price || 0,
           downloads: m.downloads || 0,
-          type: "questionPaper",
-          typeLabel: "Question Paper",
-          index: idx,
         });
       });
 
-      allMaterials = list;
+      qps.forEach((m, i) => {
+        allMaterials.push({
+          index: i,
+          type: "questionPaper",
+          typeLabel: "Question Paper",
+          title: m.title || "",
+          exam: m.exam || "",
+          year: m.year || "",
+          price: m.price || 0,
+          downloads: m.downloads || 0,
+        });
+      });
+
       renderMaterials();
     } catch (err) {
-      console.error("Fetch materials error:", err);
-      if (materialsListStatus) {
-        materialsListStatus.textContent =
-          "Failed to load materials. Please refresh the page.";
-        materialsListStatus.classList.remove("muted");
-        materialsListStatus.style.color = "#b91c1c";
-      }
+      console.error("Materials load error:", err);
+      materialsTableBody.innerHTML =
+        `<tr><td colspan="8" style="color:#b91c1c;">Failed to load materials.</td></tr>`;
+      materialsListStatus.textContent = "Failed to load materials.";
     }
   }
 
+  // -----------------------------
+  // RENDER MATERIALS TABLE
+  // -----------------------------
   function renderMaterials() {
     if (!materialsTableBody) return;
 
-    const searchTerm = (materialsSearch?.value || "").toLowerCase().trim();
+    let filtered = [...allMaterials];
+    const search = (materialsSearch?.value || "").toLowerCase().trim();
     const typeFilter = materialsTypeFilter?.value || "";
 
-    let filtered = allMaterials.slice();
-
     if (typeFilter) {
-      filtered = filtered.filter((m) => m.type === typeFilter);
+      filtered = filtered.filter(m => m.type === typeFilter);
     }
 
-    if (searchTerm) {
-      filtered = filtered.filter((m) => {
-        const text =
-          `${m.title} ${m.exam} ${m.year}`.toLowerCase();
-        return text.includes(searchTerm);
-      });
+    if (search) {
+      filtered = filtered.filter(m =>
+        `${m.title} ${m.exam} ${m.year}`.toLowerCase().includes(search)
+      );
+    }
+
+    if (!filtered.length) {
+      materialsTableBody.innerHTML =
+        `<tr><td colspan="8">No materials found.</td></tr>`;
+      materialsListStatus.textContent = "No materials match filters.";
+      return;
     }
 
     materialsTableBody.innerHTML = "";
 
-    if (!filtered.length) {
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = 8;
-      td.textContent = "No materials found.";
-      materialsTableBody.appendChild(tr);
-      tr.appendChild(td);
-
-      if (materialsListStatus) {
-        materialsListStatus.textContent = "No materials match your filters.";
-        materialsListStatus.classList.remove("muted");
-        materialsListStatus.style.color = "#6b7280";
-      }
-      return;
-    }
-
     filtered.forEach((m, i) => {
       const tr = document.createElement("tr");
-
       const priceLabel = m.price > 0 ? `₹${m.price}` : "Free";
 
       tr.innerHTML = `
@@ -240,12 +214,10 @@
         <td>${priceLabel}</td>
         <td>${m.downloads}</td>
         <td>
-          <button
-            class="btn-danger"
+          <button class="btn-danger"
             data-action="delete"
             data-type="${m.type}"
-            data-index="${m.index}"
-          >
+            data-index="${m.index}">
             Delete
           </button>
         </td>
@@ -254,30 +226,20 @@
       materialsTableBody.appendChild(tr);
     });
 
-    if (materialsListStatus) {
-      materialsListStatus.textContent = `${filtered.length} material(s) shown.`;
-      materialsListStatus.classList.add("muted");
-      materialsListStatus.style.color = "";
-    }
+    materialsListStatus.textContent = `${filtered.length} result(s) shown.`;
   }
 
   // -----------------------------
-  // Delete handler (event delegation)
+  // DELETE MATERIAL
   // -----------------------------
-  async function handleTableClick(e) {
+  async function handleDelete(e) {
     const btn = e.target.closest("button[data-action='delete']");
     if (!btn) return;
 
     const type = btn.getAttribute("data-type");
-    const indexStr = btn.getAttribute("data-index");
-    const index = Number(indexStr);
+    const index = Number(btn.getAttribute("data-index"));
 
-    if (!type || Number.isNaN(index)) return;
-
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this material? This cannot be undone."
-    );
-    if (!confirmed) return;
+    if (!confirm("Delete this material permanently?")) return;
 
     btn.disabled = true;
     const oldLabel = btn.textContent;
@@ -289,22 +251,17 @@
         { method: "DELETE" }
       );
 
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.error || "Delete failed");
-      }
-
-      await fetchMaterials();
+      if (!res.ok) throw new Error("Delete failed");
+      fetchMaterials();
     } catch (err) {
-      console.error("Delete error:", err);
-      alert("Failed to delete material: " + (err.message || "Unexpected error"));
+      alert("Delete failed: " + err.message);
       btn.disabled = false;
       btn.textContent = oldLabel;
     }
   }
 
   // -----------------------------
-  // Init
+  // INITIALIZE
   // -----------------------------
   function init() {
     initTheme();
@@ -313,17 +270,12 @@
       uploadForm.addEventListener("submit", handleUpload);
     }
 
-    if (materialsSearch) {
-      materialsSearch.addEventListener("input", () => renderMaterials());
-    }
-    if (materialsTypeFilter) {
-      materialsTypeFilter.addEventListener("change", () => renderMaterials());
-    }
     if (materialsTableBody) {
-      materialsTableBody.addEventListener("click", handleTableClick);
+      materialsTableBody.addEventListener("click", handleDelete);
+      materialsSearch?.addEventListener("input", renderMaterials);
+      materialsTypeFilter?.addEventListener("change", renderMaterials);
+      fetchMaterials();
     }
-
-    fetchMaterials();
   }
 
   document.addEventListener("DOMContentLoaded", init);

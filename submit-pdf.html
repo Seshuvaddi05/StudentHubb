@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>StudentHub – Submit PDF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Submit your PDF to StudentHub and earn coins when it gets selected." />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .submit-container { max-width: 800px; margin:2rem auto; padding:1.75rem 1.5rem; border-radius:0.9rem; background:#fff; box-shadow:0 10px 30px rgba(15,23,42,0.12); }
+    body.dark .submit-container { background:#020617; border:1px solid #1f2937; box-shadow:0 10px 30px rgba(15,23,42,0.7); }
+    .submit-heading { font-size:1.4rem; font-weight:600; margin-bottom:.25rem; }
+    .submit-subtitle { font-size:.9rem; color:#6b7280; margin-bottom:1rem; }
+    .form-row { margin-bottom:.85rem; }
+    .form-row label { display:block; font-size:.85rem; font-weight:500; margin-bottom:.2rem; }
+    .form-row input[type="text"], .form-row textarea, .form-row input[type="file"], .form-row select { width:100%; padding:.55rem .7rem; border-radius:.5rem; border:1px solid #e5e7eb; font-size:.9rem; }
+    .form-help { font-size:.78rem; color:#6b7280; }
+    .submit-status { margin-top:.75rem; font-size:.85rem; color:#6b7280; }
+    .submit-status.success { color:#047857; }
+    .submit-status.error { color:#b91c1c; }
+    .progress-bar { height:8px; background:#e6e6e6; border-radius:999px; overflow:hidden; margin-top:.5rem; }
+    .progress-bar > span { display:block; height:100%; width:0%; background:#10b981; transition:width .2s; }
+    .btn { display:inline-block; padding:.55rem 0.9rem; border-radius:.6rem; border:none; cursor:pointer; font-weight:600; }
+    .btn.primary { background:#059669; color:#fff; }
+    .note { font-size:.85rem; color:#6b7280; margin-top:.5rem; }
+    body.dark .note { color:#9ca3af; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">StudentHub</div>
+    <nav class="nav-links" id="nav-links">
+      <a href="/">Home</a>
+      <a href="/#ebooks">E-Books</a>
+      <a href="/#question-papers">Question Papers</a>
+      <a href="/library.html">My Library</a>
+      <a href="/read-later.html">Read Later</a>
+    </nav>
+    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+  </header>
+
+  <main class="section">
+    <div class="submit-container">
+      <h1 class="submit-heading">Submit a PDF</h1>
+      <p class="submit-subtitle">
+        Share your useful e-books or question papers with other students. If your PDF gets selected,
+        you’ll earn coins in your wallet.
+      </p>
+
+      <form id="submit-pdf-form" enctype="multipart/form-data" novalidate>
+        <div class="form-row">
+          <label for="pdf-type">Type *</label>
+          <select id="pdf-type" name="type" required>
+            <option value="ebook">E-Book</option>
+            <option value="questionPaper">Question Paper</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="pdf-title">Title *</label>
+          <input id="pdf-title" name="title" type="text" required placeholder="Example: Quantitative Aptitude Shortcut Guide" />
+        </div>
+
+        <div class="form-row">
+          <label for="pdf-description">Description</label>
+          <textarea id="pdf-description" name="description" rows="3" placeholder="Briefly describe what this PDF contains and which exam/subject it helps with."></textarea>
+          <p class="form-help">A clear description increases the chance of your PDF being selected.</p>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+          <div style="flex:1; min-width:160px;" class="form-row">
+            <label for="pdf-exam">Exam</label>
+            <input id="pdf-exam" name="exam" type="text" placeholder="e.g. AP Inter 1st Year" />
+          </div>
+          <div style="flex:1; min-width:160px;" class="form-row">
+            <label for="pdf-subject">Subject</label>
+            <input id="pdf-subject" name="subject" type="text" placeholder="e.g. Mathematics" />
+          </div>
+          <div style="flex:0 0 120px;" class="form-row">
+            <label for="pdf-year">Year</label>
+            <input id="pdf-year" name="year" type="text" placeholder="e.g. 2024" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="pdf-file">PDF file *</label>
+          <input id="pdf-file" name="file" type="file" accept="application/pdf" required />
+          <p class="form-help">Upload a PDF file (max 25 MB recommended). We store your submission for admin review.</p>
+          <div id="upload-progress" style="display:none;">
+            <div class="progress-bar"><span id="upload-progress-bar"></span></div>
+            <div id="upload-percent" style="font-size:.8rem;margin-top:.35rem;color:#6b7280;"></div>
+          </div>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn primary">Submit PDF</button>
+
+        <p id="submit-status" class="submit-status"></p>
+      </form>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
+  </footer>
+
+  <script src="submit-pdf.js" defer></script>
+</body>
+</html>

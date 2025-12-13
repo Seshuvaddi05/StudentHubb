@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>StudentHub Admin – Approved Submissions</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    /* small page-specific styles so it matches your existing admin UI */
+    .admin-shell { min-height:100vh; background: #f1f5f9; }
+    body.dark .admin-shell { background:#020617; color:#e5e7eb; }
+
+    .admin-header {
+      background:#020617;
+      color:#e5e7eb;
+      box-shadow:0 2px 8px rgba(15,23,42,0.6);
+      position:sticky; top:0; z-index:40;
+    }
+    .admin-header-inner { max-width:1200px; margin:0 auto; padding:0.75rem 1.25rem; display:flex; align-items:center; justify-content:space-between; }
+    .admin-brand { font-weight:600; }
+
+    .admin-nav { display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; }
+    .admin-nav a { color:#e5e7eb; padding:0.25rem 0.75rem; border-radius:999px; text-decoration:none; border:1px solid transparent; font-size:0.92rem; }
+    .admin-nav a:hover { background:rgba(148,163,184,0.12); color:#fff; }
+    .admin-nav .active { background:#fbbf24; color:#1f2937; border-color:#fbbf24; font-weight:600; }
+
+    .admin-actions { display:flex; gap:0.75rem; align-items:center; }
+
+    .admin-main { max-width:1100px; margin:2rem auto; padding:0 1.25rem 2rem; }
+
+    .admin-card {
+      background:#fff; border-radius:0.9rem; padding:1.25rem 1.5rem;
+      box-shadow:0 10px 30px rgba(15,23,42,0.12); border:1px solid #e5e7eb;
+    }
+    body.dark .admin-card { background:#020617; border-color:#1f2937; }
+
+    h1 { font-size:1.3rem; margin-bottom:0.25rem; font-weight:600; }
+    .subtitle { color:#6b7280; margin-bottom:1rem; }
+    body.dark .subtitle { color:#9ca3af; }
+
+    /* slim, readable table */
+    .admin-table { width:100%; border-collapse:collapse; font-size:0.92rem; }
+    .admin-table th, .admin-table td { padding:0.6rem 0.75rem; vertical-align:top; text-align:left; border-bottom:1px solid #eef2f7; }
+    .admin-table th { font-weight:700; color:#475569; font-size:0.87rem; }
+    body.dark .admin-table th, body.dark .admin-table td { border-color:#1f2937; color:#e5e7eb; }
+
+    .title-cell { font-weight:700; color:#0f172a; display:block; margin-bottom:6px; }
+    .meta-line { color:#6b7280; font-size:0.85rem; margin-bottom:6px; }
+    .desc { color:#475569; white-space:pre-wrap; /* preserve newlines */ max-width:420px; word-break:break-word; }
+
+    .status-pill { padding:0.18rem 0.6rem; border-radius:999px; font-size:0.78rem; font-weight:700; display:inline-block; }
+    .status-approved { background:#ecfdf5; color:#166534; }
+    .btn-small { border:none; border-radius:999px; padding:0.4rem 0.8rem; cursor:pointer; font-weight:600; }
+    .btn-delete { background:#ef4444; color:white; }
+    .btn-publish { background:#10b981; color:white; margin-right:6px; }
+    .input-coins { width:72px; padding:0.35rem 0.4rem; border-radius:8px; border:1px solid #e6eef5; }
+
+    #approved-status { margin-top:0.6rem; color:#6b7280; }
+
+    @media(max-width:900px){
+      .admin-table th:nth-child(4),
+      .admin-table td:nth-child(4) { display:none; } /* hide some columns on small screens */
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-shell">
+    <header class="admin-header">
+      <div class="admin-header-inner">
+        <div class="admin-brand">StudentHub Admin</div>
+
+        <nav class="admin-nav" id="admin-nav">
+          <a href="/admin.html">Upload</a>
+          <a href="/admin-materials.html">Materials</a>
+          <a href="/admin-submissions.html">Submissions</a>
+          <a href="/admin-approved.html" class="active">Approved</a>
+          <a href="/admin-withdrawals.html">Withdrawals</a>
+        </nav>
+
+        <div class="admin-actions">
+          <a href="/" class="admin-view-link" style="color:#e5e7eb; text-decoration:none; border:1px solid rgba(148,163,184,0.3); padding:0.35rem 0.6rem; border-radius:999px;">View site</a>
+          <button id="theme-toggle" class="theme-toggle-btn" style="background:transparent;border:none;font-size:1.05rem;">🌙</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <div class="admin-card">
+        <h1>Approved Submissions</h1>
+        <p class="subtitle">All submissions that have been approved by admins. From here you can review, remove, or publish them to the library (manual step).</p>
+
+        <div style="overflow-x:auto;">
+          <table class="admin-table" id="approved-table">
+            <thead>
+              <tr>
+                <th style="min-width:220px;">Title &amp; Description</th>
+                <th style="min-width:220px;">User</th>
+                <th style="min-width:120px;">Submitted</th>
+                <th>PDF</th>
+                <th>Type</th>
+                <th>Exam</th>
+                <th>Subject</th>
+                <th>Year</th>
+                <th>Status</th>
+                <th style="min-width:160px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="approved-table-body">
+              <tr><td colspan="10">Loading approved submissions…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p id="approved-status">Loading approved submissions…</p>
+      </div>
+    </main>
+  </div>
+
+<script>
+/* Theme toggle - matches other admin pages */
+function applyTheme(t){
+  const btn = document.getElementById("theme-toggle");
+  if(t === "dark"){ document.body.classList.add("dark"); btn.textContent = "☀️"; } 
+  else { document.body.classList.remove("dark"); btn.textContent = "🌙"; }
+  localStorage.setItem("studenthub-theme", t);
+}
+document.addEventListener("DOMContentLoaded", () => {
+  applyTheme(localStorage.getItem("studenthub-theme") || "light");
+  document.getElementById("theme-toggle").addEventListener("click", () => {
+    applyTheme(document.body.classList.contains("dark") ? "light" : "dark");
+  });
+  loadApproved();
+});
+
+/* Load approved submissions */
+async function loadApproved(){
+  const tbody = document.getElementById("approved-table-body");
+  const statusEl = document.getElementById("approved-status");
+  tbody.innerHTML = '<tr><td colspan="10">Loading approved submissions…</td></tr>';
+  statusEl.textContent = "Loading approved submissions…";
+
+  try {
+    const res = await fetch('/api/user-submissions?status=approved', { credentials: 'include' });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok || !data.ok) throw new Error(data.message || 'Failed to load');
+
+    const list = data.submissions || [];
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="10">No approved submissions.</td></tr>';
+      statusEl.textContent = "No approved submissions.";
+      return;
+    }
+
+    tbody.innerHTML = "";
+    list.forEach(s => {
+      const submittedAt = s.createdAt ? new Date(s.createdAt).toLocaleString() : '—';
+      const pdfLink = s.fileUrl ? `<a href="${s.fileUrl}" target="_blank" rel="noopener">Open PDF</a>` : '—';
+
+      const titleHtml = `<div class="title-cell">${escapeHtml(s.title || 'Untitled')}</div>
+                         <div class="meta-line">${escapeHtml(s.type || '')}${s.type ? ' • ' : ''}${escapeHtml(s.userEmail || '')}</div>
+                         <div class="desc">${escapeHtml(s.description || '')}</div>`;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${titleHtml}</td>
+        <td>${escapeHtml(s.userEmail || '—')}</td>
+        <td>${escapeHtml(submittedAt)}</td>
+        <td>${pdfLink}</td>
+        <td>${escapeHtml(s.type || '')}</td>
+        <td>${escapeHtml(s.exam || '')}</td>
+        <td>${escapeHtml(s.subject || '')}</td>
+        <td>${escapeHtml(s.year || '')}</td>
+        <td><span class="status-pill status-approved">approved</span></td>
+        <td>
+          <button class="btn-publish btn-small" data-id="${s.id}" data-action="publish">Publish</button>
+          <button class="btn-delete btn-small" data-id="${s.id}" data-action="remove">Remove</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    statusEl.textContent = `${list.length} approved submission(s) loaded.`;
+  } catch(err) {
+    console.error(err);
+    tbody.innerHTML = '<tr><td colspan="10" style="color:#b91c1c;">Error loading approved submissions.</td></tr>';
+    statusEl.textContent = "Error loading approved submissions.";
+  }
+}
+
+/* Event delegation for actions */
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if(!btn) return;
+  const id = btn.getAttribute('data-id');
+  const action = btn.getAttribute('data-action');
+  if(!id || !action) return;
+
+  if(action === 'publish'){
+    // This UI tries to publish the approved submission to ebooks.
+    // NOTE: Your server currently doesn't have a publish endpoint by default.
+    // If you have implemented a server endpoint to publish, call it here.
+    // Otherwise show a helpful message.
+    const confirmPublish = confirm("Publish this approved submission to the library (create an ebook)?");
+    if(!confirmPublish) return;
+
+    // If you implement server route /api/user-submissions/:id/publish, replace below with that call.
+    // For now just notify the admin to publish manually.
+    alert("Publish functionality requires a server endpoint. If you want, I can add a /api/user-submissions/:id/publish endpoint to the server-side code. Do you want me to add it?");
+  }
+
+  if(action === 'remove'){
+    const reason = prompt("Reason for removal (optional):", "removed-from-approved") || "";
+    if(!confirm("Remove this approved submission permanently? This will delete it from submissions.")) return;
+
+    try {
+      const res = await fetch(`/api/user-submissions/${id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ reason })
+      });
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok || !data.ok) throw new Error(data.message || 'Failed to remove');
+      loadApproved();
+    } catch(err){
+      alert("Failed to remove: "+ (err.message || err));
+      console.error(err);
+    }
+  }
+});
+
+/* small helper to escape user strings to prevent injection when injecting into innerHTML */
+function escapeHtml(s){
+  if(!s) return '';
+  return String(s)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#39;')
+    .replaceAll("\n",'<br/>');
+}
+
+</script>
+</body>
+</html>
