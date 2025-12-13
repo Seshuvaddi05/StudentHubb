@@ -1238,29 +1238,11 @@ app.post("/api/purchases", requireAuth, async (req, res) => {
 });
 
 // -----------------------------
-// Serve PDFs only for logged-in users
-// -----------------------------
-app.use("/pdfs", requireAuth, express.static(path.join(__dirname, "pdfs")));
-
-// -----------------------------
 // Materials API (public listing; files still protected by /pdfs above)
 // -----------------------------
 // Secure PDF serving (works with iframe/pdf viewer)
-app.get("/pdfs/*", requireAuth, (req, res) => {
-  const filePath = path.join(__dirname, req.path);
+// Secure PDF serving (Node 22 / Express safe)
 
-  if (!filePath.startsWith(path.join(__dirname, "pdfs"))) {
-    return res.status(403).send("Forbidden");
-  }
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send("File not found");
-  }
-
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", "inline"); // 👈 IMPORTANT
-  res.sendFile(filePath);
-});
 
 // -----------------------------
 // Admin upload route (unchanged)
@@ -1544,6 +1526,43 @@ app.get("/admin-approved.html", (req, res) => {
   // If you created admin-approved.html, this will serve it
   res.sendFile(path.join(__dirname, "admin-approved.html"));
 });
+
+
+
+// =============================
+// SECURE PDF SERVING (KEEP HERE)
+// =============================
+// =============================
+// SECURE PDF SERVING (EXPRESS 5 SAFE)
+// =============================
+app.get(/^\/pdfs\/(.+)$/, requireAuth, (req, res) => {
+  try {
+    // Regex capture group
+    const relativePath = req.params[0];
+
+    const pdfRoot = path.join(__dirname, "pdfs");
+    const filePath = path.join(pdfRoot, relativePath);
+
+    // Path traversal protection
+    if (!filePath.startsWith(pdfRoot)) {
+      return res.status(403).send("Forbidden");
+    }
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).send("File not found");
+    }
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "inline");
+
+    res.sendFile(filePath);
+  } catch (err) {
+    console.error("PDF serve error:", err);
+    res.status(500).send("Error serving PDF");
+  }
+});
+
+
 
 // -----------------------------
 // Static files
