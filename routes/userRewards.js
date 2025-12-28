@@ -16,7 +16,7 @@ module.exports = function (db) {
   // Collections
   const usersCol = () => db.collection("users");
   const pdfSubmissionsCol = () => db.collection("pdfSubmissions");
-  const withdrawalRequestsCol = () => db.collection("withdrawalRequests");
+  const withdrawalCol = () => db.collection("Withdrawal");
   const notificationsCol = () => db.collection("notifications");
 
   // Local helper to add a user notification (simple native-doc)
@@ -27,7 +27,7 @@ module.exports = function (db) {
         message,
         type,
         read: false,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
       });
     } catch (err) {
       console.warn("addNotification error:", err);
@@ -53,7 +53,7 @@ module.exports = function (db) {
         description: (description || "").trim(),
         fileUrl: fileUrl.trim(),
         status: "pending",
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
       };
 
       const result = await pdfSubmissionsCol().insertOne(doc);
@@ -116,8 +116,8 @@ module.exports = function (db) {
         walletCoins = (byEmail && byEmail.walletCoins) || 0;
       }
 
-      const pendingWithdrawals = await withdrawalRequestsCol()
-        .find({ userId: req.user.id, status: "pending" })
+      const pendingWithdrawals = await WithdrawalCol()
+        .find({ userId: req.user.id,})
         .sort({ createdAt: -1 })
         .toArray();
 
@@ -196,10 +196,10 @@ module.exports = function (db) {
         userId: req.user.id,
         amountCoins,
         status: "pending",
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
       };
 
-      const createReq = await withdrawalRequestsCol().insertOne(requestDoc);
+      const createReq = await WithdrawalCol().insertOne(requestDoc);
       requestDoc._id = createReq.insertedId;
 
       await addNotification(

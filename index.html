@@ -9,9 +9,9 @@
 
   <!-- Basic SEO -->
   <meta name="description"
-        content="StudentHub lets you access free & premium e-books and previous year question papers for RRB, SSC, campus placements and other competitive exams." />
+    content="StudentHub lets you access free & premium e-books and previous year question papers for RRB, SSC, campus placements and other competitive exams." />
   <meta name="keywords"
-        content="studenthub, free ebooks, premium ebooks, question papers, previous year papers, RRB NTPC, SSC, aptitude, reasoning, placements" />
+    content="studenthub, free ebooks, premium ebooks, question papers, previous year papers, RRB NTPC, SSC, aptitude, reasoning, placements" />
   <meta name="author" content="StudentHub" />
   <meta name="robots" content="index, follow" />
 
@@ -25,19 +25,19 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content="StudentHub – Free & Premium E-Books & Question Papers" />
   <meta property="og:description"
-        content="Simple, clean website to read exam e-books and previous year question papers, with many free materials plus some premium PDFs." />
+    content="Simple, clean website to read exam e-books and previous year question papers, with many free materials plus some premium PDFs." />
   <meta property="og:url" content="https://studenthubb.onrender.com/" />
   <meta property="og:image"
-        content="https://images.unsplash.com/photo-1528372444006-1bfc81acab02?w=1200&h=630&fit=crop" />
+    content="https://images.unsplash.com/photo-1528372444006-1bfc81acab02?w=1200&h=630&fit=crop" />
   <meta property="og:site_name" content="StudentHub" />
 
   <!-- Twitter / X Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="StudentHub – Free & Premium E-Books & Question Papers" />
   <meta name="twitter:description"
-        content="Read free & premium e-books and previous year question papers for competitive exams inside StudentHub." />
+    content="Read free & premium e-books and previous year question papers for competitive exams inside StudentHub." />
   <meta name="twitter:image"
-        content="https://images.unsplash.com/photo-1528372444006-1bfc81acab02?w=1200&h=630&fit=crop" />
+    content="https://images.unsplash.com/photo-1528372444006-1bfc81acab02?w=1200&h=630&fit=crop" />
 
   <!-- PWA / Android color -->
   <meta name="theme-color" content="#111827" />
@@ -80,15 +80,28 @@
       <a href="#about">About</a>
       <a href="#contact">Contact</a>
 
-      <!-- Single auth-aware link (controlled by script.js / initAuthNavbar) -->
       <a href="/login.html" id="nav-auth-link" data-auth-link>
         Sign in
       </a>
     </nav>
 
-    <!-- Theme toggle -->
-    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+    <!-- 🔔 NOTIFICATIONS (PASTE HERE) -->
+    <div class="nav-actions">
+
+      <div class="notif-wrapper">
+        <button id="notifBtn" title="Notifications">🔔</button>
+        <span id="notifCount" class="notif-count"></span>
+
+        <div id="notifDropdown" class="notif-dropdown hidden">
+          <ul id="notifList"></ul>
+        </div>
+      </div>
+
+      <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+
+    </div>
   </header>
+
 
   <!-- Hero Section -->
   <section class="hero">
@@ -275,26 +288,26 @@
       </button>
 
       <a id="share-whatsapp" class="share-btn"
-         href="https://wa.me/?text=StudentHub%20-%20Free%20%26%20Premium%20E-Books%20and%20Question%20Papers"
-         target="_blank" rel="noopener">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
-             class="share-icon" alt="WhatsApp logo" />
+        href="https://wa.me/?text=StudentHub%20-%20Free%20%26%20Premium%20E-Books%20and%20Question%20Papers"
+        target="_blank" rel="noopener">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="share-icon"
+          alt="WhatsApp logo" />
         Share on WhatsApp
       </a>
 
       <a id="share-telegram" class="share-btn"
-         href="https://t.me/share/url?url=https%3A%2F%2Fstudenthubb.onrender.com&text=StudentHub%20-%20Free%20%26%20Premium%20E-Books%20and%20Question%20Papers"
-         target="_blank" rel="noopener">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg"
-             class="share-icon" alt="Telegram logo" />
+        href="https://t.me/share/url?url=https%3A%2F%2Fstudenthubb.onrender.com&text=StudentHub%20-%20Free%20%26%20Premium%20E-Books%20and%20Question%20Papers"
+        target="_blank" rel="noopener">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="share-icon"
+          alt="Telegram logo" />
         Share on Telegram
       </a>
 
       <a id="share-facebook" class="share-btn"
-         href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fstudenthubb.onrender.com"
-         target="_blank" rel="noopener">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Facebook_icon.svg"
-             class="share-icon" alt="Facebook logo" />
+        href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fstudenthubb.onrender.com" target="_blank"
+        rel="noopener">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Facebook_icon.svg" class="share-icon"
+          alt="Facebook logo" />
         Share on Facebook
       </a>
     </div>
@@ -333,14 +346,13 @@
 
       <div class="form-row">
         <label for="req-exam">Exam / Subject</label>
-        <input type="text" id="req-exam" required
-               placeholder="e.g. RRB NTPC, SSC CGL, Aptitude, Reasoning" />
+        <input type="text" id="req-exam" required placeholder="e.g. RRB NTPC, SSC CGL, Aptitude, Reasoning" />
       </div>
 
       <div class="form-row">
         <label for="req-details">Details (Book name, year, etc.)</label>
         <textarea id="req-details" rows="3" required
-                  placeholder="Example: RS Aggarwal Reasoning, 2023 edition, or RRB NTPC PYQ 2021..."></textarea>
+          placeholder="Example: RS Aggarwal Reasoning, 2023 edition, or RRB NTPC PYQ 2021..."></textarea>
       </div>
 
       <button type="submit" class="btn primary">Send Request</button>

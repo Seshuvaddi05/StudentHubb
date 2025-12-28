@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>StudentHub – My Library</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <meta
-    name="description"
-    content="View all the e-books and question papers you have unlocked or purchased on StudentHub."
-  />
+  <meta name="description"
+    content="View all the e-books and question papers you have unlocked or purchased on StudentHub." />
 
   <link rel="stylesheet" href="styles.css" />
 
@@ -22,6 +21,7 @@
       padding: 1.5rem 1.75rem;
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
     }
+
     body.dark .library-container {
       background: #020617;
       border: 1px solid #1f2937;
@@ -33,11 +33,13 @@
       font-weight: 600;
       margin-bottom: 0.3rem;
     }
+
     .library-subtitle {
       font-size: 0.9rem;
       color: #6b7280;
       margin-bottom: 1rem;
     }
+
     body.dark .library-subtitle {
       color: #9ca3af;
     }
@@ -48,9 +50,11 @@
       gap: 0.5rem;
       margin-bottom: 0.75rem;
     }
+
     .library-filters .filter-input {
       flex: 1 1 220px;
     }
+
     .library-filters .filter-select {
       flex: 0 0 160px;
     }
@@ -69,6 +73,7 @@
       box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
       font-size: 0.9rem;
     }
+
     body.dark .library-card {
       background: #020617;
       border-color: #1f2937;
@@ -93,6 +98,7 @@
       color: #166534;
       border: 1px solid #bbf7d0;
     }
+
     body.dark .pill-owned {
       background: #022c22;
       color: #bbf7d0;
@@ -108,6 +114,7 @@
       background: #eef2ff;
       color: #3730a3;
     }
+
     body.dark .pill-type {
       background: #111827;
       color: #c7d2fe;
@@ -117,11 +124,13 @@
       font-weight: 600;
       margin-bottom: 0.2rem;
     }
+
     .library-card-meta {
       font-size: 0.78rem;
       color: #6b7280;
       margin-bottom: 0.35rem;
     }
+
     body.dark .library-card-meta {
       color: #9ca3af;
     }
@@ -136,6 +145,7 @@
       font-size: 0.78rem;
       color: #6b7280;
     }
+
     body.dark .library-card-footer {
       color: #9ca3af;
     }
@@ -145,6 +155,7 @@
       margin-top: 0.75rem;
       color: #6b7280;
     }
+
     .library-status.error {
       color: #b91c1c;
     }
@@ -216,14 +227,17 @@
       justify-content: center;
       border-radius: 999px;
     }
+
     .nav-icon-btn:hover {
       background: rgba(148, 163, 184, 0.2);
     }
+
     body.dark .nav-icon-btn:hover {
       background: rgba(148, 163, 184, 0.25);
     }
   </style>
 </head>
+
 <body>
   <!-- Shared user Navbar (final unified version) -->
   <header class="navbar">
@@ -236,43 +250,28 @@
       <span></span>
     </button>
 
+    <!-- Nav links -->
     <nav class="nav-links" id="nav-links">
       <a href="/">Home</a>
       <a href="/#ebooks">E-Books</a>
       <a href="/#question-papers">Question Papers</a>
       <a href="/#about">About</a>
       <a href="/#contact">Contact</a>
-
-      <a href="/library.html" class="active">My Library</a>
-      <a href="/read-later.html">Read Later</a>
-      <!-- removed permanently from navbar: Submit PDF, My Submissions, Wallet -->
-
-      <!-- auth-aware links (script.js will toggle visibility) -->
-      <a href="/dashboard.html" id="nav-dashboard-link" style="display:none;">
-        My dashboard
-      </a>
-      <a href="/login.html" id="nav-login-link" style="display:none;">
-        Sign in
-      </a>
+      <a href="/dashboard.html">My Dashboard</a>
+      <a href="/login.html" id="nav-login-link" style="display:none;">Sign in</a>
     </nav>
 
-    <!-- Notifications bell + badge (count is filled by JS if you add it later) -->
-    <button
-      id="notifications-btn"
-      class="nav-icon-btn"
-      type="button"
-      aria-label="Notifications"
-    >
-      <span>🔔</span>
-      <span
-        id="notifications-count"
-        class="nav-badge"
-        style="display:none;"
-      >0</span>
-    </button>
+    <!-- Right-side actions (ALWAYS SAME ON ALL PAGES) -->
+    <div class="nav-actions">
+      <button id="notifications-btn" class="nav-icon-btn" type="button" aria-label="Notifications">
+        <span>🔔</span>
+        <span id="notifications-count" class="nav-badge" style="display:none;">0</span>
+      </button>
 
-    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+      <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+    </div>
   </header>
+
 
   <main class="section">
     <div class="library-container">
@@ -282,12 +281,8 @@
       </p>
 
       <div class="library-filters">
-        <input
-          type="text"
-          id="library-search"
-          class="filter-input"
-          placeholder="Search in your library by title, exam, subject..."
-        />
+        <input type="text" id="library-search" class="filter-input"
+          placeholder="Search in your library by title, exam, subject..." />
         <select id="library-type-filter" class="filter-select">
           <option value="all">All types</option>
           <option value="ebook">E-Books</option>
@@ -295,11 +290,7 @@
         </select>
       </div>
 
-      <p
-        id="library-summary"
-        class="library-subtitle"
-        style="margin-bottom: 0.5rem;"
-      >
+      <p id="library-summary" class="library-subtitle" style="margin-bottom: 0.5rem;">
         Loading your library…
       </p>
 
@@ -321,4 +312,5 @@
   <!-- Page-specific logic: My Library list, filters, etc. -->
   <script src="library.js" defer></script>
 </body>
+
 </html>

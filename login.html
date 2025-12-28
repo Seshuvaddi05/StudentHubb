@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>StudentHub – Login</title>
@@ -547,16 +548,22 @@
     window.handleGoogleCredentialResponse = async (response) => {
       try {
         showStatus("Signing in with Google...");
+
         const res = await fetch("/api/auth/google", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken: response.credential }),
+          body: JSON.stringify({
+            idToken: response.credential, // ✅ FIXED
+          }),
         });
+
         const data = await res.json();
+
         if (!res.ok || !data.ok) {
           showStatus(data.message || "Google login failed.", true);
           return;
         }
+
         showStatus("Google login successful. Redirecting...");
         setTimeout(() => {
           window.location.href = nextUrl;
@@ -566,6 +573,7 @@
         showStatus("Error with Google login.", true);
       }
     };
+
 
     window.onload = () => {
       // ✅ Your actual Google OAuth client ID
@@ -588,4 +596,5 @@
     };
   </script>
 </body>
+
 </html>

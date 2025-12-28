@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Withdrawals – StudentHub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    body {
+      background:#f1f5f9;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont;
+    }
+    body.dark {
+      background:#020617;
+      color:#e5e7eb;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .card {
+      background:#ffffff;
+      border-radius:14px;
+      padding:1.5rem;
+      box-shadow:0 10px 30px rgba(15,23,42,0.12);
+      border:1px solid #e5e7eb;
+    }
+
+    body.dark .card {
+      background:#020617;
+      border-color:#1f2937;
+    }
+
+    h1 {
+      font-size:1.4rem;
+      margin-bottom:0.25rem;
+    }
+
+    .subtitle {
+      font-size:0.9rem;
+      color:#6b7280;
+      margin-bottom:1rem;
+    }
+    body.dark .subtitle { color:#9ca3af; }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:0.9rem;
+    }
+
+    th, td {
+      padding:0.6rem;
+      border-bottom:1px solid #e5e7eb;
+      text-align:left;
+    }
+
+    body.dark th, body.dark td {
+      border-color:#1f2937;
+    }
+
+    th {
+      text-transform:uppercase;
+      font-size:0.75rem;
+      color:#6b7280;
+    }
+
+    .badge {
+      padding:3px 10px;
+      border-radius:999px;
+      font-size:0.75rem;
+      font-weight:600;
+      color:#1f2937;
+      display:inline-block;
+    }
+
+    .pending { background:#fde68a; }
+    .approved { background:#bbf7d0; }
+    .rejected { background:#fecaca; }
+
+    .empty {
+      text-align:center;
+      padding:1rem;
+      color:#6b7280;
+    }
+
+    .back-link {
+      display:inline-block;
+      margin-bottom:1rem;
+      text-decoration:none;
+      color:#2563eb;
+      font-size:0.9rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <a href="/wallet.html" class="back-link">← Back to Wallet</a>
+
+    <div class="card">
+      <h1>Withdrawal History</h1>
+      <p class="subtitle">Track all your withdrawal requests and their status</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Requested</th>
+            <th>Processed</th>
+          </tr>
+        </thead>
+        <tbody id="history-body">
+          <tr>
+            <td colspan="4">Loading…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+  async function loadHistory() {
+    const tbody = document.getElementById("history-body");
+    tbody.innerHTML = `<tr><td colspan="4">Loading…</td></tr>`;
+
+    try {
+      const res = await fetch("/api/withdrawals/history", {
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error();
+
+      const list = data.withdrawals || [];
+      if (!list.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="empty">No withdrawals yet</td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = "";
+      list.forEach(w => {
+        const statusClass = w.status;
+        tbody.innerHTML += `
+          <tr>
+            <td>${w.amountCoins} coins</td>
+            <td>
+              <span class="badge ${statusClass}">
+                ${w.status.charAt(0).toUpperCase() + w.status.slice(1)}
+              </span>
+            </td>
+            <td>${new Date(w.createdAt).toLocaleString()}</td>
+            <td>
+              ${w.processedAt ? new Date(w.processedAt).toLocaleString() : "—"}
+            </td>
+          </tr>`;
+      });
+    } catch (err) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="empty">Failed to load history</td>
+        </tr>`;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    loadHistory();
+  });
+</script>
+</body>
+</html>

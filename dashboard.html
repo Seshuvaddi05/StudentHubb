@@ -1,13 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>StudentHub – My Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles.css" />
 
+  <!-- Dashboard-specific styles -->
   <style>
-    /* --- Dashboard page specific styles (keeps existing aesthetic) --- */
+    body {
+      background: #f1f5f9;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body.dark {
+      background: #020617;
+      color: #e5e7eb;
+    }
+
     .dashboard-container {
       max-width: 1100px;
       margin: 2rem auto;
@@ -15,182 +26,301 @@
     }
 
     .dash-header {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.8rem;
     }
 
     .dash-title {
-      font-size: 1.6rem;
+      font-size: 1.8rem;
       font-weight: 600;
-      margin-bottom: 0.25rem;
     }
 
     .dash-subtitle {
       font-size: 0.95rem;
-      color: #6b7280;
+      color: #64748b;
+      margin-top: 0.2rem;
     }
-    body.dark .dash-subtitle { color: #9ca3af; }
+
+    body.dark .dash-subtitle {
+      color: #9ca3af;
+    }
 
     .dash-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 1rem;
-      margin-bottom: 1.75rem;
+      margin-bottom: 2rem;
     }
 
     .dash-card {
       background: #ffffff;
-      border-radius: 0.9rem;
-      padding: 1rem 1.1rem;
-      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      border-radius: 14px;
+      padding: 1.2rem;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
       border: 1px solid #e5e7eb;
-      font-size: 0.9rem;
-      min-height: 110px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
     }
 
-    .dash-card h3 { font-size: 0.95rem; margin-bottom: 0.35rem; }
-
-    .dash-metric {
-      font-size: 1.7rem;
-      font-weight: 600;
-      color: #0f172a;
-    }
-
-    .dash-note { font-size: 0.8rem; color: #9ca3af; margin-top: 0.3rem; }
     body.dark .dash-card {
       background: #020617;
       border-color: #1f2937;
-      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.7);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
     }
 
-    .dash-links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
-
-    .dash-section-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.35rem; }
-    .dash-section-sub { font-size: 0.85rem; color: #6b7280; margin-bottom: 0.4rem; }
-    body.dark .dash-section-sub { color: #9ca3af; }
-
-    .dash-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.75rem; }
-    .dash-list-item { background: #ffffff; padding: 0.75rem 0.9rem; border-radius: 0.75rem; border: 1px solid #e5e7eb; font-size: 0.9rem; }
-    .dash-list-item-title { font-weight: 500; margin-bottom: 0.15rem; }
-    .dash-list-item-meta { font-size: 0.8rem; color: #6b7280; margin-bottom: 0.3rem; }
-    .dash-list-item-actions { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.2rem; }
-
-    .dash-empty { font-size: 0.9rem; color: #6b7280; padding: 0.6rem 0; }
-    body.dark .dash-empty { color: #9ca3af; }
-
-    .dash-logout-row { margin-top: 1.5rem; display: flex; justify-content: flex-end; }
-
-    .chip { display:inline-block; padding:0.25rem 0.6rem; border-radius: 999px; background:#f3f4f6; font-size:0.85rem; text-decoration:none; color:#111827; border:1px solid #e5e7eb; }
-    .btn { padding:0.5rem 0.75rem; border-radius:0.6rem; border:1px solid transparent; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem; }
-    .btn.small { padding:0.28rem 0.5rem; font-size:0.85rem; }
-
-    @media (max-width:640px) {
-      .dashboard-container { margin-top:1.25rem; padding: 0 0.8rem; }
+    .dash-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.6rem;
     }
 
-    /* small loader text */
-    .loader { font-size:0.9rem; color:#6b7280; }
+    .dash-metric {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
 
+    .dash-note {
+      font-size: 0.85rem;
+      color: #64748b;
+      line-height: 1.4;
+    }
+
+    body.dark .dash-note {
+      color: #9ca3af;
+    }
+
+    .dash-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.8rem;
+    }
+
+    .chip {
+      padding: 0.35rem 0.7rem;
+      font-size: 0.8rem;
+      border-radius: 999px;
+      background: #f1f5f9;
+      border: 1px solid #e5e7eb;
+      text-decoration: none;
+      color: #0f172a;
+      font-weight: 500;
+      transition: 0.15s ease;
+    }
+
+    .chip:hover {
+      background: #e2e8f0;
+    }
+
+    body.dark .chip {
+      background: #020617;
+      border-color: #1f2937;
+      color: #e5e7eb;
+    }
+
+    .dash-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.6rem;
+    }
+
+    .dash-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .dash-list-item {
+      background: #ffffff;
+      padding: 0.8rem 1rem;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      font-size: 0.9rem;
+    }
+
+    body.dark .dash-list-item {
+      background: #020617;
+      border-color: #1f2937;
+    }
+
+    .dash-empty {
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+
+    body.dark .dash-empty {
+      color: #9ca3af;
+    }
+
+    .dash-logout-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 2rem;
+    }
+
+    .btn.small {
+      padding: 0.45rem 0.9rem;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    body.dark .btn.small {
+      background: #020617;
+      border-color: #1f2937;
+      color: #e5e7eb;
+    }
   </style>
 </head>
+
 <body>
+
   <!-- Navbar -->
   <header class="navbar">
     <div class="logo">StudentHub</div>
-    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
 
+    <!-- Mobile hamburger -->
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <!-- Nav links -->
     <nav class="nav-links" id="nav-links">
       <a href="/">Home</a>
       <a href="/#ebooks">E-Books</a>
       <a href="/#question-papers">Question Papers</a>
       <a href="/#about">About</a>
       <a href="/#contact">Contact</a>
-      <a href="/library.html">My Library</a>
-      <a href="/read-later.html">Read Later</a>
-      <!-- removed: Submit PDF, My Submissions, Wallet (permanent removal from navbar) -->
 
-      <a href="/dashboard.html" id="nav-dashboard-link" class="active">My dashboard</a>
+      <!-- auth handled by JS -->
       <a href="/login.html" id="nav-login-link" style="display:none;">Sign in</a>
+      <a href="/dashboard.html" id="nav-dashboard-link" style="display:none;">My Dashboard</a>
     </nav>
 
-    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+    <!-- Right actions -->
+    <div class="nav-actions">
+      <div class="notif-wrapper">
+        <button id="notifBtn" title="Notifications">🔔</button>
+        <span id="notifCount"></span>
+
+        <div id="notifDropdown" class="notif-dropdown hidden">
+          <ul id="notifList"></ul>
+        </div>
+      </div>
+
+      <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+    </div>
   </header>
+
 
   <main class="section">
     <div class="dashboard-container">
+
+      <!-- Header -->
       <div class="dash-header">
-        <h1 class="dash-title" id="dash-title">My dashboard</h1>
-        <p class="dash-subtitle" id="dash-subtitle">Loading your account details…</p>
+        <h1 class="dash-title" id="dash-title">My Dashboard</h1>
+        <p class="dash-subtitle" id="dash-subtitle">Loading your account…</p>
       </div>
 
-      <div class="dash-grid" id="dash-grid">
+      <!-- Grid -->
+      <div class="dash-grid">
+
+        <!-- All Materials -->
         <div class="dash-card">
-          <h3>Total e-books</h3>
-          <div class="dash-metric" id="metric-ebooks">–</div>
-        </div>
-        <div class="dash-card">
-          <h3>Total question papers</h3>
-          <div class="dash-metric" id="metric-qps">–</div>
-        </div>
-        <div class="dash-card">
-          <h3>All materials</h3>
+          <h3>All Materials</h3>
           <div class="dash-metric" id="metric-total">–</div>
+          <div class="dash-note">
+            <span id="metric-ebooks">0</span> E-Books •
+            <span id="metric-qps">0</span> Question Papers
+          </div>
+          <div class="dash-links">
+            <a href="/#ebooks" class="chip">E-Books</a>
+            <a href="/#question-papers" class="chip">Question Papers</a>
+          </div>
         </div>
+
+        <!-- Library -->
+        <div class="dash-card">
+          <h3>Library & Read Later</h3>
+          <div class="dash-note">
+            Library: <strong id="metric-library">0</strong><br />
+            Read Later: <strong id="metric-readlater">0</strong>
+          </div>
+          <div class="dash-links">
+            <a href="/library.html" class="chip">My Library</a>
+            <a href="/read-later.html" class="chip">Read Later</a>
+          </div>
+        </div>
+
+        <!-- Wallet -->
         <div class="dash-card">
           <h3>Wallet</h3>
-          <div class="dash-metric" id="metric-wallet">–</div>
-          <div class="dash-note">Minimum 100 coins required for withdrawal.</div>
-          <div class="dash-links"><a href="/wallet.html" class="chip">Open wallet</a></div>
+          <div class="dash-metric" id="metric-wallet">0</div>
+          <div class="dash-note">Minimum 100 required for withdrawal</div>
+          <div class="dash-links">
+            <a href="/wallet.html" class="chip">Open Wallet</a>
+          </div>
         </div>
 
+        <!-- Creator Rewards -->
         <div class="dash-card">
-          <h3>Creator rewards</h3>
-          <div>
-            <strong>Submissions:</strong> <span id="metric-submissions">0</span>
-            <div id="metric-submissions-detail" style="font-size:0.85rem; color:#6b7280; margin-top:0.35rem;">0 pending • 0 approved • 0 rejected</div>
+          <h3>Creator Rewards</h3>
+          <div class="dash-note">
+            Submissions: <strong id="metric-submissions">0</strong><br />
+            <span id="metric-submissions-detail">0 pending • 0 approved • 0 rejected</span>
           </div>
-
-          <div style="margin-top:0.6rem;">
-            <strong>Withdrawals:</strong> <span id="metric-withdrawals">0</span>
-            <div id="metric-withdrawals-detail" style="font-size:0.85rem; color:#6b7280; margin-top:0.35rem;">0 pending • 0 approved • 0 rejected</div>
+          <div class="dash-note" style="margin-top:6px;">
+            Withdrawals: <strong id="metric-withdrawals">0</strong><br />
+            <span id="metric-withdrawals-detail">0 pending • 0 paid • 0 rejected</span>
           </div>
-
-          <div class="dash-links" style="margin-top:0.6rem;">
+          <div class="dash-links">
             <a href="/submit-pdf.html" class="chip">Submit PDF</a>
-            <a href="/my-submissions.html" class="chip">My submissions</a>
+            <a href="/my-submissions.html" class="chip">My Submissions</a>
           </div>
         </div>
 
+        <!-- Account -->
         <div class="dash-card">
-          <h3>Your account</h3>
+          <h3>Your Account</h3>
           <div id="account-info">—</div>
-          <div id="account-extra" style="font-size:0.85rem; margin-top:0.5rem;">Purchased items: 0</div>
+          <div class="dash-note" id="account-extra">Purchased items: 0</div>
         </div>
+
       </div>
 
+      <!-- Purchased -->
       <section>
         <h2 class="dash-section-title">Your Purchased PDFs</h2>
-        <p id="lib-subtitle" class="dash-section-sub">Loading your library…</p>
-        <div id="my-library-list" class="dash-list"><div class="dash-empty loader">Loading...</div></div>
+        <div id="my-library-list" class="dash-list">
+          <div class="dash-empty">Loading…</div>
+        </div>
       </section>
 
-      <section style="margin-top:1.25rem;">
+      <!-- Popular -->
+      <section style="margin-top:1.5rem;">
         <h2 class="dash-section-title">Popular Materials</h2>
-        <p class="dash-section-sub">Most downloaded PDFs on StudentHub</p>
-        <div id="popular-list" class="dash-list"><div class="dash-empty loader">Loading...</div></div>
+        <div id="popular-list" class="dash-list">
+          <div class="dash-empty">Loading…</div>
+        </div>
       </section>
 
-      <section style="margin-top:1.25rem;">
+      <!-- Notifications -->
+      <section style="margin-top:1.5rem;">
         <h2 class="dash-section-title">Latest Notifications</h2>
-        <p class="dash-section-sub">Updates about submissions & wallet</p>
-        <div id="notifications-list" class="dash-list"><div class="dash-empty loader">Loading...</div></div>
+        <div id="notifications-list" class="dash-list">
+          <div class="dash-empty">No notifications</div>
+        </div>
       </section>
 
+      <!-- Logout -->
       <div class="dash-logout-row">
         <button class="btn small" id="btn-logout">Logout</button>
       </div>
+
     </div>
   </main>
 
@@ -200,241 +330,8 @@
 
   <button id="back-to-top" class="back-to-top">↑</button>
 
-  <script>
-    // ---------- small defensive helpers ----------
-    function slugify(text){ return (text||"").toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
-    async function safeJsonFetch(url, options){ const res = await fetch(url, options); const data = await res.json().catch(()=>({})); if(!res.ok) throw new Error(data.message||data.error||('HTTP '+res.status)); return data; }
-
-    // ---------- theme / nav / back-to-top ----------
-    function applyTheme(theme){
-      const b = document.body, t = document.getElementById('theme-toggle'); if(!b) return;
-      if(theme === 'dark'){ b.classList.add('dark'); if(t) t.textContent = '☀️'; } else { b.classList.remove('dark'); if(t) t.textContent = '🌙'; }
-      localStorage.setItem('studenthub_theme', theme);
-    }
-    function initThemeToggle(){
-      const saved = localStorage.getItem('studenthub_theme') || 'light'; applyTheme(saved);
-      const btn = document.getElementById('theme-toggle'); if(!btn) return;
-      btn.addEventListener('click', ()=>{ const next = document.body.classList.contains('dark') ? 'light' : 'dark'; applyTheme(next); });
-    }
-
-    function initMobileNav(){
-      const navToggle = document.getElementById('nav-toggle'); const navLinks = document.getElementById('nav-links');
-      if(!navToggle||!navLinks) return;
-      navToggle.addEventListener('click', ()=>{ navLinks.classList.toggle('open'); navToggle.classList.toggle('open'); });
-      navLinks.querySelectorAll('a').forEach(a=>a.addEventListener('click', ()=>{ navLinks.classList.remove('open'); navToggle.classList.remove('open'); }));
-    }
-
-    function initBackToTop(){
-      const btn = document.getElementById('back-to-top'); if(!btn) return;
-      window.addEventListener('scroll', ()=>{ if(window.scrollY > 300) btn.classList.add('show'); else btn.classList.remove('show'); });
-      btn.addEventListener('click', ()=> window.scrollTo({ top:0, behavior:'smooth' }));
-    }
-
-    async function initAuthNavbarSimple(){
-      const dashLink = document.getElementById('nav-dashboard-link');
-      const loginLink = document.getElementById('nav-login-link');
-      if(!dashLink && !loginLink) return;
-
-      try{
-        const res = await fetch('/api/me');
-        if (res.ok){
-          const data = await res.json().catch(()=>({}));
-          if (data && data.ok && data.user){
-            if (dashLink) dashLink.style.display = 'inline-block';
-            if (loginLink) loginLink.style.display = 'none';
-            return data.user;
-          }
-        }
-      }catch(e){ /* ignore */ }
-
-      if (dashLink) dashLink.style.display = 'none';
-      if (loginLink) loginLink.style.display = 'inline-block';
-      return null;
-    }
-
-    // ---------- rendering helpers ----------
-    function createLibraryItemCard(it){
-      const container = document.createElement('div'); container.className = 'dash-list-item';
-      const title = document.createElement('div'); title.className = 'dash-list-item-title'; title.textContent = it.title || 'Untitled';
-      const meta = document.createElement('div'); meta.className = 'dash-list-item-meta';
-      meta.textContent = `${it.itemType === 'questionPaper' ? 'Question Paper' : 'E-Book'} • ${it.exam||'—'} • ${it.year||'—'} • Price: ₹${Number(it.price||0)}`;
-      const actions = document.createElement('div'); actions.className = 'dash-list-item-actions';
-      const open = document.createElement('a'); open.className='btn small'; open.href = `/view/${slugify(it.title||'read')}?id=${encodeURIComponent(it.itemId||it.itemId)}`; open.textContent='Open reader'; actions.appendChild(open);
-      container.appendChild(title); container.appendChild(meta); container.appendChild(actions);
-      return container;
-    }
-
-    function createPopularCard(item){
-      const d = document.createElement('div'); d.className='dash-list-item';
-      d.innerHTML = `<div class="dash-list-item-title">${item.title||'Untitled'}</div>
-        <div class="dash-list-item-meta">${item.type||'E-Book'} • ${item.exam||'—'} • Downloads: ${item.downloads||0}</div>`;
-      return d;
-    }
-
-    function renderNotifications(notifs){
-      const list = document.getElementById('notifications-list'); if(!list) return;
-      list.innerHTML = '';
-      if(!Array.isArray(notifs) || notifs.length === 0){
-        list.innerHTML = '<div class="dash-empty">No notifications yet.</div>'; return;
-      }
-      notifs.slice().reverse().forEach(n=>{
-        const div = document.createElement('div'); div.className='dash-list-item';
-        const createdAt = n.createdAt ? new Date(n.createdAt).toLocaleString() : '';
-        div.innerHTML = `<div class="dash-list-item-title">${n.message||''}</div>
-          <div class="dash-list-item-meta">${createdAt}</div>`;
-        list.appendChild(div);
-      });
-    }
-
-    // ---------- main page logic ----------
-    document.addEventListener('DOMContentLoaded', async () => {
-      document.getElementById('year').textContent = new Date().getFullYear();
-      initThemeToggle(); initMobileNav(); initBackToTop();
-      const user = await initAuthNavbarSimple(); // also returns user when logged in
-
-      const dashTitle = document.getElementById('dash-title');
-      const dashSubtitle = document.getElementById('dash-subtitle');
-      const metricE = document.getElementById('metric-ebooks');
-      const metricQ = document.getElementById('metric-qps');
-      const metricT = document.getElementById('metric-total');
-      const metricWallet = document.getElementById('metric-wallet');
-      const metricSubs = document.getElementById('metric-submissions');
-      const metricSubsDetail = document.getElementById('metric-submissions-detail');
-      const metricW = document.getElementById('metric-withdrawals');
-      const metricWDetail = document.getElementById('metric-withdrawals-detail');
-
-      const accountInfo = document.getElementById('account-info');
-      const accountExtra = document.getElementById('account-extra');
-      const popularList = document.getElementById('popular-list');
-      const myLibList = document.getElementById('my-library-list');
-      const libSubtitle = document.getElementById('lib-subtitle');
-      const notifList = document.getElementById('notifications-list');
-      const logoutBtn = document.getElementById('btn-logout');
-
-      // 1) load current user (if not already set by nav call)
-      try {
-        if (user){
-          dashTitle.textContent = "Welcome, " + (user.name || user.email);
-          dashSubtitle.textContent = "You joined StudentHub on " + (user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—') + ".";
-          accountInfo.textContent = (user.email || '') + (user.provider === 'google' ? ' • Signed in with Google' : ' • Email account');
-        } else {
-          const meRes = await fetch('/api/me');
-          if (meRes.status === 401){
-            // redirect to login (preserve next)
-            window.location.href = '/login.html?next=' + encodeURIComponent('/dashboard.html');
-            return;
-          }
-          const meData = await meRes.json().catch(()=>({}));
-          if (meData && meData.ok && meData.user){
-            dashTitle.textContent = "Welcome, " + (meData.user.name || meData.user.email);
-            dashSubtitle.textContent = "You joined StudentHub on " + (meData.user.createdAt ? new Date(meData.user.createdAt).toLocaleDateString() : '—') + ".";
-            accountInfo.textContent = (meData.user.email || '') + (meData.user.provider === 'google' ? ' • Signed in with Google' : ' • Email account');
-          } else {
-            dashSubtitle.textContent = "Unable to load your account.";
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching /api/me', err);
-        dashSubtitle.textContent = "Failed to load your account.";
-      }
-
-      // 2) materials & popular
-      try {
-        const data = await safeJsonFetch('/api/materials');
-        const ebooks = Array.isArray(data.ebooks) ? data.ebooks : [];
-        const qps = Array.isArray(data.questionPapers) ? data.questionPapers : [];
-
-        metricE.textContent = ebooks.length;
-        metricQ.textContent = qps.length;
-        metricT.textContent = ebooks.length + qps.length;
-
-        const combined = [
-          ...ebooks.map(i => ({ ...i, type: 'E-Book' })),
-          ...qps.map(i => ({ ...i, type: 'Question Paper' }))
-        ];
-
-        combined.sort((a,b)=> (b.downloads||0) - (a.downloads||0));
-        const top = combined.slice(0,6);
-
-        popularList.innerHTML = '';
-        if (!top.length) {
-          popularList.innerHTML = '<div class="dash-empty">No materials uploaded yet.</div>';
-        } else {
-          top.forEach(it => popularList.appendChild(createPopularCard(it)));
-        }
-
-      } catch (err) {
-        console.error('Error loading materials:', err);
-        popularList.innerHTML = '<div class="dash-empty" style="color:#b91c1c">Error loading materials.</div>';
-        if(metricE) metricE.textContent = '–';
-        if(metricQ) metricQ.textContent = '–';
-        if(metricT) metricT.textContent = '–';
-      }
-
-      // 3) my library / purchased items
-      try {
-        const libData = await safeJsonFetch('/api/my-library');
-        const items = Array.isArray(libData.items) ? libData.items : [];
-        accountExtra.textContent = 'Purchased items: ' + items.length;
-
-        myLibList.innerHTML = '';
-        if (!items.length){
-          libSubtitle.textContent = "You haven't purchased any PDFs yet.";
-          myLibList.innerHTML = '<div class="dash-empty">Unlock any paid PDF in the reader and it will appear here.</div>';
-        } else {
-          libSubtitle.textContent = 'You can reopen any unlocked PDF from here.';
-          items.forEach(it => myLibList.appendChild(createLibraryItemCard(it)));
-        }
-      } catch (err) {
-        console.error('Error loading my library:', err);
-        libSubtitle.textContent = 'Error loading your library.';
-        myLibList.innerHTML = '<div class="dash-empty" style="color:#b91c1c">Unable to load your purchases.</div>';
-      }
-
-      // 4) wallet / notifications / withdrawals (combined)
-      try {
-        const walletData = await safeJsonFetch('/api/wallet');
-        // walletCoins may be at root or within walletData
-        const coins = typeof walletData.walletCoins === 'number' ? walletData.walletCoins : (typeof walletData.coins === 'number' ? walletData.coins : 0);
-        metricWallet.textContent = coins;
-
-        const pendingWithdrawals = Array.isArray(walletData.pendingWithdrawals) ? walletData.pendingWithdrawals.length : (Array.isArray(walletData.withdrawals) ? walletData.withdrawals.filter(w=>w.status==='pending').length : 0);
-        metricW.textContent = pendingWithdrawals;
-        metricWDetail.textContent = (pendingWithdrawals) + ' pending • 0 approved • 0 rejected';
-
-        const notifs = Array.isArray(walletData.notifications) ? walletData.notifications : (Array.isArray(walletData.notificationsList) ? walletData.notificationsList : []);
-        renderNotifications(notifs);
-      } catch (err) {
-        console.error('Error loading wallet/notifications:', err);
-        metricWallet.textContent = '–';
-        document.getElementById('notifications-list').innerHTML = '<div class="dash-empty">Unable to load notifications.</div>';
-      }
-
-      // 5) user submissions
-      try {
-        const subsData = await safeJsonFetch('/api/user-submissions');
-        const submissions = Array.isArray(subsData.submissions) ? subsData.submissions : [];
-        const total = submissions.length;
-        let pending=0, approved=0, rejected=0;
-        submissions.forEach(s => { if(s.status==='pending') pending++; else if(s.status==='approved') approved++; else if(s.status==='rejected') rejected++; });
-        metricSubs.textContent = total;
-        metricSubsDetail.textContent = `${pending} pending • ${approved} approved • ${rejected} rejected`;
-      } catch (err) {
-        console.warn('Error loading submissions:', err);
-      }
-
-      // logout handling
-      if (logoutBtn){
-        logoutBtn.addEventListener('click', async () => {
-          try {
-            await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-          } catch(e){
-            console.error('Logout error', e);
-          }
-          window.location.href = '/login.html';
-        });
-      }
-    });
-  </script>
+  <!-- Dashboard JS -->
+  <script src="/dashboard.js"></script>
 </body>
+
 </html>

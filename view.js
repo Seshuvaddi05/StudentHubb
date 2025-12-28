@@ -1,6 +1,6 @@
-// view.js – Handles loading a single material + payment / unlock
+// view.js – FINAL & CORRECT (Secure PDF loading via /pdfs/*)
 
-// Keep slugify in sync with script.js
+// ---------- Utils ----------
 function slugify(text) {
   return (text || "")
     .toString()
@@ -11,38 +11,40 @@ function slugify(text) {
 }
 
 function isPaidItem(item) {
-  const priceNum = Number(item?.price) || 0;
-  return priceNum > 0;
+  return Number(item?.price || 0) > 0;
 }
 
 function formatPrice(item) {
-  if (!item) return "Free";
-  const priceNum = Number(item.price) || 0;
-  if (priceNum > 0) return `₹${priceNum}`;
-  return "Free";
+  const p = Number(item?.price || 0);
+  return p > 0 ? `₹${p}` : "Free";
 }
 
 function getSlugFromLocation() {
-  const path = window.location.pathname || "";
-  const parts = path.split("/view/");
-  if (parts.length < 2) return "";
-  const slugPart = parts[1].split(/[?#]/)[0];
-  return decodeURIComponent(slugPart);
+  const parts = window.location.pathname.split("/view/");
+  return decodeURIComponent(parts[1]?.split(/[?#]/)[0] || "");
 }
 
+// ---------- 🔐 AUTH CHECK ----------
+async function ensureLoggedIn() {
+  const res = await fetch("/api/me");
+  if (!res.ok) {
+    const next = encodeURIComponent(window.location.pathname);
+    window.location.href = `/login.html?next=${next}`;
+    throw new Error("Not authenticated");
+  }
+  return res.json();
+}
+
+// ---------- API ----------
 async function fetchAllMaterials() {
   const res = await fetch("/api/materials");
   if (!res.ok) throw new Error("Failed to load materials");
+
   const data = await res.json();
-  const ebooks = (data.ebooks || []).map((m) => ({ ...m, type: "ebook" }));
-  const qps = (data.questionPapers || []).map((m) => ({
-    ...m,
-    type: "questionPaper",
-  }));
-  return [...ebooks, ...qps].map((m) => ({
-    ...m,
-    slug: slugify(m.title || ""),
-  }));
+  return [
+    ...(data.ebooks || []).map(m => ({ ...m, type: "ebook" })),
+    ...(data.questionPapers || []).map(m => ({ ...m, type: "questionPaper" })),
+  ].map(m => ({ ...m, slug: slugify(m.title) }));
 }
 
 async function fetchMyLibrary() {
@@ -50,206 +52,131 @@ async function fetchMyLibrary() {
     const res = await fetch("/api/my-library");
     if (!res.ok) return [];
     const data = await res.json();
-    if (!data.ok || !Array.isArray(data.items)) return [];
-    return data.items;
-  } catch (err) {
-    console.warn("Unable to load library:", err);
+    return Array.isArray(data.items) ? data.items : [];
+  } catch {
     return [];
   }
 }
 
-async function trackRead(materialId) {
-  if (!materialId) return;
+async function trackRead(id) {
   try {
-    await fetch(`/api/materials/${materialId}/track-read`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (err) {
-    console.warn("Failed to track read:", err);
-  }
-}
-
-function loadPdfIntoFrame(item) {
-  const frame = document.getElementById("pdf-frame");
-  if (!frame || !item || !item.file) return;
-
-  frame.src = "/" + item.file.replace(/^\/+/, "");
-  trackRead(item.id);
+    await fetch(`/api/materials/${id}/track-read`, { method: "POST" });
+  } catch {}
 }
 
 async function markPurchase(material, amountPaid, reference) {
-  const payload = {
-    materialId: material.id,
-    amountPaid: Number(amountPaid) || 0,
-    paymentId: reference || `manual-${Date.now()}`,
-  };
-
   const res = await fetch("/api/purchases", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      materialId: material.id,
+      amountPaid: Number(amountPaid) || 0,
+      paymentId: reference || `manual-${Date.now()}`
+    }),
   });
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data.ok === false) {
-    throw new Error(data.message || "Failed to record purchase");
+    throw new Error(data.message || "Purchase failed");
   }
-  return data;
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const slug = getSlugFromLocation();
+// ---------- ✅ SECURE PDF LOADER (FIXED) ----------
+function loadPdfIntoFrame(item) {
+  const frame = document.getElementById("pdf-frame");
+  if (!frame || !item?.file) return;
 
+  // 🔐 FORCE PDF THROUGH /pdfs/* ROUTE
+  const cleanPath = item.file.replace(/^\/+/, "").replace(/^pdfs\//, "");
+  frame.src = `/pdfs/${cleanPath}`;
+
+  trackRead(item.id);
+}
+
+// ---------- MAIN ----------
+document.addEventListener("DOMContentLoaded", async () => {
   const titleEl = document.getElementById("reader-title");
-  const metaLineEl = document.getElementById("reader-meta-line");
   const breadcrumbEl = document.getElementById("reader-breadcrumb");
+  const metaLineEl = document.getElementById("reader-meta-line");
   const typePillEl = document.getElementById("reader-type-pill");
   const priceChipEl = document.getElementById("reader-price-chip");
-  const downloadsPillEl = document.getElementById("reader-downloads-pill");
-
   const paywallBox = document.getElementById("reader-paywall");
-  const paywallPriceInput = document.getElementById("paywall-price");
-  const paywallAmountInput = document.getElementById("paywall-amount");
-  const paywallRefInput = document.getElementById("paywall-reference");
-  const paywallConfirm = document.getElementById("paywall-confirm");
   const paywallBtn = document.getElementById("paywall-unlock-btn");
-  const paywallStatusEl = document.getElementById("paywall-status");
+  const paywallStatus = document.getElementById("paywall-status");
 
-  let currentMaterial = null;
-  let unlocked = false;
-
-  function setStatus(msg, kind) {
-    if (!paywallStatusEl) return;
-    paywallStatusEl.textContent = msg || "";
-    paywallStatusEl.classList.remove("error", "ok");
-    if (kind) paywallStatusEl.classList.add(kind);
+  function setStatus(msg, type) {
+    if (!paywallStatus) return;
+    paywallStatus.textContent = msg || "";
+    paywallStatus.className = type ? `paywall-status ${type}` : "paywall-status";
   }
 
   try {
-    const allMaterials = await fetchAllMaterials();
-    currentMaterial = allMaterials.find((m) => m.slug === slug);
+    // 🔐 LOGIN CHECK
+    await ensureLoggedIn();
 
-    if (!currentMaterial) {
-      if (titleEl) titleEl.textContent = "Material not found";
-      if (breadcrumbEl) breadcrumbEl.textContent = "Unknown material";
-      setStatus("We couldn't find this PDF. Please go back and try again.", "error");
+    const slug = getSlugFromLocation();
+    const materials = await fetchAllMaterials();
+    const material = materials.find(m => m.slug === slug);
+
+    if (!material) {
+      titleEl.textContent = "Material not found";
+      breadcrumbEl.textContent = "Invalid link";
       return;
     }
 
-    // Fill header info
-    if (breadcrumbEl) {
-      breadcrumbEl.textContent =
-        (currentMaterial.type === "ebook" ? "E-Book" : "Question Paper") +
-        (currentMaterial.exam ? " • " + currentMaterial.exam : "");
+    // Header
+    breadcrumbEl.textContent =
+      (material.type === "ebook" ? "E-Book" : "Question Paper") +
+      (material.exam ? ` • ${material.exam}` : "");
+
+    titleEl.textContent = material.title;
+    metaLineEl.textContent =
+      `Subject: ${material.subject || "—"} • Year: ${material.year || "—"}`;
+    typePillEl.textContent =
+      material.type === "ebook" ? "E-Book" : "Question Paper";
+    priceChipEl.textContent = formatPrice(material);
+
+    // ---------- FREE PDF ----------
+    if (!isPaidItem(material)) {
+      paywallBox.style.display = "none";
+      loadPdfIntoFrame(material);
+      return;
     }
-    if (titleEl) titleEl.textContent = currentMaterial.title || "Untitled PDF";
-    if (metaLineEl) {
-      metaLineEl.textContent = `Subject: ${
-        currentMaterial.subject || "—"
-      }  •  Year: ${currentMaterial.year || "—"}`;
+
+    // ---------- PAID PDF ----------
+    paywallBox.style.display = "block";
+
+    // Already purchased?
+    const library = await fetchMyLibrary();
+    const owned = library.find(
+      i => i.itemId === material.id && i.itemType === material.type
+    );
+
+    if (owned) {
+      paywallBox.style.display = "none";
+      loadPdfIntoFrame(material);
+      return;
     }
-    if (typePillEl) {
-      typePillEl.textContent =
-        currentMaterial.type === "ebook" ? "E-Book" : "Question Paper";
-    }
-    if (priceChipEl) {
-      priceChipEl.textContent = formatPrice(currentMaterial);
-    }
-    if (downloadsPillEl) {
-      const d = Number(currentMaterial.downloads) || 0;
-      if (d > 0) {
-        downloadsPillEl.style.display = "inline-flex";
-        downloadsPillEl.textContent = `${d} read${d === 1 ? "" : "s"}`;
+
+    // Unlock
+    paywallBtn.addEventListener("click", async () => {
+      try {
+        paywallBtn.disabled = true;
+        paywallBtn.textContent = "Unlocking…";
+
+        await markPurchase(material, material.price, "");
+
+        paywallBox.style.display = "none";
+        loadPdfIntoFrame(material);
+      } catch (err) {
+        setStatus(err.message || "Unlock failed", "error");
+      } finally {
+        paywallBtn.disabled = false;
+        paywallBtn.textContent = "Unlock PDF";
       }
-    }
+    });
 
-    const paid = isPaidItem(currentMaterial);
-
-    if (!paid) {
-      // Free PDF – no paywall
-      if (paywallBox) paywallBox.style.display = "none";
-      loadPdfIntoFrame(currentMaterial);
-      unlocked = true;
-      return;
-    }
-
-    // Paid PDF – show paywall by default
-    if (paywallBox) paywallBox.style.display = "block";
-    if (paywallPriceInput)
-      paywallPriceInput.value = Number(currentMaterial.price) || 0;
-    if (paywallAmountInput)
-      paywallAmountInput.value = Number(currentMaterial.price) || 0;
-
-    // Check if user already purchased this item
-    const myItems = await fetchMyLibrary();
-    const already = myItems.find(
-      (it) => it.itemId === currentMaterial.id && it.itemType === currentMaterial.type
-    );
-
-    if (already) {
-      // Already purchased → auto unlock
-      if (paywallBox) paywallBox.style.display = "none";
-      setStatus("You already purchased this PDF. Unlocking…", "ok");
-      loadPdfIntoFrame(currentMaterial);
-      unlocked = true;
-      return;
-    }
-
-    // Not purchased yet – wire up unlock button
-    if (paywallBtn) {
-      paywallBtn.addEventListener("click", async () => {
-        if (unlocked) return;
-
-        const requiredPrice = Number(currentMaterial.price) || 0;
-        const amountPaid = Number(paywallAmountInput?.value || 0);
-        const reference = paywallRefInput?.value.trim();
-
-        setStatus("", null);
-
-        if (!paywallConfirm || !paywallConfirm.checked) {
-          setStatus("Please tick the confirmation box after paying.", "error");
-          return;
-        }
-
-        if (!amountPaid || amountPaid < requiredPrice) {
-          setStatus(
-            `Amount should be at least ₹${requiredPrice}.`,
-            "error"
-          );
-          return;
-        }
-
-        try {
-          paywallBtn.disabled = true;
-          paywallBtn.textContent = "Unlocking…";
-
-          await markPurchase(currentMaterial, amountPaid, reference);
-
-          setStatus("Purchase recorded. Unlocking your PDF…", "ok");
-          if (paywallBox) paywallBox.style.display = "none";
-          loadPdfIntoFrame(currentMaterial);
-          unlocked = true;
-        } catch (err) {
-          console.error(err);
-          setStatus(
-            err.message || "Failed to unlock. Please try again.",
-            "error"
-          );
-        } finally {
-          paywallBtn.disabled = false;
-          paywallBtn.textContent = "Unlock PDF";
-        }
-      });
-    }
   } catch (err) {
-    console.error("Error in reader:", err);
-    if (titleEl) titleEl.textContent = "Error loading PDF";
-    setStatus(
-      "Something went wrong while loading this PDF. Please try again later.",
-      "error"
-    );
+    console.warn("Reader stopped:", err.message);
   }
 });

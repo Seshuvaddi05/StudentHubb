@@ -1,108 +1,158 @@
 // utils/notifications.js
+// Centralized in-app notification helper for StudentHub
+// Stores notifications INSIDE the User document (embedded array)
+
+const mongoose = require("mongoose");
 const User = require("../models/User");
 
 /**
- * Add a notification to a user.
+ * Add a notification to a user
  *
- * Usage (compatible with old version):
- *   addNotification(userId, "Your PDF was approved", "success");
+ * BASIC:
+ *   addNotification(userId, "Withdrawal approved", "success");
  *
- * Or with more options:
+ * ADVANCED:
  *   addNotification(userId, "Withdrawal rejected", {
  *     type: "error",
- *     meta: { reason: "Bank details invalid" }
+ *     title: "Withdrawal Failed",
+ *     meta: { reason: "Invalid UPI ID" }
  *   });
- *
- * We also keep only the latest 50 notifications for each user.
  */
 async function addNotification(userId, message, typeOrOptions = "info") {
-  if (!userId || !message) return;
-
-  let options = {};
-  if (typeof typeOrOptions === "string") {
-    options.type = typeOrOptions;
-  } else if (typeOrOptions && typeof typeOrOptions === "object") {
-    options = { ...typeOrOptions };
-  }
-
-  const notification = {
-    message,
-    type: options.type || "info",
-    read: false,
-  };
-
-  // Optional extra data (e.g. { reason, relatedId, kind: "pdf" })
-  if (options.meta && typeof options.meta === "object") {
-    notification.meta = options.meta;
-  }
-
   try {
-    await User.findByIdAndUpdate(
-      userId,
+    if (!userId || !message) return;
+
+    const uid = mongoose.Types.ObjectId.isValid(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : userId;
+
+    let options = {};
+    if (typeof typeOrOptions === "string") {
+      options.type = typeOrOptions;
+    } else if (typeof typeOrOptions === "object" && typeOrOptions !== null) {
+      options = { ...typeOrOptions };
+    }
+
+    const notification = {
+      title: options.title || "Notification",
+      message,
+      type: options.type || "info", // info | success | warning | error
+      read: false,
+      createdAt: new Date(),
+    };
+
+    // Optional metadata (safe extra info)
+    if (options.meta && typeof options.meta === "object") {
+      notification.meta = options.meta;
+    }
+
+    // Push notification & keep only latest 50
+    await User.updateOne(
+      { _id: uid },
       {
         $push: {
           notifications: {
             $each: [notification],
-            // keep only the newest 50 notifications
-            $slice: -50,
+            $slice: -50, // keep latest 50 notifications
           },
         },
-      },
-      { new: false }
+      }
     );
   } catch (err) {
-    console.error("addNotification error:", err);
+    console.error("[Notification] addNotification error:", err.message);
   }
 }
 
 /**
- * Get a user's notifications (newest first).
- * Default limit: 20
+ * Get notifications for a user (newest first)
+ * Default limit = 20
  */
 async function getNotifications(userId, limit = 20) {
-  if (!userId) return [];
-
   try {
-    const user = await User.findById(userId, {
+    if (!userId) return [];
+
+    const uid = mongoose.Types.ObjectId.isValid(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : userId;
+
+    const user = await User.findById(uid, {
       notifications: { $slice: -limit },
     }).lean();
 
     if (!user || !Array.isArray(user.notifications)) return [];
 
-    // We sliced from the end (oldest→newest), reverse to show newest first
+    // newest first
     return user.notifications.slice().reverse();
   } catch (err) {
-    console.error("getNotifications error:", err);
+    console.error("[Notification] getNotifications error:", err.message);
     return [];
   }
 }
 
 /**
- * Mark all notifications as read for a user.
+ * Mark ALL notifications as read
  */
 async function markAllNotificationsRead(userId) {
-  if (!userId) return;
-
   try {
+    if (!userId) return;
+
+    const uid = mongoose.Types.ObjectId.isValid(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : userId;
+
     await User.updateOne(
-      { _id: userId, "notifications.read": false },
+      { _id: uid },
       { $set: { "notifications.$[].read": true } }
     );
   } catch (err) {
-    console.error("markAllNotificationsRead error:", err);
+    console.error(
+      "[Notification] markAllNotificationsRead error:",
+      err.message
+    );
   }
 }
 
 /**
- * Clear all notifications for a user.
+ * Mark ONE notification as read
+ */
+async function markNotificationRead(userId, notificationId) {
+  try {
+    if (!userId || !notificationId) return;
+
+    const uid = mongoose.Types.ObjectId.isValid(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : userId;
+
+    const nid = mongoose.Types.ObjectId.isValid(notificationId)
+      ? new mongoose.Types.ObjectId(notificationId)
+      : notificationId;
+
+    await User.updateOne(
+      { _id: uid, "notifications._id": nid },
+      { $set: { "notifications.$.read": true } }
+    );
+  } catch (err) {
+    console.error("[Notification] markNotificationRead error:", err.message);
+  }
+}
+
+/**
+ * Clear ALL notifications
  */
 async function clearNotifications(userId) {
-  if (!userId) return;
-
   try {
-    await User.findByIdAndUpdate(userId, { $set: { notifications: [] } });
+    if (!userId) return;
+
+    const uid = mongoose.Types.ObjectId.isValid(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : userId;
+
+    await User.updateOne(
+      { _id: uid },
+      { $set: { notifications: [] } }
+    );
   } catch (err) {
-    console.error("clearNotifications error:", err);
+    console.error("[Notification] clearNotifications error:", err.message);
   }
 }
 
@@ -110,5 +160,6 @@ module.exports = {
   addNotification,
   getNotifications,
   markAllNotificationsRead,
+  markNotificationRead,
   clearNotifications,
 };

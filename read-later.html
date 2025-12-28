@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Read Later – StudentHub</title>
@@ -9,18 +10,6 @@
   <link rel="stylesheet" href="styles.css" />
 
   <style>
-    /* ---- Navbar helpers (kept small) ---- */
-    .navbar .nav-links { position: relative; gap: 0.75rem; align-items: center; }
-    .nav-links a { display:inline-flex; align-items:center; gap:0.35rem; }
-    .nav-badge {
-      display:inline-flex; align-items:center; justify-content:center;
-      min-width:1.6rem; height:1.6rem; padding:0 0.45rem; border-radius:999px;
-      background:#f59e0b; color:#0f172a; font-weight:600; font-size:0.78rem;
-      margin-left:0.2rem; box-shadow:0 2px 6px rgba(15,23,42,0.12);
-    }
-    .nav-icon-btn { border:none; background:transparent; cursor:pointer; padding:0.25rem 0.5rem; border-radius:999px; }
-    .nav-icon-btn:hover { background: rgba(148,163,184,0.12); }
-
     /* ---- Page cards & layout ---- */
     .cards-grid {
       display: grid;
@@ -35,56 +24,124 @@
       border: 1px solid #e5e7eb;
       border-radius: 0.9rem;
       padding: 1.05rem 1.1rem;
-      box-shadow: 0 6px 16px rgba(15,23,42,0.08);
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
       font-size: 0.95rem;
       display: flex;
       flex-direction: column;
       gap: 0.45rem;
     }
+
     body.dark .rl-card {
       background: #020617;
       border-color: #1f2937;
-      box-shadow: 0 6px 16px rgba(15,23,42,0.7);
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.7);
     }
 
     .rl-top {
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
       gap: 0.6rem;
     }
-    .rl-title { font-weight:600; font-size:1.02rem; }
-    .rl-labels { display:flex; gap:0.45rem; align-items:center; }
-    .pill-owned, .pill-type {
-      padding:0.12rem 0.5rem; border-radius:999px; font-size:0.72rem; display:inline-flex; align-items:center;
+
+    .rl-title {
+      font-weight: 600;
+      font-size: 1.02rem;
     }
-    .pill-type { background:#eef2ff; color:#3730a3; }
-    .pill-owned { background:#ecfdf5; color:#166534; border:1px solid #bbf7d0; }
 
-    .rl-meta { color:#6b7280; font-size:0.9rem; margin-top: 2px; }
-    body.dark .rl-meta { color:#9ca3af; }
+    .rl-labels {
+      display: flex;
+      gap: 0.45rem;
+      align-items: center;
+    }
 
-    .rl-footer { display:flex; justify-content:space-between; align-items:center; gap:0.6rem; margin-top:0.6rem; flex-wrap:wrap; }
-    .rl-actions { display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; }
-    .btn.small { padding:0.45rem 0.7rem; border-radius:0.6rem; font-size:0.9rem; }
+    .pill-owned,
+    .pill-type {
+      padding: 0.12rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      display: inline-flex;
+      align-items: center;
+    }
 
-    .rl-price { font-weight:600; color:#0f172a; }
-    body.dark .rl-price { color:#e6eef7; }
+    .pill-type {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .pill-owned {
+      background: #ecfdf5;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .rl-meta {
+      color: #6b7280;
+      font-size: 0.9rem;
+      margin-top: 2px;
+    }
+
+    body.dark .rl-meta {
+      color: #9ca3af;
+    }
+
+    .rl-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .rl-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn.small {
+      padding: 0.45rem 0.7rem;
+      border-radius: 0.6rem;
+      font-size: 0.9rem;
+    }
+
+    .rl-price {
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    body.dark .rl-price {
+      color: #e6eef7;
+    }
 
     .empty-msg {
-      padding:1rem; text-align:center; font-size:1rem; color:#6b7280; border-radius:0.6rem;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1rem;
+      color: #6b7280;
+      border-radius: 0.6rem;
     }
-    body.dark .empty-msg { color:#9ca3af; }
+
+    body.dark .empty-msg {
+      color: #9ca3af;
+    }
 
     /* small responsive */
     @media (min-width: 760px) {
-      .cards-grid { grid-template-columns: 1fr; }
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* filter small spacing when container narrow */
-    #read-later-filters { gap:0.6rem; }
+    #read-later-filters {
+      gap: 0.6rem;
+    }
   </style>
 </head>
+
 <body>
   <!-- Navbar (same shape as other pages) -->
   <header class="navbar">
@@ -100,21 +157,26 @@
       <a href="/#question-papers">Question Papers</a>
       <a href="/#about">About</a>
       <a href="/#contact">Contact</a>
-
-      <a href="/library.html">My Library</a>
-      <a href="/read-later.html" class="active">Read Later</a>
       <!-- removed permanently from navbar: Submit PDF, My Submissions, Wallet -->
-
       <a href="/dashboard.html" id="nav-dashboard-link" style="display:none;">My dashboard</a>
       <a href="/login.html" id="nav-login-link" style="display:none;">Sign in</a>
     </nav>
 
-    <button id="notifications-btn" class="nav-icon-btn" aria-label="Notifications">
-      <span>🔔</span>
-      <span id="notifications-count" class="nav-badge" style="display:none;">0</span>
-    </button>
+    <!-- Right-side navbar actions -->
+    <div class="nav-actions">
 
-    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+      <div class="notif-wrapper">
+        <button id="notifBtn" title="Notifications">🔔</button>
+        <span id="notifCount" class="notif-count"></span>
+
+        <div id="notifDropdown" class="notif-dropdown hidden">
+          <ul id="notifList"></ul>
+        </div>
+      </div>
+
+      <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+
+    </div>
   </header>
 
   <main class="section" style="max-width:1000px; margin:0 auto;">
@@ -127,42 +189,45 @@
 
     <p id="read-later-stats" class="section-subtitle" style="margin-top:0.15rem;font-size:0.85rem;color:#6b7280;"></p>
 
-    <div id="read-later-filters" style="margin:0.75rem 0 0.9rem; display:flex; flex-wrap:wrap; align-items:center;">
-      <label style="font-size:0.9rem;">
-        Type
-        <select id="rl-type-filter" class="filter-select" style="margin-left:0.35rem;">
-          <option value="all">All</option>
-          <option value="ebook">E-Books</option>
-          <option value="questionPaper">Question Papers</option>
-        </select>
-      </label>
+    <div id="read-later-filters"
+      style="margin:0.9rem 0 1rem; display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center;">
 
-      <label style="font-size:0.9rem;">
-        Price
-        <select id="rl-price-filter" class="filter-select" style="margin-left:0.35rem;">
-          <option value="all">All prices</option>
-          <option value="free">Free only</option>
-          <option value="paid">Paid only</option>
-        </select>
-      </label>
+      <!-- 🔍 Search -->
+      <input type="text" id="rl-search" class="filter-input" placeholder="Search by title, exam, subject, year…"
+        style="flex:1 1 260px;" />
 
-      <label style="font-size:0.9rem;">
-        Sort by
-        <select id="rl-sort" class="filter-select" style="margin-left:0.35rem;">
-          <option value="recent">Newest</option>
-          <option value="title">Title A–Z</option>
-          <option value="reads">Most read</option>
-        </select>
-      </label>
+      <!-- Type -->
+      <select id="rl-type-filter" class="filter-select">
+        <option value="all">All types</option>
+        <option value="ebook">E-Books</option>
+        <option value="questionPaper">Question Papers</option>
+      </select>
 
+      <!-- Price -->
+      <select id="rl-price-filter" class="filter-select">
+        <option value="all">All prices</option>
+        <option value="free">Free only</option>
+        <option value="paid">Paid only</option>
+      </select>
+
+      <!-- Sort -->
+      <select id="rl-sort" class="filter-select">
+        <option value="recent">Newest</option>
+        <option value="title">Title A–Z</option>
+        <option value="reads">Most read</option>
+      </select>
+
+      <!-- Clear -->
       <button id="read-later-clear" class="btn small secondary" style="margin-left:auto; display:none;">
         Clear all
       </button>
     </div>
 
+
     <div id="read-later-list" class="cards-grid" aria-live="polite"></div>
 
-    <div id="read-later-empty" class="card" style="display:none; margin-top:1rem; border:1px dashed #d1d5db; background:#f9fafb;">
+    <div id="read-later-empty" class="card"
+      style="display:none; margin-top:1rem; border:1px dashed #d1d5db; background:#f9fafb;">
       <h3 style="font-size:1rem; margin-bottom:0.4rem;">Nothing saved yet.</h3>
       <p style="font-size:0.95rem; color:#6b7280; margin-bottom:0.6rem;">
         Use the <strong>“Read later”</strong> button on any ebook or question paper to save it here.
@@ -275,6 +340,8 @@
       const typeFilter = document.getElementById('rl-type-filter');
       const priceFilter = document.getElementById('rl-price-filter');
       const sortFilter = document.getElementById('rl-sort');
+      const searchInput = document.getElementById('rl-search');
+
 
       let items = []; // items from API
 
@@ -334,6 +401,17 @@
 
         let list = items.slice();
 
+        const q = (searchInput?.value || '').toLowerCase().trim();
+        if (q) {
+          list = list.filter(i => {
+            const text =
+              `${i.title || ''} ${i.exam || ''} ${i.subject || ''} ${i.year || ''}`
+                .toLowerCase();
+            return text.includes(q);
+          });
+        }
+
+
         if (type !== 'all') {
           list = list.filter(i => i.itemType === type);
         }
@@ -342,11 +420,11 @@
         if (price === 'paid') list = list.filter(i => Number(i.price || 0) > 0);
 
         if (sortBy === 'recent') {
-          list.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+          list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         } else if (sortBy === 'title') {
-          list.sort((a,b) => ( (a.title||'').localeCompare(b.title||'') ));
+          list.sort((a, b) => ((a.title || '').localeCompare(b.title || '')));
         } else if (sortBy === 'reads') {
-          list.sort((a,b) => ( (b.downloads||0) - (a.downloads||0) ));
+          list.sort((a, b) => ((b.downloads || 0) - (a.downloads || 0)));
         }
 
         listEl.innerHTML = '';
@@ -374,7 +452,7 @@
             </div>
 
             <div class="rl-footer">
-              <div class="rl-meta" style="flex:1 1 60%;">Reads: ${Number(item.downloads||0)}</div>
+              <div class="rl-meta" style="flex:1 1 60%;">Reads: ${Number(item.downloads || 0)}</div>
               <div class="rl-actions">
                 <a href="/view/${slugify(item.title)}?id=${encodeURIComponent(item.itemId)}" class="btn small primary">Open reader</a>
                 <button class="btn small secondary remove-btn" data-id="${encodeURIComponent(item.itemId)}">Remove</button>
@@ -410,7 +488,7 @@
         renderList();
         // update summary & stats quickly
         summaryEl.textContent = items.length ? `Showing ${items.length} saved item(s).` : 'No items saved yet.';
-        const free = items.filter(i => Number(i.price||0)===0).length;
+        const free = items.filter(i => Number(i.price || 0) === 0).length;
         const paid = items.length - free;
         statsEl.textContent = items.length ? `${free} free • ${paid} paid` : '';
         if (!items.length) {
@@ -430,8 +508,8 @@
         for (const id of toRemove) {
           try {
             await fetch('/api/read-later/remove', {
-              method:'POST',
-              headers:{ 'Content-Type':'application/json' },
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ materialId: id })
             });
           } catch (err) {
@@ -483,4 +561,5 @@
     });
   </script>
 </body>
+
 </html>

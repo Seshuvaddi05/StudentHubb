@@ -60,6 +60,12 @@ function readLaterCollection() {
 function submissionsCollection() {
   return db.collection("submissions");
 }
+function withdrawalsCollection() {
+  return db.collection("withdrawals");
+}
+function walletLedgerCollection() {
+  return db.collection("walletLedger");
+}
 
 // -----------------------------
 // Middleware (global)
@@ -118,6 +124,14 @@ function requireAuth(req, res, next) {
   return res.status(401).json({ ok: false, error: "Not authenticated" });
 }
 
+
+function requireAdmin(req, res, next) {
+  if (!req.user || req.user.email !== process.env.ADMIN_EMAIL) {
+    return res.status(403).json({ ok: false, message: "Admin access only" });
+  }
+  next();
+}
+
 // -----------------------------
 // In-memory OTP stores
 // -----------------------------
@@ -146,21 +160,57 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
 }
 
 // -----------------------------
+// Withdrawal email helper
+// -----------------------------
+async function sendWithdrawalEmail(to, subject, text) {
+  if (!mailTransporter) {
+    console.log("[EMAIL SKIPPED]", subject, "→", to);
+    return;
+  }
+
+  await mailTransporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to,
+    subject,
+    text,
+  });
+}
+
+// -----------------------------
 // Simple admin login route
 // -----------------------------
-app.post("/api/admin/login", (req, res) => {
+app.post("/api/admin/login", async (req, res) => {
   const { password } = req.body || {};
 
   if (!password) {
     return res.status(400).json({ ok: false, message: "Password required" });
   }
 
-  if (password === ADMIN_SECRET) {
-    return res.json({ ok: true, message: "Welcome admin" });
+  if (password !== ADMIN_SECRET) {
+    return res.status(401).json({ ok: false, message: "Invalid password" });
   }
 
-  return res.status(401).json({ ok: false, message: "Invalid password" });
+  // 🔑 Create admin token
+  const token = jwt.sign(
+    {
+      id: "admin",
+      email: process.env.ADMIN_EMAIL,
+      name: "Admin",
+    },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  return res.json({ ok: true, message: "Admin logged in" });
 });
+
 
 // -----------------------------
 // USER AUTH ROUTES (unchanged)
@@ -189,7 +239,7 @@ app.post("/api/auth/register", async (req, res) => {
       passwordHash: hash,
       emailVerified: false,
       provider: "local",
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
       walletCoins: 0,
       notifications: [],
     };
@@ -369,7 +419,7 @@ app.post("/api/auth/google", async (req, res) => {
         passwordHash: "",
         emailVerified: true,
         provider: "google",
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
         walletCoins: 0,
         notifications: [],
       };
@@ -574,8 +624,17 @@ app.post(
         (req.body && (req.body.title || req.body.pdfTitle)) ||
         (req.body && req.body.name) ||
         "";
+
       const description = (req.body && req.body.description) || "";
-      const pdfUrlFromBody = (req.body && (req.body.pdfUrl || req.body.fileUrl)) || "";
+
+      // ✅ NEW: read extra metadata from submission form
+      const exam = (req.body && req.body.exam) || "";
+      const subject = (req.body && req.body.subject) || "";
+      const year = (req.body && req.body.year) || "";
+
+      const pdfUrlFromBody =
+        (req.body && (req.body.pdfUrl || req.body.fileUrl)) || "";
+
 
       const user = req.user || null;
 
@@ -604,14 +663,11 @@ app.post(
         title: (title || "").trim(),
         description: (description || "").trim(),
 
-        // ✅ REQUIRED FIX: save these fields
-        exam: (req.body.exam || "").trim(),
-        subject: (req.body.subject || "").trim(),
-        year: (req.body.year || "").trim(),
-        type: (req.body.type || "").trim(), // ebook | questionPaper
+        // ✅ STORE METADATA
+        exam: (exam || "").trim(),
+        subject: (subject || "").trim(),
+        year: (year || "").trim(),
 
-        // store both: 'file' stores the relative path when file uploaded
-        // 'pdfUrl' stores the original URL (if provided)
         file: storedFilePath,
         pdfUrl: storedFilePath ? null : (publicFileUrl || null),
 
@@ -620,10 +676,14 @@ app.post(
 
         status: "pending",
         adminNote: "",
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
         processedAt: null,
+        type: req.body.type === "ebook"
+          ? "ebook"
+          : req.body.type === "questionPaper"
+            ? "questionPaper"
+            : "ebook", // default = ebook
       };
-
 
       const result = await submissionsCollection().insertOne(doc);
       doc._id = result.insertedId;
@@ -642,12 +702,16 @@ app.post(
   }
 );
 
-// GET list submissions (admin). Returns fileUrl normalized for frontend.
+// GET list submissions (USER – their own submissions only)
 app.get("/api/user-submissions", requireAuth, async (req, res) => {
   try {
     const { status } = req.query; // optional ?status=approved|rejected|pending
-    const q = {};
+    const q = {
+      userId: req.user.id,   // 🔥 THIS IS THE FIX
+    };
+
     if (status) q.status = status;
+
 
     const docs = await submissionsCollection().find(q).sort({ createdAt: -1 }).toArray();
 
@@ -690,127 +754,217 @@ app.get("/api/user-submissions", requireAuth, async (req, res) => {
 // POST approve (admin)
 // NOTE: This handler marks submission as "approved" but DOES NOT auto-publish to ebooks.
 // Approved submissions remain in submissions collection and will be visible in the admin "Approved" page.
-// =============================
-// APPROVE SUBMISSION (ADMIN)
-// =============================
-app.post("/api/user-submissions/:id/approve", requireAuth, async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!id) {
-      return res.status(400).json({ ok: false, message: "Missing id" });
-    }
-
-    const _id = new ObjectId(id);
-    const now = new Date().toISOString();
-
-    const adminNote =
-      req.body && typeof req.body.adminNote === "string"
-        ? req.body.adminNote.trim()
-        : "";
-
-    const coinsAwarded = Number.isFinite(Number(req.body?.coinsAwarded))
-      ? Number(req.body.coinsAwarded)
-      : 0;
-
-    // Update ONLY admin-related fields
-    const update = {
-      $set: {
-        status: "approved",
-        processedAt: now,
-        adminNote,
-      },
-    };
-
-    const result = await submissionsCollection().updateOne({ _id }, update);
-
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ ok: false, message: "Submission not found" });
-    }
-
-    // Fetch submission AFTER approval
-    const submission = await submissionsCollection().findOne({ _id });
-
-    // Award coins if applicable
-    if (coinsAwarded > 0 && submission?.userEmail) {
-      await usersCollection().updateOne(
-        { email: submission.userEmail },
-        { $inc: { walletCoins: coinsAwarded } }
-      );
-    }
-
-    // NOTE:
-    // exam / subject / year are intentionally NOT modified here
-    // They must already exist from submission time
-
-    return res.json({
-      ok: true,
-      message: "Submission approved successfully",
-    });
-  } catch (err) {
-    console.error("APPROVE submission error:", err);
-    return res.status(500).json({ ok: false, message: "Server error" });
-  }
-});
-
-
-// =============================
-// REJECT SUBMISSION (ADMIN)
-// =============================
-app.post("/api/user-submissions/:id/reject", requireAuth, async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!id) {
-      return res.status(400).json({ ok: false, message: "Missing id" });
-    }
-
-    const reason =
-      req.body && typeof req.body.reason === "string"
-        ? req.body.reason.trim()
-        : "";
-
-    const _id = new ObjectId(id);
-
-    const submission = await submissionsCollection().findOne({ _id });
-    if (!submission) {
-      return res.status(404).json({ ok: false, message: "Submission not found" });
-    }
-
-    // Remove uploaded file if exists
-    if (submission.file) {
-      try {
-        const filePath = path.join(__dirname, submission.file);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-          console.log("[SUBMISSION REJECT] File deleted:", filePath);
-        }
-      } catch (e) {
-        console.warn("[SUBMISSION REJECT] File delete failed:", e.message);
+app.post(
+  "/api/user-submissions/:id/approve",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        return res.status(400).json({ ok: false, message: "Missing submission id" });
       }
+
+      const _id = new ObjectId(id);
+      const adminNote = req.body?.adminNote || "";
+      const coinsAwarded = Number.isFinite(Number(req.body?.coinsAwarded))
+        ? Number(req.body.coinsAwarded)
+        : 0;
+
+      // ✅ 1️⃣ FETCH SUBMISSION FIRST
+      const sub = await submissionsCollection().findOne({ _id });
+      if (!sub) {
+        return res.status(404).json({ ok: false, message: "Submission not found" });
+      }
+
+      // 🚫 2️⃣ PREVENT DOUBLE APPROVAL (CORRECT PLACE)
+      if (sub.status === "approved") {
+        return res.status(400).json({
+          ok: false,
+          message: "Submission already approved",
+        });
+      }
+
+      // ✅ 3️⃣ UPDATE STATUS
+      await submissionsCollection().updateOne(
+        { _id },
+        {
+          $set: {
+            status: "approved",
+            processedAt: new Date(),
+            adminNote,
+          },
+        }
+      );
+
+      // ✅ 4️⃣ AWARD COINS
+      if (coinsAwarded > 0 && sub.userId) {
+        await usersCollection().updateOne(
+          { _id: new ObjectId(sub.userId) },
+          { $inc: { walletCoins: coinsAwarded } }
+        );
+
+        await walletLedgerCollection().insertOne({
+          userId: sub.userId,
+          type: "submission-reward",
+          amount: coinsAwarded,
+          ref: sub._id.toString(),
+          createdAt: new Date(),
+        });
+      }
+
+      // 🔔 5️⃣ NOTIFY USER
+      if (sub.userId) {
+        const { addNotification } = require("./utils/notifications");
+        await addNotification(
+          sub.userId,
+          `Your submission "${sub.title}" was approved. You earned ${coinsAwarded} coins.`,
+          "success"
+        );
+      }
+
+      return res.json({
+        ok: true,
+        message: "Submission approved successfully",
+        coinsAwarded,
+      });
+    } catch (err) {
+      console.error("/api/user-submissions/:id/approve error:", err);
+      return res.status(500).json({
+        ok: false,
+        message: "Server error while approving submission",
+      });
     }
+  }
+);
 
-    await submissionsCollection().deleteOne({ _id });
 
-    return res.json({
-      ok: true,
-      message: "Submission rejected and deleted",
-      reason,
+// POST reject (admin)
+// Behavior: reject marks submission as "rejected" (kept for history)
+// If a file was uploaded and stored on disk, it will be removed as well.
+app.post(
+  "/api/user-submissions/:id/reject",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+      const { id } = req.params;
+      const reason = (req.body && req.body.reason) || "";
+      if (!id) return res.status(400).json({ ok: false, message: "Missing id" });
+
+      const _id = new ObjectId(id);
+      // find the submission to check for stored file
+      const sub = await submissionsCollection().findOne({ _id });
+      if (!sub) return res.status(404).json({ ok: false, message: "Submission not found" });
+
+      // If the submission has a stored file path (file field), remove it from disk
+      if (sub.file) {
+        try {
+          const filePath = path.join(__dirname, sub.file);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log("[SUBMISSION DELETE] removed file:", filePath);
+          }
+        } catch (e) {
+          console.warn("[SUBMISSION DELETE] unable to delete file:", e && e.message ? e.message : e);
+        }
+      }
+
+      // delete the submission document
+      await submissionsCollection().updateOne(
+        { _id },
+        {
+          $set: {
+            status: "rejected",
+            adminNote: reason,
+            processedAt: new Date(),
+          },
+        }
+      );
+
+
+      // 🔔 STEP 2: Notify user
+      if (sub?.userId) {
+        const { addNotification } = require("./utils/notifications");
+        await addNotification(
+          sub.userId,
+          `Your submission "${sub.title}" was rejected.`,
+          {
+            type: "error",
+            meta: { reason }
+          }
+        );
+      }
+
+
+      // Optionally log the rejection reason somewhere (adminNote or separate collection).
+      // For now we simply return the reason in response for auditing in client logs.
+      return res.json({ ok: true, message: "Submission rejected and removed", reason });
+    } catch (err) {
+      console.error("/api/user-submissions/:id/reject error:", err);
+      return res.status(500).json({ ok: false, message: "Server error" });
+    }
+  });
+
+
+
+// ================================
+// ADMIN: GET ALL SUBMISSIONS
+// ================================
+app.get("/api/admin/submissions", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { status } = req.query; // optional ?status=pending|approved|rejected
+
+    const query = {};
+    if (status) query.status = status;
+
+    const docs = await submissionsCollection()
+      .find(query)
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    const mapped = docs.map((d) => {
+      let fileUrl = "";
+      if (d.file) {
+        const normalized = d.file.split(path.sep).join("/");
+        fileUrl = normalized.startsWith("/") ? normalized : "/" + normalized;
+      } else if (d.pdfUrl) {
+        fileUrl = d.pdfUrl;
+      }
+
+      return {
+        id: d._id.toString(),
+        title: d.title,
+        description: d.description,
+        fileUrl,
+        userEmail: d.userEmail,
+        status: d.status,
+        adminNote: d.adminNote || "",
+        createdAt: d.createdAt,
+        processedAt: d.processedAt,
+        exam: d.exam || "",
+        subject: d.subject || "",
+        year: d.year || "",
+      };
     });
+
+    return res.json({ ok: true, submissions: mapped });
   } catch (err) {
-    console.error("REJECT submission error:", err);
-    return res.status(500).json({ ok: false, message: "Server error" });
+    console.error("/api/admin/submissions error:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
   }
 });
 
 
-// =============================
-// MATERIAL HELPERS
-// =============================
+// -----------------------------
+// Materials helpers (Mongo)
+// -----------------------------
 async function getAllMaterials() {
   const ebooks = await ebooksCollection()
     .find({})
     .sort({ createdAt: 1, _id: 1 })
     .toArray();
-
   const questionPapers = await questionPapersCollection()
     .find({})
     .sort({ createdAt: 1, _id: 1 })
@@ -821,8 +975,8 @@ async function getAllMaterials() {
     title: doc.title || "",
     description: doc.description || "",
     file: doc.file,
-    exam: doc.exam || "",
     subject: doc.subject || "",
+    exam: doc.exam || "",
     year: doc.year || "—",
     createdAt: doc.createdAt || new Date().toISOString(),
     downloads: doc.downloads || 0,
@@ -837,20 +991,18 @@ async function getAllMaterials() {
 
 async function getListByType(type) {
   if (type === "ebook") {
-    return ebooksCollection()
+    return await ebooksCollection()
       .find({})
       .sort({ createdAt: 1, _id: 1 })
       .toArray();
   }
-
   if (type === "questionPaper") {
-    return questionPapersCollection()
+    return await questionPapersCollection()
       .find({})
       .sort({ createdAt: 1, _id: 1 })
       .toArray();
   }
-
-  return [];
+  return null;
 }
 
 function collectionByType(type) {
@@ -864,10 +1016,23 @@ function collectionByType(type) {
 // -----------------------------
 app.get("/api/my-library", requireAuth, async (req, res) => {
   try {
+    const userIdStr = req.user.id;
+    let userObjectId = null;
+
+    try {
+      userObjectId = new ObjectId(userIdStr);
+    } catch (_) { }
+
     const orders = await ordersCollection()
-      .find({ userId: req.user.id })
+      .find({
+        $or: [
+          { userId: userIdStr },          // string userId
+          { userId: userObjectId },       // ObjectId userId (old data)
+        ],
+      })
       .sort({ createdAt: -1 })
       .toArray();
+
 
     if (!orders.length) {
       return res.json({ ok: true, items: [] });
@@ -989,7 +1154,7 @@ app.post("/api/library/add", requireAuth, async (req, res) => {
       price: 0,
       status: "free",
       paymentMethod: "library-add",
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
     });
 
     return res.json({ ok: true, message: "Added to your library." });
@@ -1169,6 +1334,731 @@ app.post("/api/read-later/remove", requireAuth, async (req, res) => {
   }
 });
 
+// ================================
+// NOTIFICATIONS – USER APIs
+// ================================
+app.get("/api/notifications", requireAuth, async (req, res) => {
+  try {
+    const user = await usersCollection().findOne(
+      { email: req.user.email },
+      { projection: { notifications: { $slice: -20 } } }
+    );
+
+    if (!user || !Array.isArray(user.notifications)) {
+      return res.json({ ok: true, notifications: [] });
+    }
+
+    // newest first
+    const list = user.notifications.slice().reverse();
+
+    res.json({ ok: true, notifications: list });
+  } catch (err) {
+    console.error("/api/notifications error:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+
+app.post("/api/notifications/:index/read", requireAuth, async (req, res) => {
+  try {
+    const index = Number(req.params.index);
+
+    if (Number.isNaN(index)) {
+      return res.status(400).json({ ok: false, message: "Invalid index" });
+    }
+
+    const user = await usersCollection().findOne(
+      { email: req.user.email },
+      { projection: { notifications: 1 } }
+    );
+
+    if (!user || !user.notifications || !user.notifications[index]) {
+      return res.status(404).json({ ok: false, message: "Notification not found" });
+    }
+
+    const key = `notifications.${index}.read`;
+
+    await usersCollection().updateOne(
+      { email: req.user.email },
+      { $set: { [key]: true } }
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("mark notification read error:", err);
+    res.status(500).json({ ok: false });
+  }
+});
+
+
+// ================================
+// WALLET APIs  👈 ADD HERE
+// ================================
+app.get("/api/wallet", requireAuth, async (req, res) => {
+  try {
+    const user = await usersCollection().findOne({ email: req.user.email });
+    if (!user) {
+      return res.status(404).json({ ok: false, message: "User not found" });
+    }
+
+    const withdrawals = await withdrawalsCollection()
+      .find({ userId: req.user.id }) // 🔥 REMOVE status filter
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    return res.json({
+      ok: true,
+      walletCoins: user.walletCoins || 0,
+      minWithdraw: 100,
+      conversionRate: 1,
+      withdrawals: withdrawals.map(w => ({
+        id: w._id.toString(),
+        amountCoins: w.amountCoins,
+        status: w.status,
+        createdAt: w.createdAt,
+        processedAt: w.processedAt,
+      })),
+    });
+
+  } catch (err) {
+    console.error("/api/wallet error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// ================================
+// WALLET LEDGER (USER HISTORY)
+// ================================
+app.get("/api/wallet/ledger", requireAuth, async (req, res) => {
+  try {
+    const list = await walletLedgerCollection()
+      .find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.json({ ok: true, ledger: list });
+  } catch (err) {
+    console.error("/api/wallet/ledger error:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+
+// ================================
+// WALLET ANALYTICS (USER)
+// ================================
+// ================================
+// WALLET ANALYTICS (USER)
+// ================================
+app.get("/api/wallet/analytics", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Ledger-based totals
+    const ledger = await walletLedgerCollection()
+      .find({ userId })
+      .toArray();
+
+    let earned = 0;
+    let withdrawn = 0;
+
+    ledger.forEach((l) => {
+      if (l.amount > 0) earned += l.amount;
+      if (l.type === "withdraw-request") {
+        withdrawn += Math.abs(l.amount);// withdraw-request
+      }
+    });
+
+    // Paid withdrawals count
+    const paid = await withdrawalsCollection().countDocuments({
+      userId,
+      status: "paid",
+    });
+
+    return res.json({
+      ok: true,
+      earned,
+      withdrawn,
+      paid,
+    });
+  } catch (err) {
+    console.error("/api/wallet/analytics error:", err);
+    return res.status(500).json({
+      ok: false,
+      message: "Server error",
+    });
+  }
+});
+
+
+// ================================
+// USER: Withdrawal History
+// ================================
+app.get("/api/withdrawals/history", requireAuth, async (req, res) => {
+  try {
+    const list = await withdrawalsCollection()
+      .find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    return res.json({
+      ok: true,
+      withdrawals: list.map(w => ({
+        id: w._id.toString(),
+
+        amountCoins: w.amountCoins,     // 1 coin = 1 money
+        status: w.status,
+
+        payoutMethod: w.payoutMethod || "",     // "upi" | "bank"
+        payoutDetails: w.payoutDetails || {},   // full object
+
+        note: w.note || "",
+
+        createdAt: w.createdAt,
+        processedAt: w.processedAt || null,
+      })),
+    });
+  } catch (err) {
+    console.error("User withdrawal history error:", err);
+    return res.status(500).json({
+      ok: false,
+      message: "Failed to load withdrawal history",
+    });
+  }
+});
+
+
+app.post("/api/withdraw", requireAuth, async (req, res) => {
+  const session = mongoClientInstance.startSession();
+
+  try {
+    const { amountCoins, payoutDetails, note } = req.body;
+
+    // ================================
+    // BASIC VALIDATION
+    // ================================
+    const coins = Number(amountCoins);
+
+    if (!Number.isFinite(coins) || coins < 100) {
+      return res.status(400).json({
+        ok: false,
+        message: "Minimum withdrawal is 100 coins",
+      });
+    }
+
+    if (!payoutDetails || typeof payoutDetails !== "object") {
+      return res.status(400).json({
+        ok: false,
+        message: "Withdrawal method is required",
+      });
+    }
+
+    if (!payoutDetails.method) {
+      return res.status(400).json({
+        ok: false,
+        message: "Withdrawal method is required",
+      });
+    }
+
+    // ================================
+    // PAYOUT METHOD VALIDATION
+    // ================================
+    if (payoutDetails.method === "upi") {
+      if (
+        !payoutDetails.upiId ||
+        typeof payoutDetails.upiId !== "string" ||
+        !payoutDetails.upiId.includes("@")
+      ) {
+        return res.status(400).json({
+          ok: false,
+          message: "Valid UPI ID is required",
+        });
+      }
+    }
+
+    if (payoutDetails.method === "bank") {
+      if (
+        !payoutDetails.bankName ||
+        !payoutDetails.bankAccount ||
+        !payoutDetails.bankIfsc
+      ) {
+        return res.status(400).json({
+          ok: false,
+          message: "Complete bank details are required",
+        });
+      }
+    }
+
+    // ================================
+    // TRANSACTION START
+    // ================================
+    await session.withTransaction(async () => {
+      // 🔒 1️⃣ Fetch user (transaction-safe)
+      const user = await usersCollection().findOne(
+        { email: req.user.email },
+        { session }
+      );
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      // ⏱️ 2️⃣ COOLDOWN CHECK (24 HOURS)
+      const lastWithdrawal = await withdrawalsCollection()
+        .find({ userId: user._id.toString() })
+        .sort({ createdAt: -1 })
+        .limit(1)
+        .toArray();
+
+      if (lastWithdrawal.length) {
+        const lastTime = new Date(lastWithdrawal[0].createdAt).getTime();
+        const now = Date.now();
+        const diffHours = (now - lastTime) / (1000 * 60 * 60);
+
+        if (diffHours < 24) {
+          throw new Error(
+            "You can request withdrawal only once every 24 hours. Please try again later."
+          );
+        }
+      }
+
+      // 💰 3️⃣ FINAL BALANCE CHECK
+      if (user.walletCoins < coins) {
+        throw new Error("Insufficient wallet balance");
+      }
+
+      // 🔻 4️⃣ DEDUCT WALLET COINS
+      await usersCollection().updateOne(
+        { _id: user._id },
+        { $inc: { walletCoins: -coins } },
+        { session }
+      );
+
+      // 🧾 5️⃣ WALLET LEDGER ENTRY
+      await walletLedgerCollection().insertOne(
+        {
+          userId: user._id.toString(),
+          type: "withdraw-request",
+          amount: -coins,
+          ref: "withdrawal",
+          createdAt: new Date(),
+        },
+        { session }
+      );
+
+      // 🏦 6️⃣ INSERT WITHDRAWAL REQUEST
+      await withdrawalsCollection().insertOne(
+        {
+          userId: user._id.toString(),
+          userEmail: user.email,
+
+          payoutMethod: payoutDetails.method,
+          payoutDetails: {
+            ...payoutDetails, // safe full object
+          },
+
+          note: typeof note === "string" ? note.trim() : "",
+          amountCoins: coins,
+
+          status: "pending",
+          createdAt: new Date(),
+          processedAt: null,
+        },
+        { session }
+      );
+    });
+
+    return res.json({
+      ok: true,
+      message: "Withdrawal request submitted",
+    });
+  } catch (err) {
+    console.error("/api/withdraw error:", err);
+
+    return res.status(400).json({
+      ok: false,
+      message: err.message || "Withdrawal failed",
+    });
+  } finally {
+    await session.endSession();
+  }
+});
+
+
+app.get("/api/admin/withdrawals", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { status, email } = req.query;
+
+    // ✅ Build query dynamically
+    const query = {};
+
+    if (status && status !== "all") {
+      if (status.includes(",")) {
+        query.status = { $in: status.split(",") };
+      } else {
+        query.status = status;
+      }
+    }
+
+    if (email) {
+      query.userEmail = { $regex: email, $options: "i" };
+    }
+
+    const withdrawals = await withdrawalsCollection()
+      .find(query)
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    // ================================
+    // FETCH USER WALLET BALANCES (SAFE)
+    // ================================
+    const userIds = [
+      ...new Set(withdrawals.map(w => w.userId).filter(Boolean)),
+    ];
+
+    const validUserObjectIds = userIds
+      .map(id => {
+        try {
+          return new ObjectId(id);
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+
+    const users = await usersCollection()
+      .find({ _id: { $in: validUserObjectIds } })
+      .project({ walletCoins: 1 })
+      .toArray();
+
+    const walletMap = {};
+    users.forEach(u => {
+      walletMap[u._id.toString()] = u.walletCoins || 0;
+    });
+
+    // ================================
+    // RESPONSE
+    // ================================
+    return res.json({
+      ok: true,
+      withdrawals: withdrawals.map(w => ({
+        id: w._id.toString(),
+        userEmail: w.userEmail,
+
+        // ✅ FLATTENED PAYOUT FIELDS (frontend-safe)
+        payoutMethod: w.payoutMethod || "",
+        upiId: w.payoutDetails?.upiId || null,
+        bankAccount: w.payoutDetails?.bankAccount || null,
+        bankIfsc: w.payoutDetails?.bankIfsc || null,
+        bankName: w.payoutDetails?.bankName || null,
+
+        amountCoins: w.amountCoins,
+        walletCoins: walletMap[String(w.userId)] ?? 0,
+
+        status: w.status,
+        createdAt: w.createdAt,
+        processedAt: w.processedAt || null,
+        paidAt: w.paidAt || null, // ✅ CONSISTENT PAID TIMESTAMP
+      })),
+    });
+
+  } catch (err) {
+    console.error("/api/admin/withdrawals error:", err);
+    return res.status(500).json({
+      ok: false,
+      message: "Server error",
+    });
+  }
+});
+
+// ================================
+// ADMIN: EXPORT WITHDRAWALS TO CSV
+// ================================
+app.get(
+  "/api/admin/withdrawals/export",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const list = await withdrawalsCollection()
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray();
+
+      // ✅ CSV header
+      let csv = "Email,Method,Amount,Status,Requested,Processed,PaidAt\n";
+
+      // ✅ Prevent CSV / Excel injection
+      const safe = (v) => `"${String(v || "").replace(/"/g, '""')}"`;
+
+      list.forEach((w) => {
+        csv +=
+          `${safe(w.userEmail)},` +
+          `${safe(w.payoutMethod)},` +
+          `${safe(w.amountCoins)},` +
+          `${safe(w.status)},` +
+          `${safe(w.createdAt)},` +
+          `${safe(w.processedAt || "")},` +
+          `${safe(w.paidAt || "")}\n`;
+      });
+
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=withdrawals.csv"
+      );
+
+      res.send(csv);
+    } catch (err) {
+      console.error("CSV export error:", err);
+      res.status(500).send("Failed to export CSV");
+    }
+  }
+);
+
+
+
+app.post(
+  "/api/admin/withdrawals/:id/approve",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+
+    try {
+
+      const _id = new ObjectId(req.params.id);
+
+      // ✅ 1️⃣ FETCH ONLY PENDING WITHDRAWAL
+      const w = await withdrawalsCollection().findOne({
+        _id,
+        status: "pending",
+      });
+
+      if (!w) {
+        return res.status(400).json({
+          ok: false,
+          message: "Withdrawal already processed or not found",
+        });
+      }
+
+      // ✅ 2️⃣ UPDATE STATUS TO APPROVED
+      await withdrawalsCollection().updateOne(
+        { _id },
+        {
+          $set: {
+            status: "approved",
+            processedAt: new Date(),
+            processedBy: req.user.email, // ✅ ADD HERE
+          },
+        }
+      );
+
+      // 🔔 STEP 2: Notify user
+      const { addNotification } = require("./utils/notifications");
+      await addNotification(
+        w.userId,
+        `Your withdrawal request of ${w.amountCoins} coins has been approved.`,
+        "success"
+      );
+
+
+
+      // 🧾 3️⃣ WALLET LEDGER ENTRY (APPROVAL CONFIRMATION)
+      await walletLedgerCollection().insertOne({
+        userId: w.userId,
+        type: "withdraw-approved",
+        amount: 0,
+        ref: w._id.toString(),
+        createdAt: new Date(),
+      });
+
+      // 📧 4️⃣ SEND EMAIL NOTIFICATION
+      await sendWithdrawalEmail(
+        w.userEmail,
+        "Withdrawal Approved – StudentHub",
+        `Your withdrawal of ${w.amountCoins} coins has been approved and processed.`
+      );
+
+      return res.json({
+        ok: true,
+        message: "Withdrawal approved",
+      });
+    } catch (err) {
+      console.error("approve withdrawal error:", err);
+      return res.status(500).json({
+        ok: false,
+        message: "Server error",
+      });
+    }
+  });
+
+app.post("/api/admin/withdrawals/:id/reject", requireAuth, requireAdmin, async (req, res) => {
+  try {
+
+    const _id = new ObjectId(req.params.id);
+
+    // 🔒 1️⃣ Fetch ONLY pending withdrawal
+    const w = await withdrawalsCollection().findOne({
+      _id,
+      status: "pending",
+    });
+
+    if (!w) {
+      return res.status(400).json({
+        ok: false,
+        message: "Withdrawal already processed or not found",
+      });
+    }
+
+    // 💰 2️⃣ REFUND coins back to user wallet
+    await usersCollection().updateOne(
+      { email: w.userEmail },
+      { $inc: { walletCoins: w.amountCoins } }
+    );
+
+    // 🧾 3️⃣ Wallet ledger entry (refund)
+    await walletLedgerCollection().insertOne({
+      userId: w.userId,
+      type: "withdraw-refund",
+      amount: w.amountCoins,
+      ref: "withdrawal",
+      createdAt: new Date(),
+    });
+
+    // ❌ 4️⃣ Mark withdrawal as rejected (SINGLE update)
+    await withdrawalsCollection().updateOne(
+      { _id },
+      {
+        $set: {
+          status: "rejected",
+          processedAt: new Date(),
+          processedBy: req.user.email,
+        },
+      }
+    );
+
+    // 🔔 STEP 2: Notify user
+    const { addNotification } = require("./utils/notifications");
+    await addNotification(
+      w.userId,
+      `Your withdrawal request was rejected. Coins have been refunded.`,
+      "error"
+    );
+
+
+    // 📧 5️⃣ Send email notification
+    await sendWithdrawalEmail(
+      w.userEmail,
+      "Withdrawal Rejected – StudentHub",
+      `Your withdrawal of ${w.amountCoins} coins was rejected. Coins have been refunded to your wallet.`
+    );
+
+    return res.json({
+      ok: true,
+      message: "Withdrawal rejected & refunded",
+    });
+  } catch (err) {
+    console.error("reject withdrawal error:", err);
+    return res.status(500).json({
+      ok: false,
+      message: "Server error",
+    });
+  }
+});
+
+
+// ================================
+// ADMIN: MARK WITHDRAWAL AS PAID
+// ================================
+app.post("/api/admin/withdrawals/:id/paid", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const _id = new ObjectId(req.params.id);
+
+    // 🔒 Only APPROVED withdrawals can be marked PAID
+    const w = await withdrawalsCollection().findOne({
+      _id,
+      status: "approved",
+    });
+
+    if (!w) {
+      return res.status(400).json({
+        ok: false,
+        message: "Only approved withdrawals can be marked as paid",
+      });
+    }
+
+    // 🚫 Prevent double payment (race-condition safety)
+    if (w.status === "paid") {
+      return res.status(400).json({
+        ok: false,
+        message: "Withdrawal already paid",
+      });
+    }
+
+    // 🔎 Ensure user still exists
+    const user = await usersCollection().findOne({
+      _id: new ObjectId(w.userId),
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        ok: false,
+        message: "User not found",
+      });
+    }
+
+    // ✅ MARK AS PAID
+    await withdrawalsCollection().updateOne(
+      { _id },
+      {
+        $set: {
+          status: "paid",
+          paidAt: new Date(),
+          processedAt: new Date(),
+          processedBy: req.user.email,
+        },
+      }
+    );
+
+    // 🧾 WALLET LEDGER ENTRY
+    await walletLedgerCollection().insertOne({
+      userId: w.userId,
+      type: "withdraw-paid",
+      amount: 0,
+      ref: w._id.toString(),
+      createdAt: new Date(),
+    });
+
+    // 🔔 In-app notification
+    const { addNotification } = require("./utils/notifications");
+    await addNotification(
+      w.userId,
+      `Your withdrawal of ${w.amountCoins} coins has been paid successfully.`,
+      "success"
+    );
+
+    // 📧 Email notification
+    await sendWithdrawalEmail(
+      w.userEmail,
+      "Withdrawal Paid – StudentHub",
+      `Your withdrawal of ${w.amountCoins} coins has been successfully paid.`
+    );
+
+    return res.json({
+      ok: true,
+      message: "Withdrawal marked as PAID",
+    });
+  } catch (err) {
+    console.error("mark paid error:", err);
+    return res.status(500).json({
+      ok: false,
+      message: "Server error",
+    });
+  }
+});
+
+
 // -----------------------------
 // Purchases (unchanged)
 // -----------------------------
@@ -1222,7 +2112,7 @@ app.post("/api/purchases", requireAuth, async (req, res) => {
         status: "success",
         paymentMethod: "demo-paywall",
         paymentId: paymentId || null,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
       });
 
       console.log(
@@ -1238,11 +2128,22 @@ app.post("/api/purchases", requireAuth, async (req, res) => {
 });
 
 // -----------------------------
+// Serve PDFs only for logged-in users
+// -----------------------------
+app.use("/pdfs", requireAuth, express.static(path.join(__dirname, "pdfs")));
+
+// -----------------------------
 // Materials API (public listing; files still protected by /pdfs above)
 // -----------------------------
-// Secure PDF serving (works with iframe/pdf viewer)
-// Secure PDF serving (Node 22 / Express safe)
-
+app.get("/api/materials", async (req, res) => {
+  try {
+    const data = await getAllMaterials();
+    res.json(data);
+  } catch (err) {
+    console.error("/api/materials error:", err);
+    res.status(500).json({ error: "Failed to load materials" });
+  }
+});
 
 // -----------------------------
 // Admin upload route (unchanged)
@@ -1307,7 +2208,7 @@ app.post("/api/upload", (req, res) => {
         subject: (subject || "").trim(),
         exam: (exam || "").trim(),
         year: (year || "").trim() || "—",
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
         downloads: 0,
         price: finalPrice,
       };
@@ -1328,7 +2229,7 @@ app.post("/api/upload", (req, res) => {
 // -----------------------------
 // Delete a material + its PDF
 // -----------------------------
-app.delete("/api/materials/:type/:index", async (req, res) => {
+app.delete("/api/materials/:type/:index", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { type, index } = req.params;
     const i = parseInt(index, 10);
@@ -1364,6 +2265,51 @@ app.delete("/api/materials/:type/:index", async (req, res) => {
     res.status(500).json({ error: "Server error while deleting item" });
   }
 });
+
+
+// ================================
+// ADMIN: Delete material by ID (PRODUCTION SAFE)
+// ================================
+app.delete("/api/admin/materials/:id", requireAuth, requireAdmin, async (req, res) => {
+  try {
+
+    const { id } = req.params;
+    let _id;
+
+    try {
+      _id = new ObjectId(id);
+    } catch {
+      return res.status(400).json({ ok: false, message: "Invalid material ID" });
+    }
+
+    let col = ebooksCollection();
+    let doc = await col.findOne({ _id });
+
+    if (!doc) {
+      col = questionPapersCollection();
+      doc = await col.findOne({ _id });
+    }
+
+    if (!doc) {
+      return res.status(404).json({ ok: false, message: "Material not found" });
+    }
+
+    if (doc.file) {
+      const filePath = path.join(__dirname, doc.file);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    await col.deleteOne({ _id });
+
+    return res.json({ ok: true, message: "Material deleted successfully" });
+  } catch (err) {
+    console.error("Admin delete material error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
 
 // -----------------------------
 // Track a "read" (view in reader)
@@ -1445,7 +2391,7 @@ app.get("/api/download/:type/:index", requireAuth, async (req, res) => {
           status: "success",
           paymentMethod: "test-free",
           paymentId: null,
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(),
         });
         console.log(
           `[ORDER] Created test purchase for user ${req.user.email} on ${type} ${item._id.toString()} for ₹${price}`
@@ -1505,64 +2451,37 @@ app.get("/wallet.html", requireAuth, (req, res) => {
 });
 
 // -----------------------------
-// ADMIN PAGES
+// ADMIN PAGES (PROTECTED)
 // -----------------------------
-app.get("/admin.html", (req, res) => {
+
+// Admin dashboard
+app.get("/admin.html", requireAuth, requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, "admin.html"));
 });
-app.get("/admin", (req, res) => {
+
+app.get("/admin", requireAuth, requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, "admin.html"));
 });
-app.get("/admin-materials.html", (req, res) => {
+
+// Admin materials
+app.get("/admin-materials.html", requireAuth, requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, "admin-materials.html"));
 });
-app.get("/admin-submissions.html", (req, res) => {
+
+// Admin submissions
+app.get("/admin-submissions.html", requireAuth, requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, "admin-submissions.html"));
 });
-app.get("/admin-withdrawals.html", (req, res) => {
+
+// Admin withdrawals
+app.get("/admin-withdrawals.html", requireAuth, requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, "admin-withdrawals.html"));
 });
-app.get("/admin-approved.html", (req, res) => {
-  // If you created admin-approved.html, this will serve it
+
+// Admin approved submissions (optional page)
+app.get("/admin-approved.html", requireAuth, requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, "admin-approved.html"));
 });
-
-
-
-// =============================
-// SECURE PDF SERVING (KEEP HERE)
-// =============================
-// =============================
-// SECURE PDF SERVING (EXPRESS 5 SAFE)
-// =============================
-app.get(/^\/pdfs\/(.+)$/, requireAuth, (req, res) => {
-  try {
-    // Regex capture group
-    const relativePath = req.params[0];
-
-    const pdfRoot = path.join(__dirname, "pdfs");
-    const filePath = path.join(pdfRoot, relativePath);
-
-    // Path traversal protection
-    if (!filePath.startsWith(pdfRoot)) {
-      return res.status(403).send("Forbidden");
-    }
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).send("File not found");
-    }
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "inline");
-
-    res.sendFile(filePath);
-  } catch (err) {
-    console.error("PDF serve error:", err);
-    res.status(500).send("Error serving PDF");
-  }
-});
-
-
 
 // -----------------------------
 // Static files
@@ -1588,6 +2507,24 @@ async function startServer() {
     db = client.db(DB_NAME);
 
     console.log("[MongoDB] Connected to", DB_NAME);
+
+    // ================================
+    // MongoDB Indexes (Performance)
+    // ================================
+    try {
+      await db.collection("withdrawals").createIndex({ status: 1, createdAt: -1 });
+      await db.collection("withdrawals").createIndex({ userId: 1, createdAt: -1 });
+      await db.collection("withdrawals").createIndex({ status: 1, userId: 1 });
+      await db.collection("withdrawals").createIndex({ userEmail: 1 });
+      await db.collection("walletLedger").createIndex({ userId: 1, createdAt: -1 });
+      await db.collection("orders").createIndex({ userId: 1 });
+      await db.collection("readLater").createIndex({ userId: 1 });
+
+      console.log("[MongoDB] Indexes ensured");
+    } catch (indexErr) {
+      console.warn("[MongoDB] Index creation warning:", indexErr.message);
+    }
+
 
     // Make db accessible to routes and other code
     app.locals.db = db;
@@ -1694,4 +2631,3 @@ async function startServer() {
 }
 
 startServer();
-

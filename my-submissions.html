@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>StudentHub – My Submissions</title>
@@ -16,6 +17,7 @@
       background: #ffffff;
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
     }
+
     body.dark .submissions-container {
       background: #020617;
       border: 1px solid #1f2937;
@@ -27,11 +29,13 @@
       font-weight: 600;
       margin-bottom: 0.25rem;
     }
+
     .submissions-subtitle {
       font-size: 0.9rem;
       color: #6b7280;
       margin-bottom: 0.9rem;
     }
+
     body.dark .submissions-subtitle {
       color: #9ca3af;
     }
@@ -50,6 +54,7 @@
       box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
       font-size: 0.9rem;
     }
+
     body.dark .submission-card {
       background: #020617;
       border-color: #1f2937;
@@ -60,11 +65,13 @@
       font-weight: 600;
       margin-bottom: 0.25rem;
     }
+
     .submission-meta {
       font-size: 0.78rem;
       color: #6b7280;
       margin-bottom: 0.35rem;
     }
+
     body.dark .submission-meta {
       color: #9ca3af;
     }
@@ -78,9 +85,21 @@
       font-size: 0.72rem;
       font-weight: 600;
     }
-    .status-pending { background: #fef3c7; color: #92400e; }
-    .status-approved { background: #ecfdf5; color: #166534; }
-    .status-rejected { background: #fee2e2; color: #b91c1c; }
+
+    .status-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-approved {
+      background: #ecfdf5;
+      color: #166534;
+    }
+
+    .status-rejected {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
 
     .submissions-status {
       margin-top: 0.75rem;
@@ -91,46 +110,21 @@
     /* ---------------------------
        Navbar badge & icon styles
        --------------------------- */
-    .nav-links a {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-
-    .nav-badge {
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      min-width: 1.6rem;
-      height: 1.6rem;
-      padding: 0 0.45rem;
-      font-size: 0.75rem;
-      border-radius: 999px;
-      background: #f59e0b;
-      font-weight: 700;
-      color: #0f172a;
-      margin-left: 0.25rem;
-    }
     body.dark .nav-badge {
       background: #f59e0b;
       color: #040f1c;
     }
 
-    .nav-icon-btn {
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      padding: 0.3rem 0.55rem;
-      border-radius: 999px;
-      font-size: 1.1rem;
-    }
     .nav-icon-btn:hover {
-      background: rgba(148,163,184,0.2);
+      background: rgba(148, 163, 184, 0.2);
     }
 
     /* Mobile small adjustments */
     @media (max-width: 640px) {
-      .submissions-container { padding: 1rem; margin: 1.25rem; }
+      .submissions-container {
+        padding: 1rem;
+        margin: 1.25rem;
+      }
     }
   </style>
 </head>
@@ -140,37 +134,38 @@
   <header class="navbar">
     <div class="logo">StudentHub</div>
 
+    <!-- Mobile hamburger -->
     <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
-      <span></span><span></span><span></span>
+      <span></span>
+      <span></span>
+      <span></span>
     </button>
 
+    <!-- Nav links -->
     <nav class="nav-links" id="nav-links">
       <a href="/">Home</a>
       <a href="/#ebooks">E-Books</a>
       <a href="/#question-papers">Question Papers</a>
       <a href="/#about">About</a>
       <a href="/#contact">Contact</a>
-      <a href="/library.html">My Library</a>
-      <a href="/read-later.html">Read Later</a>
 
-      <!-- Removed permanently: Submit PDF, My Submissions, Wallet -->
-
-      <!-- Auth-aware -->
-      <a href="/dashboard.html" id="nav-dashboard-link" style="display:none;">
-        My dashboard
-      </a>
-      <a href="/login.html" id="nav-login-link" style="display:none;">
-        Sign in
-      </a>
+      <!-- auth handled by JS -->
+      <a href="/login.html" id="nav-auth-link" data-auth-link>Sign in</a>
     </nav>
 
-    <!-- Notifications Button -->
-    <button id="notifications-btn" class="nav-icon-btn" type="button" aria-label="Notifications">
-      🔔
-      <span id="notifications-count" class="nav-badge" style="display:none;">0</span>
-    </button>
+    <!-- Right actions -->
+    <div class="nav-actions">
+      <div class="notif-wrapper">
+        <button id="notifBtn" title="Notifications">🔔</button>
+        <span id="notifCount"></span>
 
-    <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">🌙</button>
+        <div id="notifDropdown" class="notif-dropdown hidden">
+          <ul id="notifList"></ul>
+        </div>
+      </div>
+
+      <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+    </div>
   </header>
 
   <!-- ------------- Main Section ------------- -->
@@ -198,4 +193,5 @@
   <script src="notifications.js" defer></script>
   <script src="my-submissions.js" defer></script>
 </body>
+
 </html>

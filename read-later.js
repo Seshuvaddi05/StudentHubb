@@ -5,6 +5,8 @@
 
 let readLaterItems = [];
 let ownedMaterialIds = new Set();
+let readLaterSearchQuery = "";
+
 
 // ---------- small helpers ----------
 function slugify(text) {
@@ -382,6 +384,20 @@ function renderReadLater() {
   const sortVal = sortSelect ? sortSelect.value : "recent";
 
   let filtered = [...readLaterItems];
+  // 🔍 Search filter (title / exam / subject / year)
+  if (readLaterSearchQuery) {
+    const q = readLaterSearchQuery;
+    filtered = filtered.filter((it) => {
+      const haystack = `
+      ${it.title || ""}
+      ${it.exam || ""}
+      ${it.subject || ""}
+      ${it.year || ""}
+    `.toLowerCase();
+      return haystack.includes(q);
+    });
+  }
+
 
   // Type filter
   if (typeVal === "ebook") filtered = filtered.filter((it) => it.itemType !== "questionPaper");
@@ -409,9 +425,12 @@ function renderReadLater() {
   });
 
   // Summary text
-  if (summary) {
+  if (readLaterSearchQuery) {
+    summary.textContent = `Found ${filtered.length} result(s) for “${readLaterSearchQuery}”.`;
+  } else {
     summary.textContent = `Showing ${filtered.length} of ${readLaterItems.length} item${readLaterItems.length === 1 ? "" : "s"} in Read Later.`;
   }
+
 
   // Stats (free / paid / value)
   if (statsEl) {
@@ -491,7 +510,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   const typeSelect = document.getElementById("rl-type-filter");
   const priceSelect = document.getElementById("rl-price-filter");
   const sortSelect = document.getElementById("rl-sort");
+  const searchInput = document.getElementById("rl-search");
   if (typeSelect) typeSelect.addEventListener("change", renderReadLater);
   if (priceSelect) priceSelect.addEventListener("change", renderReadLater);
   if (sortSelect) sortSelect.addEventListener("change", renderReadLater);
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      readLaterSearchQuery = searchInput.value.toLowerCase().trim();
+      renderReadLater();
+    });
+  }
+
 });

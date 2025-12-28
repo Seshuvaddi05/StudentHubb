@@ -1,96 +1,46 @@
 // dashboard.js
-// User dashboard: stats + wallet + notifications + creator overview
+// StudentHub – User Dashboard Logic (FINAL CLEAN VERSION)
 
 (function () {
   const BASE_URL = window.location.origin;
 
-  // Elements
+  /* ---------------- ELEMENTS ---------------- */
+
   const yearSpan = document.getElementById("year");
 
-  const nameEl = document.getElementById("dash-name");
-  const joinedEl = document.getElementById("dash-joined");
+  const dashTitle = document.getElementById("dash-title");
+  const dashSubtitle = document.getElementById("dash-subtitle");
 
-  const ebooksStat = document.getElementById("stat-ebooks");
-  const qpsStat = document.getElementById("stat-qps");
-  const totalStat = document.getElementById("stat-total");
-  const walletStat = document.getElementById("stat-wallet");
+  const metricEbooks = document.getElementById("metric-ebooks");
+  const metricQps = document.getElementById("metric-qps");
+  const metricTotal = document.getElementById("metric-total");
 
-  const submissionsStat = document.getElementById("stat-submissions");
-  const submissionsDetail = document.getElementById("stat-submissions-detail");
+  const metricLibrary = document.getElementById("metric-library");
+  const metricReadLater = document.getElementById("metric-readlater");
 
-  const withdrawalsStat = document.getElementById("stat-withdrawals");
-  const withdrawalsDetail = document.getElementById("stat-withdrawals-detail");
+  const metricWallet = document.getElementById("metric-wallet");
 
-  const purchasedList = document.getElementById("purchased-list");
+  const metricSubs = document.getElementById("metric-submissions");
+  const metricSubsDetail = document.getElementById("metric-submissions-detail");
+
+  const metricWithdrawals = document.getElementById("metric-withdrawals");
+  const metricWithdrawalsDetail = document.getElementById("metric-withdrawals-detail");
+
+  const accountInfo = document.getElementById("account-info");
+  const accountExtra = document.getElementById("account-extra");
+
+  const libraryList = document.getElementById("my-library-list");
+  const popularList = document.getElementById("popular-list");
   const notificationsList = document.getElementById("notifications-list");
 
-  const logoutBtn = document.getElementById("logout-btn");
+  const logoutBtn = document.getElementById("btn-logout");
 
   const navToggle = document.getElementById("nav-toggle");
   const navLinks = document.getElementById("nav-links");
-
   const themeToggleBtn = document.getElementById("theme-toggle");
 
-  const notifBell = document.getElementById("notif-bell");
-  const notifDot = document.getElementById("notif-dot");
-  const notifPanel = document.getElementById("notif-panel");
-  const notifPanelList = document.getElementById("notif-list");
+  /* ---------------- HELPERS ---------------- */
 
-  // ---------------- THEME ----------------
-  function applyTheme(theme) {
-    if (theme === "dark") {
-      document.body.classList.add("dark");
-      if (themeToggleBtn) themeToggleBtn.textContent = "☀️";
-    } else {
-      document.body.classList.remove("dark");
-      if (themeToggleBtn) themeToggleBtn.textContent = "🌙";
-    }
-    localStorage.setItem("studenthub_theme", theme);
-  }
-
-  function initTheme() {
-    const saved = localStorage.getItem("studenthub_theme") || "light";
-    applyTheme(saved);
-
-    if (themeToggleBtn) {
-      themeToggleBtn.addEventListener("click", () => {
-        const next = document.body.classList.contains("dark") ? "light" : "dark";
-        applyTheme(next);
-      });
-    }
-  }
-
-  // ---------------- MOBILE NAV ----------------
-  function initMobileNav() {
-    if (!navToggle || !navLinks) return;
-    navToggle.addEventListener("click", () => {
-      navLinks.classList.toggle("open");
-      navToggle.classList.toggle("open");
-    });
-    navLinks.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => {
-        navLinks.classList.remove("open");
-        navToggle.classList.remove("open");
-      });
-    });
-  }
-
-  // ---------------- BACK TO TOP ----------------
-  function initBackToTop() {
-    const btn = document.getElementById("back-to-top");
-    if (!btn) return;
-
-    window.addEventListener("scroll", () => {
-      if (window.scrollY > 300) btn.classList.add("show");
-      else btn.classList.remove("show");
-    });
-
-    btn.addEventListener("click", () => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-  }
-
-  // ---------------- FETCH HELPERS ----------------
   async function safeJsonFetch(url, options = {}) {
     const res = await fetch(url, {
       credentials: "include",
@@ -103,245 +53,275 @@
     return data;
   }
 
-  // ---------------- LOAD USER ----------------
+  function slugify(text) {
+    return (text || "")
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  /* ---------------- THEME ---------------- */
+
+  function applyTheme(theme) {
+    if (theme === "dark") {
+      document.body.classList.add("dark");
+      themeToggleBtn.textContent = "☀️";
+    } else {
+      document.body.classList.remove("dark");
+      themeToggleBtn.textContent = "🌙";
+    }
+    localStorage.setItem("studenthub_theme", theme);
+  }
+
+  function initTheme() {
+    const saved = localStorage.getItem("studenthub_theme") || "light";
+    applyTheme(saved);
+
+    themeToggleBtn.addEventListener("click", () => {
+      const next = document.body.classList.contains("dark") ? "light" : "dark";
+      applyTheme(next);
+    });
+  }
+
+  /* ---------------- NAV & UI ---------------- */
+
+  function initMobileNav() {
+    if (!navToggle || !navLinks) return;
+    navToggle.addEventListener("click", () => {
+      navLinks.classList.toggle("open");
+      navToggle.classList.toggle("open");
+    });
+  }
+
+  function initBackToTop() {
+    const btn = document.getElementById("back-to-top");
+    if (!btn) return;
+
+    window.addEventListener("scroll", () => {
+      btn.classList.toggle("show", window.scrollY > 300);
+    });
+
+    btn.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  /* ---------------- USER ---------------- */
+
   async function loadUser() {
     try {
       const data = await safeJsonFetch(`${BASE_URL}/api/me`);
       const u = data.user;
-      if (!u) return;
 
-      if (nameEl) nameEl.textContent = u.name || "Student";
-      if (joinedEl && u.createdAt) {
-        const d = new Date(u.createdAt);
-        joinedEl.textContent = d.toLocaleDateString("en-IN", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        });
-      }
+      dashTitle.textContent = `Welcome, ${u.name || u.email}`;
+      dashSubtitle.textContent = `You joined StudentHub on ${
+        u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"
+      }`;
+
+      accountInfo.textContent = u.email || "";
     } catch (err) {
-      console.error("loadUser error:", err);
+      dashSubtitle.textContent = "Failed to load account.";
+      console.error(err);
     }
   }
 
-  // ---------------- LOAD MATERIAL STATS ----------------
+  /* ---------------- MATERIAL STATS ---------------- */
+
   async function loadMaterialStats() {
     try {
       const data = await safeJsonFetch(`${BASE_URL}/api/materials`);
       const ebooks = Array.isArray(data.ebooks) ? data.ebooks.length : 0;
-      const qps = Array.isArray(data.questionPapers)
-        ? data.questionPapers.length
-        : 0;
+      const qps = Array.isArray(data.questionPapers) ? data.questionPapers.length : 0;
 
-      if (ebooksStat) ebooksStat.textContent = ebooks;
-      if (qpsStat) qpsStat.textContent = qps;
-      if (totalStat) totalStat.textContent = ebooks + qps;
-    } catch (err) {
-      console.error("loadMaterialStats error:", err);
-    }
-  }
+      metricEbooks.textContent = ebooks;
+      metricQps.textContent = qps;
+      metricTotal.textContent = ebooks + qps;
 
-  // ---------------- LOAD WALLET + NOTIFS + WITHDRAWALS ----------------
-  async function loadWalletAndNotifications() {
-    try {
-      const data = await safeJsonFetch(`${BASE_URL}/api/wallet`);
+      const combined = [
+        ...(data.ebooks || []).map(i => ({ ...i, type: "E-Book" })),
+        ...(data.questionPapers || []).map(i => ({ ...i, type: "Question Paper" }))
+      ];
 
-      if (walletStat) {
-        walletStat.textContent =
-          typeof data.walletCoins === "number" ? data.walletCoins : 0;
-      }
+      combined.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
+      popularList.innerHTML = "";
 
-      // Withdrawal stats (based on pending list; we only know pending from this endpoint)
-      const pending = Array.isArray(data.pendingWithdrawals)
-        ? data.pendingWithdrawals.length
-        : 0;
-
-      // For now we only know "pending" count; approved/rejected could be added later
-      if (withdrawalsStat) withdrawalsStat.textContent = pending;
-      if (withdrawalsDetail) {
-        withdrawalsDetail.textContent = `${pending} pending • 0 approved • 0 rejected`;
-      }
-
-      // Notifications
-      const notifs = Array.isArray(data.notifications)
-        ? data.notifications
-        : [];
-
-      renderNotifications(notifs);
-    } catch (err) {
-      console.error("loadWalletAndNotifications error:", err);
-    }
-  }
-
-  function renderNotifications(notifs) {
-    const listEl = notificationsList;
-    const panelList = notifPanelList;
-    if (!listEl || !panelList) return;
-
-    listEl.innerHTML = "";
-    panelList.innerHTML = "";
-
-    if (!notifs.length) {
-      listEl.innerHTML =
-        '<p class="dash-empty">No notifications yet.</p>';
-      if (notifDot) notifDot.style.display = "none";
-      return;
-    }
-
-    // Show orange dot if there is at least one notification
-    if (notifDot) notifDot.style.display = "block";
-
-    notifs
-      .slice()
-      .reverse() // newest first
-      .forEach((n) => {
-        const createdAt = n.createdAt
-          ? new Date(n.createdAt)
-          : null;
-        const timeText = createdAt
-          ? createdAt.toLocaleString("en-IN", {
-              day: "2-digit",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : "";
-
-        // Main list (on page)
-        const item = document.createElement("div");
-        item.className = "dash-list-item notif-item";
-        item.innerHTML = `
-          <div class="notif-title">${n.message || ""}</div>
-          <div class="notif-meta">${timeText}</div>
+      combined.slice(0, 6).forEach(it => {
+        const div = document.createElement("div");
+        div.className = "dash-list-item";
+        div.innerHTML = `
+          <div class="dash-list-item-title">${it.title || "Untitled"}</div>
+          <div class="dash-list-item-meta">${it.type} • ${it.exam || "—"} • Downloads: ${it.downloads || 0}</div>
         `;
-        listEl.appendChild(item);
-
-        // Bell dropdown
-        const panelItem = document.createElement("div");
-        panelItem.className = "notif-item";
-        panelItem.innerHTML = `
-          <div class="notif-title">${n.message || ""}</div>
-          <div class="notif-meta">${timeText}</div>
-        `;
-        panelList.appendChild(panelItem);
+        popularList.appendChild(div);
       });
+
+      if (!combined.length) {
+        popularList.innerHTML = `<div class="dash-empty">No materials yet.</div>`;
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }
 
-  // ---------------- LOAD PURCHASED PDFs ----------------
-  async function loadPurchased() {
-    if (!purchasedList) return;
+  /* ---------------- LIBRARY ---------------- */
+
+  async function loadLibrary() {
     try {
       const data = await safeJsonFetch(`${BASE_URL}/api/my-library`);
-      const items = Array.isArray(data.items) ? data.items : [];
+      const items = data.items || [];
 
-      purchasedList.innerHTML = "";
+      metricLibrary.textContent = items.length;
+      accountExtra.textContent = `Purchased items: ${items.length}`;
+
+      libraryList.innerHTML = "";
 
       if (!items.length) {
-        purchasedList.innerHTML =
-          '<p class="dash-empty">You haven\'t purchased or unlocked any PDFs yet.</p>';
+        libraryList.innerHTML = `<div class="dash-empty">No purchases yet.</div>`;
         return;
       }
 
-      items.slice(0, 5).forEach((it) => {
-        const row = document.createElement("div");
-        row.className = "dash-list-item";
-        row.textContent = `${it.title || "Untitled"} • ${
-          it.exam || "—"
-        } • ${it.year || "—"}`;
-        purchasedList.appendChild(row);
+      items.forEach(it => {
+        const div = document.createElement("div");
+        div.className = "dash-list-item";
+        div.innerHTML = `
+          <div class="dash-list-item-title">${it.title || "Untitled"}</div>
+          <div class="dash-list-item-meta">
+            ${it.itemType === "questionPaper" ? "Question Paper" : "E-Book"} •
+            ${it.exam || "—"} • ${it.year || "—"} • ₹${Number(it.price || 0)}
+          </div>
+          <div class="dash-list-item-actions">
+            <a class="btn small" href="/view/${slugify(it.title)}?id=${encodeURIComponent(it.itemId)}">
+              Open reader
+            </a>
+          </div>
+        `;
+        libraryList.appendChild(div);
       });
-
-      if (items.length > 5) {
-        const more = document.createElement("div");
-        more.className = "dash-list-item";
-        more.innerHTML =
-          `<a href="/library.html">View all ${items.length} items in My Library →</a>`;
-        purchasedList.appendChild(more);
-      }
     } catch (err) {
-      console.error("loadPurchased error:", err);
-      purchasedList.innerHTML =
-        '<p class="dash-empty">Could not load your library. Please refresh.</p>';
+      console.error(err);
     }
   }
 
-  // ---------------- LOAD USER SUBMISSIONS ----------------
+
+  /* ---------------- READ LATER ---------------- */
+
+async function loadReadLater() {
+  try {
+    const data = await safeJsonFetch(`${BASE_URL}/api/read-later`);
+
+    // data.ids = array of material IDs
+    // data.items = actual items
+    const count = Array.isArray(data.ids) ? data.ids.length : 0;
+
+    metricReadLater.textContent = count;
+  } catch (err) {
+    console.error("Failed to load Read Later count", err);
+    metricReadLater.textContent = "0";
+  }
+}
+
+  /* ---------------- WALLET & WITHDRAWALS ---------------- */
+
+  async function loadWallet() {
+    try {
+      const data = await safeJsonFetch(`${BASE_URL}/api/wallet`);
+      metricWallet.textContent = data.walletCoins || 0;
+
+      const withdrawals = data.withdrawals || [];
+      let pending = 0, paid = 0, rejected = 0;
+
+      withdrawals.forEach(w => {
+        if (w.status === "pending") pending++;
+        else if (w.status === "paid" || w.status === "approved") paid++;
+        else if (w.status === "rejected") rejected++;
+      });
+
+      metricWithdrawals.textContent = withdrawals.length;
+      metricWithdrawalsDetail.textContent =
+        `${pending} pending • ${paid} paid • ${rejected} rejected`;
+
+      renderNotifications(data.notifications || []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  /* ---------------- SUBMISSIONS ---------------- */
+
   async function loadSubmissions() {
     try {
       const data = await safeJsonFetch(`${BASE_URL}/api/user-submissions`);
-      const submissions = Array.isArray(data.submissions)
-        ? data.submissions
-        : [];
+      const submissions = data.submissions || [];
 
-      const total = submissions.length;
-      let pending = 0;
-      let approved = 0;
-      let rejected = 0;
+      let pending = 0, approved = 0, rejected = 0;
 
-      submissions.forEach((s) => {
+      submissions.forEach(s => {
         if (s.status === "pending") pending++;
         else if (s.status === "approved") approved++;
         else if (s.status === "rejected") rejected++;
       });
 
-      if (submissionsStat) submissionsStat.textContent = total;
-      if (submissionsDetail) {
-        submissionsDetail.textContent = `${pending} pending • ${approved} approved • ${rejected} rejected`;
-      }
+      metricSubs.textContent = submissions.length;
+      metricSubsDetail.textContent =
+        `${pending} pending • ${approved} approved • ${rejected} rejected`;
     } catch (err) {
-      console.error("loadSubmissions error:", err);
+      console.error(err);
     }
   }
 
-  // ---------------- NOTIF BELL UI ----------------
-  function initNotificationsUI() {
-    if (!notifBell || !notifPanel) return;
+  /* ---------------- NOTIFICATIONS ---------------- */
 
-    notifBell.addEventListener("click", () => {
-      notifPanel.classList.toggle("open");
-    });
+  function renderNotifications(notifs) {
+    notificationsList.innerHTML = "";
 
-    document.addEventListener("click", (e) => {
-      if (
-        !notifPanel.contains(e.target) &&
-        !notifBell.contains(e.target)
-      ) {
-        notifPanel.classList.remove("open");
-      }
+    if (!notifs.length) {
+      notificationsList.innerHTML = `<div class="dash-empty">No notifications yet.</div>`;
+      return;
+    }
+
+    notifs.slice().reverse().forEach(n => {
+      const div = document.createElement("div");
+      div.className = "dash-list-item";
+      div.innerHTML = `
+        <div>${n.message || ""}</div>
+        <small>${n.createdAt ? new Date(n.createdAt).toLocaleString() : ""}</small>
+      `;
+      notificationsList.appendChild(div);
     });
   }
 
-  // ---------------- LOGOUT ----------------
+  /* ---------------- LOGOUT ---------------- */
+
   function initLogout() {
-    if (!logoutBtn) return;
     logoutBtn.addEventListener("click", async () => {
       try {
         await fetch(`${BASE_URL}/api/auth/logout`, {
           method: "POST",
           credentials: "include",
         });
-      } catch (err) {
-        console.error("logout error:", err);
       } finally {
-        window.location.href = "/";
+        window.location.href = "/login.html";
       }
     });
   }
 
-  // ---------------- INIT ----------------
+  /* ---------------- INIT ---------------- */
+
   function init() {
     if (yearSpan) yearSpan.textContent = new Date().getFullYear();
 
     initTheme();
     initMobileNav();
     initBackToTop();
-    initNotificationsUI();
     initLogout();
 
     loadUser();
     loadMaterialStats();
-    loadWalletAndNotifications();
-    loadPurchased();
+    loadLibrary();
+    loadReadLater();
+    loadWallet();
     loadSubmissions();
   }
 

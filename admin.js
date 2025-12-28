@@ -44,7 +44,7 @@
   }
 
   // -----------------------------
-  // ADMIN UPLOAD HANDLING (FIXED)
+  // ADMIN UPLOAD HANDLING
   // -----------------------------
   async function handleUpload(e) {
     e.preventDefault();
@@ -96,20 +96,13 @@
       });
 
       const data = await res.json().catch(() => ({}));
-
-      // ✅ FIX: ONLY check HTTP status (backend does not return data.ok)
-      if (!res.ok) {
-        throw new Error(data.message || "Upload failed");
-      }
+      if (!res.ok) throw new Error(data.error || "Upload failed");
 
       uploadStatus.textContent = "Uploaded successfully!";
       uploadStatus.style.color = "#16a34a";
-
       uploadForm.reset();
 
-      if (materialsTableBody) {
-        fetchMaterials();
-      }
+      fetchMaterials();
     } catch (err) {
       uploadStatus.textContent = "Upload failed: " + err.message;
       uploadStatus.style.color = "#b91c1c";
@@ -127,19 +120,18 @@
     materialsListStatus.textContent = "Loading materials…";
 
     try {
-      const res = await fetch(`${BASE_URL}/api/materials`);
-      const data = await res.json().catch(() => ({}));
+      const res = await fetch(`${BASE_URL}/api/materials`, {
+        credentials: "include",
+      });
+      const data = await res.json();
 
       if (!res.ok) throw new Error("Failed to load");
 
-      const ebooks = Array.isArray(data.ebooks) ? data.ebooks : [];
-      const qps = Array.isArray(data.questionPapers) ? data.questionPapers : [];
-
       allMaterials = [];
 
-      ebooks.forEach((m, i) => {
+      (data.ebooks || []).forEach((m) => {
         allMaterials.push({
-          index: i,
+          id: m.id, // ✅ MongoDB ID
           type: "ebook",
           typeLabel: "E-Book",
           title: m.title || "",
@@ -150,9 +142,9 @@
         });
       });
 
-      qps.forEach((m, i) => {
+      (data.questionPapers || []).forEach((m) => {
         allMaterials.push({
-          index: i,
+          id: m.id, // ✅ MongoDB ID
           type: "questionPaper",
           typeLabel: "Question Paper",
           title: m.title || "",
@@ -165,7 +157,7 @@
 
       renderMaterials();
     } catch (err) {
-      console.error("Materials load error:", err);
+      console.error(err);
       materialsTableBody.innerHTML =
         `<tr><td colspan="8" style="color:#b91c1c;">Failed to load materials.</td></tr>`;
       materialsListStatus.textContent = "Failed to load materials.";
@@ -173,19 +165,14 @@
   }
 
   // -----------------------------
-  // RENDER MATERIALS TABLE
+  // RENDER TABLE
   // -----------------------------
   function renderMaterials() {
-    if (!materialsTableBody) return;
-
     let filtered = [...allMaterials];
     const search = (materialsSearch?.value || "").toLowerCase().trim();
     const typeFilter = materialsTypeFilter?.value || "";
 
-    if (typeFilter) {
-      filtered = filtered.filter(m => m.type === typeFilter);
-    }
-
+    if (typeFilter) filtered = filtered.filter(m => m.type === typeFilter);
     if (search) {
       filtered = filtered.filter(m =>
         `${m.title} ${m.exam} ${m.year}`.toLowerCase().includes(search)
@@ -195,7 +182,6 @@
     if (!filtered.length) {
       materialsTableBody.innerHTML =
         `<tr><td colspan="8">No materials found.</td></tr>`;
-      materialsListStatus.textContent = "No materials match filters.";
       return;
     }
 
@@ -217,65 +203,64 @@
           <button class="btn-danger"
             data-action="delete"
             data-type="${m.type}"
-            data-index="${m.index}">
+            data-id="${m.id}">
             Delete
           </button>
         </td>
       `;
-
       materialsTableBody.appendChild(tr);
     });
-
-    materialsListStatus.textContent = `${filtered.length} result(s) shown.`;
   }
 
   // -----------------------------
-  // DELETE MATERIAL
+  // DELETE MATERIAL (FIXED)
   // -----------------------------
   async function handleDelete(e) {
     const btn = e.target.closest("button[data-action='delete']");
     if (!btn) return;
 
-    const type = btn.getAttribute("data-type");
-    const index = Number(btn.getAttribute("data-index"));
+    const id = btn.dataset.id;
 
-    if (!confirm("Delete this material permanently?")) return;
+    if (!confirm("⚠️ Delete this material permanently? This cannot be undone.")) {
+      return;
+    }
 
     btn.disabled = true;
-    const oldLabel = btn.textContent;
     btn.textContent = "Deleting…";
 
     try {
       const res = await fetch(
-        `${BASE_URL}/api/materials/${encodeURIComponent(type)}/${index}`,
-        { method: "DELETE" }
+        `${BASE_URL}/api/admin/materials/${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
       );
 
-      if (!res.ok) throw new Error("Delete failed");
-      fetchMaterials();
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.message || "Delete failed");
+      }
+
+      fetchMaterials(); // refresh list
     } catch (err) {
       alert("Delete failed: " + err.message);
       btn.disabled = false;
-      btn.textContent = oldLabel;
+      btn.textContent = "Delete";
     }
   }
 
+
   // -----------------------------
-  // INITIALIZE
+  // INIT
   // -----------------------------
   function init() {
     initTheme();
-
-    if (uploadForm) {
-      uploadForm.addEventListener("submit", handleUpload);
-    }
-
-    if (materialsTableBody) {
-      materialsTableBody.addEventListener("click", handleDelete);
-      materialsSearch?.addEventListener("input", renderMaterials);
-      materialsTypeFilter?.addEventListener("change", renderMaterials);
-      fetchMaterials();
-    }
+    uploadForm?.addEventListener("submit", handleUpload);
+    materialsTableBody?.addEventListener("click", handleDelete);
+    materialsSearch?.addEventListener("input", renderMaterials);
+    materialsTypeFilter?.addEventListener("change", renderMaterials);
+    fetchMaterials();
   }
 
   document.addEventListener("DOMContentLoaded", init);

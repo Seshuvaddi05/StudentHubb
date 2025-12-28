@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>StudentHub – Wallet</title>
@@ -11,217 +12,296 @@
     .wallet-container {
       max-width: 900px;
       margin: 2rem auto;
-      padding: 1.5rem 1.5rem;
+      padding: 1.5rem;
       border-radius: 0.9rem;
       background: #ffffff;
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
     }
+
     body.dark .wallet-container {
       background: #020617;
       border: 1px solid #1f2937;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
     }
 
     .wallet-heading {
       font-size: 1.4rem;
       font-weight: 600;
-      margin-bottom: 0.3rem;
     }
+
     .wallet-subtitle {
       font-size: 0.9rem;
       color: #6b7280;
       margin-bottom: 1rem;
     }
+
     body.dark .wallet-subtitle {
       color: #9ca3af;
     }
 
     .wallet-balance {
-      display: flex;
-      align-items: baseline;
-      gap: 0.4rem;
       font-size: 1.8rem;
       font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    .wallet-balance span {
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: #6b7280;
-    }
-    body.dark .wallet-balance span {
-      color: #9ca3af;
     }
 
-    .wallet-note {
-      font-size: 0.8rem;
+    .wallet-rupees {
+      font-size: 0.9rem;
       color: #6b7280;
       margin-bottom: 1rem;
     }
-    body.dark .wallet-note {
+
+    body.dark .wallet-rupees {
       color: #9ca3af;
     }
 
+    /* ===== Analytics ===== */
+    .wallet-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0 1.5rem;
+    }
+
+    .stat-card {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 0.8rem;
+      text-align: center;
+    }
+
+    body.dark .stat-card {
+      background: #020617;
+      border-color: #1f2937;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-top: 0.2rem;
+    }
+
+    /* ===== Withdraw Card ===== */
     .withdraw-card {
       margin-top: 1rem;
-      padding: 1rem 1rem;
+      padding: 1rem;
       border-radius: 0.8rem;
       border: 1px solid #e5e7eb;
       background: #f9fafb;
     }
+
     body.dark .withdraw-card {
       background: #020617;
+      border-color: #1f2937;
+    }
+
+    .form-label {
+      margin-top: 0.6rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: block;
+    }
+
+    .form-input {
+      width: 100%;
+      max-width: 320px;
+      padding: 0.45rem 0.6rem;
+      border-radius: 0.55rem;
+      border: 1px solid #e5e7eb;
+      font-size: 0.9rem;
+    }
+
+    body.dark .form-input {
+      background: #020617;
+      color: #e5e7eb;
       border-color: #1f2937;
     }
 
     .withdraw-status {
       margin-top: 0.6rem;
       font-size: 0.85rem;
-      color: #6b7280;
     }
+
     .withdraw-status.success {
       color: #047857;
     }
+
     .withdraw-status.error {
       color: #b91c1c;
     }
 
-    .pending-list {
+    .withdraw-status.warning {
+      color: #d97706;
+    }
+
+    /* ===== Tables ===== */
+    table {
+      width: 100%;
       margin-top: 1rem;
+      border-collapse: collapse;
       font-size: 0.85rem;
     }
 
-    /* Navbar styles */
-    .navbar .nav-links {
-      position: relative;
-      gap: 0.75rem;
-      align-items: center;
+    th,
+    td {
+      padding: 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
     }
-    .nav-links a {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
+
+    body.dark th,
+    body.dark td {
+      border-color: #1f2937;
     }
-    .nav-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 1.6rem;
-      height: 1.6rem;
-      padding: 0 0.45rem;
+
+    .ledger-type {
+      padding: 2px 8px;
       border-radius: 999px;
-      background: #f59e0b;
-      color: #0f172a;
+      font-size: 0.75rem;
       font-weight: 600;
-      font-size: 0.78rem;
-      margin-left: 0.2rem;
-      box-shadow: 0 2px 6px rgba(15,23,42,0.12);
     }
 
-    body.dark .nav-badge {
-      background: #f59e0b;
-      color: #021423;
+    .ledger-type.credit {
+      background: #dcfce7;
+      color: #166534;
     }
 
-    .nav-icon-btn {
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      padding: 0.25rem 0.5rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-    }
-
-    .nav-icon-btn:hover {
-      background: rgba(148,163,184,0.2);
+    .ledger-type.debit {
+      background: #fee2e2;
+      color: #991b1b;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- Updated Navbar (Submit PDF, My Submissions, Wallet removed) -->
   <header class="navbar">
     <div class="logo">StudentHub</div>
-
-    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
-      <span></span><span></span><span></span>
-    </button>
-
-    <nav class="nav-links" id="nav-links">
+    <nav class="nav-links">
       <a href="/">Home</a>
-      <a href="/#ebooks">E-Books</a>
-      <a href="/#question-papers">Question Papers</a>
-      <a href="/#about">About</a>
-      <a href="/#contact">Contact</a>
-
-      <!-- Remaining allowed links -->
-      <a href="/library.html">My Library</a>
-      <a href="/read-later.html">Read Later</a>
-
-      <!-- Auth-aware -->
-      <a href="/dashboard.html" id="nav-dashboard-link" style="display:none;">My dashboard</a>
-      <a href="/login.html" id="nav-login-link" style="display:none;">Sign in</a>
+      <a href="/dashboard.html">Dashboard</a>
     </nav>
-
-    <!-- Notifications -->
-    <button id="notifications-btn" class="nav-icon-btn" aria-label="Notifications">
-      🔔
-      <span id="notifications-count" class="nav-badge" style="display:none;">0</span>
-    </button>
-
     <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
   </header>
 
-
   <main class="section">
     <div class="wallet-container">
+
       <h1 class="wallet-heading">My Wallet</h1>
       <p class="wallet-subtitle">
-        Earn coins when your PDFs are selected. Minimum 100 coins required to withdraw.
+        Earn coins when your PDFs are approved. Minimum 100 coins required to withdraw.
       </p>
 
-      <div class="wallet-balance">
-        <span>Balance:</span>
-        <span id="wallet-coins">0</span>
-        <span>coins</span>
+      <div class="wallet-balance" id="walletBalance">0 coins</div>
+      <div class="wallet-rupees" id="walletRupees">₹0.00</div>
+
+      <!-- WALLET ANALYTICS -->
+      <div class="wallet-stats">
+        <div class="stat-card">
+          <div class="stat-label">Earned</div>
+          <div class="stat-value" id="statEarned">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Withdrawn</div>
+          <div class="stat-value" id="statWithdrawn">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Paid</div>
+          <div class="stat-value" id="statPaid">0</div>
+        </div>
       </div>
 
-      <p class="wallet-note">
-        You can submit a withdrawal request after reaching 100 coins.
-      </p>
-
+      <!-- Withdraw Form -->
       <div class="withdraw-card">
-        <h2 style="font-size:1rem; font-weight:600; margin-bottom:0.4rem;">Request withdrawal</h2>
+        <h2 style="font-size:1rem;">Request Withdrawal</h2>
 
-        <label for="withdraw-amount" style="font-size:0.85rem;">Amount to withdraw (coins)</label>
+        <!-- Balance -->
+        <label class="form-label">Current Balance</label>
+        <input id="withdraw-balance" class="form-input" readonly />
 
-        <input id="withdraw-amount" type="number" min="1" step="1"
-          style="width:100%;max-width:220px;padding:0.4rem 0.6rem;border-radius:0.5rem;border:1px solid #e5e7eb;font-size:0.9rem;" />
+        <!-- Amount -->
+        <label class="form-label">Withdraw Amount (₹)</label>
+        <input id="withdrawAmount" type="number" min="10" class="form-input" />
 
-        <button id="withdraw-btn" class="btn primary" style="margin-top:0.6rem;">
-          Submit withdrawal request
+        <!-- Method -->
+        <label class="form-label">Withdrawal Method</label>
+        <select id="withdrawMethod" class="form-input">
+          <option value="upi">UPI</option>
+          <option value="bank">Bank Transfer</option>
+        </select>
+
+        <!-- UPI SECTION -->
+        <div id="upiSection">
+          <label class="form-label">UPI ID</label>
+          <input id="upiId" class="form-input" placeholder="example@upi" />
+        </div>
+
+        <!-- BANK SECTION -->
+        <div id="bankSection" style="display:none;">
+          <label class="form-label">Account Holder Name</label>
+          <input id="bankName" class="form-input" />
+
+          <label class="form-label">Account Number</label>
+          <input id="bankAccount" class="form-input" />
+
+          <label class="form-label">IFSC Code</label>
+          <input id="bankIfsc" class="form-input" />
+        </div>
+
+        <!-- Note -->
+        <label class="form-label">Note (optional)</label>
+        <textarea id="withdraw-note" rows="2" class="form-input"></textarea>
+
+        <button id="withdrawBtn" class="btn primary" style="margin-top:0.8rem;">
+          Submit Withdrawal
         </button>
 
-        <p id="withdraw-status" class="withdraw-status"></p>
+        <p id="walletMessage" class="withdraw-status"></p>
       </div>
 
-      <div class="pending-list">
-        <h3 style="font-size:0.95rem; font-weight:600; margin-bottom:0.3rem;">Pending withdrawals</h3>
-        <ul id="pending-withdrawals"></ul>
-      </div>
+
+      <!-- Withdrawal History -->
+      <h3 style="margin-top:1.5rem;">Withdrawal History</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Coins</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="withdrawalHistory"></tbody>
+      </table>
+
+      <!-- Wallet Ledger -->
+      <h3 style="margin-top:2rem;">Wallet Activity</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Coins</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="walletLedger">
+          <tr>
+            <td colspan="3">Loading activity…</td>
+          </tr>
+        </tbody>
+      </table>
+
     </div>
   </main>
 
   <footer class="footer">
-    <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
+    <p>© <span id="year"></span> StudentHub</p>
   </footer>
-
-  <button id="back-to-top" class="back-to-top">↑</button>
 
   <script src="script.js" defer></script>
   <script src="wallet.js" defer></script>
 </body>
+
 </html>

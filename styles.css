@@ -15,14 +15,17 @@ body {
   color: #111827;
 }
 
-/* Navbar */
+/* ===============================
+   🔝 FINAL UNIFIED NAVBAR
+================================ */
+
 .navbar {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 0.75rem 1.5rem;
   background: #111827;
   color: #f9fafb;
@@ -31,36 +34,97 @@ body {
 .logo {
   font-weight: 700;
   font-size: 1.2rem;
+  white-space: nowrap;
 }
 
-/* Nav links wrapper */
+/* Nav links */
 .nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #e5e7eb;
+  font-size: 0.95rem;
+}
+
+.nav-links a:hover {
+  color: #ffffff;
+}
+
+/* Right side actions */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Notification bell */
+.notif-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
 }
 
-/* Default desktop nav links (nav inside navbar) */
-.navbar nav a {
-  margin-left: 1rem;
-  text-decoration: none;
-  color: #e5e7eb;
-  font-size: 0.95rem;
-  transition: color 0.15s ease, transform 0.15s ease;
+#notifBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.05rem;
 }
 
-.navbar nav a:hover {
-  color: #ffffff;
-  transform: translateY(-1px);
+#notifBtn:hover {
+  background: rgba(255,255,255,0.08);
 }
 
-/* Mobile hamburger button (hidden by default on desktop) */
+/* Notification count */
+#notifCount {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 0.65rem;
+  border-radius: 999px;
+  background: #f59e0b;
+  color: #111827;
+  font-weight: 700;
+  display: none;
+}
+
+/* Theme toggle */
+.theme-toggle-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid #4b5563;
+  background: #1f2937;
+  color: #f9fafb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle-btn:hover {
+  background: #374151;
+}
+
+/* Hamburger */
 .nav-toggle {
   display: none;
-  border: none;
   background: transparent;
+  border: none;
   cursor: pointer;
-  padding: 0.25rem;
-  margin-left: 0.75rem;
 }
 
 .nav-toggle span {
@@ -69,7 +133,24 @@ body {
   height: 2px;
   background: #f9fafb;
   margin: 3px 0;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .nav-toggle {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    margin-top: 0.5rem;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
 }
 
 /* Animated X when open */
@@ -83,28 +164,6 @@ body {
 
 .nav-toggle.open span:nth-child(3) {
   transform: translateY(-5px) rotate(-45deg);
-}
-
-/* Theme toggle button */
-.theme-toggle-btn {
-  margin-left: 1rem;
-  border-radius: 999px;
-  border: 1px solid #4b5563;
-  background: #1f2937;
-  color: #f9fafb;
-  padding: 0.3rem 0.7rem;
-  font-size: 0.9rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
-}
-
-.theme-toggle-btn:hover {
-  background: #374151;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.4);
 }
 
 /* Hero */
@@ -369,16 +428,36 @@ body.dark .btn.secondary:disabled {
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
+
+
+/* ===============================
+   Prevent text overflow in cards
+================================ */
+
+/* Title text */
 .card h3 {
-  font-size: 1.05rem;
-  margin-bottom: 0.4rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;   /* max 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
+/* Description / paragraph text */
 .card p {
-  font-size: 0.9rem;
-  color: #4b5563;
-  margin-bottom: 0.7rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 3;   /* max 3 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
+
 
 .card:hover {
   transform: translateY(-3px);
@@ -1044,4 +1123,231 @@ body.dark .suggest-item {
 
 body.dark .suggest-item:hover {
   background: #1e293b;
+}
+
+
+.form-label {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.45rem 0.6rem;
+  margin-top: 0.2rem;
+  border-radius: 0.55rem;
+  border: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+}
+
+body.dark .form-input {
+  background: #020617;
+  color: #e5e7eb;
+  border-color: #1f2937;
+}
+
+
+.status.pending { color: orange; font-weight: 600; }
+.status.approved { color: green; font-weight: 600; }
+.status.rejected { color: red; font-weight: 600; }
+
+#walletMessage.success { color: green; }
+#walletMessage.error { color: red; }
+#walletMessage.warning { color: orange; }
+
+
+.status.pending { color: orange; font-weight: 600; }
+.status.approved { color: green; font-weight: 600; }
+.status.rejected { color: red; font-weight: 600; }
+
+.btn.small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+.btn.success { background: #16a34a; color: #fff; }
+.btn.danger { background: #dc2626; color: #fff; }
+
+
+.ledger-type {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ledger-type.credit {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.ledger-type.debit {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+
+/* ===============================
+   🔔 Notifications (Navbar)
+   =============================== */
+
+#notifBtn:hover {
+  transform: scale(1.1);
+}
+
+/* dark mode */
+body.dark .notif-dropdown {
+  background: #020617;
+  border-color: #1f2937;
+}
+
+/* hidden state */
+.notif-dropdown.hidden {
+  display: none;
+}
+
+#notifList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* single notification */
+#notifList li {
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+}
+
+body.dark #notifList li {
+  border-color: #1f2937;
+}
+
+#notifList li:last-child {
+  border-bottom: none;
+}
+
+#notifList li:hover {
+  background: #f3f4f6;
+}
+
+body.dark #notifList li:hover {
+  background: #020617;
+}
+
+/* unread highlight */
+#notifList li.unread {
+  font-weight: 600;
+}
+
+/* empty state */
+#notifList li.empty {
+  text-align: center;
+  color: #6b7280;
+  cursor: default;
+}
+
+
+/* ================================
+   Notifications UI
+================================ */
+
+body.dark .notif-dropdown {
+  background: #020617;
+  border-color: #1f2937;
+}
+
+.notif-dropdown.hidden {
+  display: none;
+}
+
+.notif-dropdown ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notif-item {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.85rem;
+}
+
+body.dark .notif-item {
+  border-color: #1f2937;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+/* Types */
+.notif-success {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.notif-error {
+  background: #fef2f2;
+  color: #7f1d1d;
+}
+
+.notif-info {
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.notif-warning {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+/*===============================
+  FIX: Prevent text overflow in Library cards
+  =============================== */
+
+/* Library card title */
+.library-card-title {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;   /* limit to 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Library description / paragraphs */
+.library-card p {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 3;   /* limit to 3 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Extra safety for any unexpected long strings */
+.library-card {
+  overflow: hidden;
+}
+
+
+/* Read Later – search polish */
+#rl-search {
+  min-height: 40px;
+}
+
+@media (max-width: 520px) {
+  #read-later-filters {
+    gap: 0.5rem;
+  }
 }

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>StudentHub – Submit PDF</title>
@@ -7,36 +8,153 @@
   <meta name="description" content="Submit your PDF to StudentHub and earn coins when it gets selected." />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    .submit-container { max-width: 800px; margin:2rem auto; padding:1.75rem 1.5rem; border-radius:0.9rem; background:#fff; box-shadow:0 10px 30px rgba(15,23,42,0.12); }
-    body.dark .submit-container { background:#020617; border:1px solid #1f2937; box-shadow:0 10px 30px rgba(15,23,42,0.7); }
-    .submit-heading { font-size:1.4rem; font-weight:600; margin-bottom:.25rem; }
-    .submit-subtitle { font-size:.9rem; color:#6b7280; margin-bottom:1rem; }
-    .form-row { margin-bottom:.85rem; }
-    .form-row label { display:block; font-size:.85rem; font-weight:500; margin-bottom:.2rem; }
-    .form-row input[type="text"], .form-row textarea, .form-row input[type="file"], .form-row select { width:100%; padding:.55rem .7rem; border-radius:.5rem; border:1px solid #e5e7eb; font-size:.9rem; }
-    .form-help { font-size:.78rem; color:#6b7280; }
-    .submit-status { margin-top:.75rem; font-size:.85rem; color:#6b7280; }
-    .submit-status.success { color:#047857; }
-    .submit-status.error { color:#b91c1c; }
-    .progress-bar { height:8px; background:#e6e6e6; border-radius:999px; overflow:hidden; margin-top:.5rem; }
-    .progress-bar > span { display:block; height:100%; width:0%; background:#10b981; transition:width .2s; }
-    .btn { display:inline-block; padding:.55rem 0.9rem; border-radius:.6rem; border:none; cursor:pointer; font-weight:600; }
-    .btn.primary { background:#059669; color:#fff; }
-    .note { font-size:.85rem; color:#6b7280; margin-top:.5rem; }
-    body.dark .note { color:#9ca3af; }
+    .submit-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 1.75rem 1.5rem;
+      border-radius: 0.9rem;
+      background: #fff;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+    }
+
+    body.dark .submit-container {
+      background: #020617;
+      border: 1px solid #1f2937;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
+    }
+
+    .submit-heading {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: .25rem;
+    }
+
+    .submit-subtitle {
+      font-size: .9rem;
+      color: #6b7280;
+      margin-bottom: 1rem;
+    }
+
+    .form-row {
+      margin-bottom: .85rem;
+    }
+
+    .form-row label {
+      display: block;
+      font-size: .85rem;
+      font-weight: 500;
+      margin-bottom: .2rem;
+    }
+
+    .form-row input[type="text"],
+    .form-row textarea,
+    .form-row input[type="file"],
+    .form-row select {
+      width: 100%;
+      padding: .55rem .7rem;
+      border-radius: .5rem;
+      border: 1px solid #e5e7eb;
+      font-size: .9rem;
+    }
+
+    .form-help {
+      font-size: .78rem;
+      color: #6b7280;
+    }
+
+    .submit-status {
+      margin-top: .75rem;
+      font-size: .85rem;
+      color: #6b7280;
+    }
+
+    .submit-status.success {
+      color: #047857;
+    }
+
+    .submit-status.error {
+      color: #b91c1c;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: #e6e6e6;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: .5rem;
+    }
+
+    .progress-bar>span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: #10b981;
+      transition: width .2s;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: .55rem 0.9rem;
+      border-radius: .6rem;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn.primary {
+      background: #059669;
+      color: #fff;
+    }
+
+    .note {
+      font-size: .85rem;
+      color: #6b7280;
+      margin-top: .5rem;
+    }
+
+    body.dark .note {
+      color: #9ca3af;
+    }
   </style>
 </head>
+
+
 <body>
   <header class="navbar">
     <div class="logo">StudentHub</div>
+
+    <!-- Mobile hamburger -->
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <!-- Nav links -->
     <nav class="nav-links" id="nav-links">
       <a href="/">Home</a>
       <a href="/#ebooks">E-Books</a>
       <a href="/#question-papers">Question Papers</a>
-      <a href="/library.html">My Library</a>
-      <a href="/read-later.html">Read Later</a>
+      <a href="/#about">About</a>
+      <a href="/#contact">Contact</a>
+
+      <!-- auth handled by JS -->
+      <a href="/login.html" id="nav-auth-link" data-auth-link>Sign in</a>
     </nav>
-    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+
+    <!-- Right actions -->
+    <div class="nav-actions">
+      <div class="notif-wrapper">
+        <button id="notifBtn" title="Notifications">🔔</button>
+        <span id="notifCount"></span>
+
+        <div id="notifDropdown" class="notif-dropdown hidden">
+          <ul id="notifList"></ul>
+        </div>
+      </div>
+
+      <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+    </div>
   </header>
 
   <main class="section">
@@ -58,12 +176,14 @@
 
         <div class="form-row">
           <label for="pdf-title">Title *</label>
-          <input id="pdf-title" name="title" type="text" required placeholder="Example: Quantitative Aptitude Shortcut Guide" />
+          <input id="pdf-title" name="title" type="text" required
+            placeholder="Example: Quantitative Aptitude Shortcut Guide" />
         </div>
 
         <div class="form-row">
           <label for="pdf-description">Description</label>
-          <textarea id="pdf-description" name="description" rows="3" placeholder="Briefly describe what this PDF contains and which exam/subject it helps with."></textarea>
+          <textarea id="pdf-description" name="description" rows="3"
+            placeholder="Briefly describe what this PDF contains and which exam/subject it helps with."></textarea>
           <p class="form-help">A clear description increases the chance of your PDF being selected.</p>
         </div>
 
@@ -103,6 +223,8 @@
     <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
   </footer>
 
+  <script src="script.js" defer></script>
   <script src="submit-pdf.js" defer></script>
 </body>
+
 </html>

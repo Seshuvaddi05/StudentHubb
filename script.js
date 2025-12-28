@@ -178,9 +178,8 @@ function createCard(item, highlightTerms = []) {
 
   const meta = document.createElement("p");
   meta.style = "font-size: 0.8rem; color: #6b7280; margin-bottom: 0.4rem;";
-  meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${
-    item.subject || "—"
-  } | Year: ${item.year || "—"}`;
+  meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${item.subject || "—"
+    } | Year: ${item.year || "—"}`;
   article.appendChild(meta);
 
   // READ COUNTER
@@ -306,9 +305,8 @@ function createRecentCard(item) {
 
   const meta = document.createElement("p");
   meta.style = "font-size: 0.8rem; color: #6b7280; margin-bottom: 0.6rem;";
-  meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${
-    item.subject || "—"
-  } | Year: ${item.year || "—"}`;
+  meta.textContent = `Exam: ${item.exam || "—"} | Subject: ${item.subject || "—"
+    } | Year: ${item.year || "—"}`;
   article.appendChild(meta);
 
   const btnRow = document.createElement("div");
@@ -908,9 +906,8 @@ function buildRecommendations(limit = 6) {
       else if (days < 30) score += 1;
     }
 
-    const combinedText = `${item.exam || ""} ${item.subject || ""} ${
-      item.title || ""
-    }`.toLowerCase();
+    const combinedText = `${item.exam || ""} ${item.subject || ""} ${item.title || ""
+      }`.toLowerCase();
 
     historyTerms.forEach((t) => {
       if (!t) return;
@@ -1471,11 +1468,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
       const body = encodeURIComponent(
         `Name: ${name}\n` +
-          `Email: ${email}\n` +
-          `Material Type: ${type}\n` +
-          `Exam / Subject: ${exam}\n\n` +
-          `Requested Details:\n${details}\n\n` +
-          `Sent from StudentHub website.`
+        `Email: ${email}\n` +
+        `Material Type: ${type}\n` +
+        `Exam / Subject: ${exam}\n\n` +
+        `Requested Details:\n${details}\n\n` +
+        `Sent from StudentHub website.`
       );
 
       const mailtoLink = `mailto:${to}?subject=${subject}&body=${body}`;
@@ -1624,6 +1621,159 @@ document.addEventListener("DOMContentLoaded", async () => {
       qpSearchInput.focus();
       qpSearchInput.select();
     }
+  });
+
+  /* =====================================
+   🔔 Notifications (Navbar)
+   ===================================== */
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const notifBtn = document.getElementById("notifBtn");
+    const notifCount = document.getElementById("notifCount");
+    const notifDropdown = document.getElementById("notifDropdown");
+    const notifList = document.getElementById("notifList");
+    const notifReadAll = document.getElementById("notifReadAll");
+
+
+    // If navbar doesn't have notification UI, exit safely
+    if (!notifBtn || !notifDropdown || !notifList) return;
+
+    // ---------------------------
+    // Load notifications
+    // ---------------------------
+    async function loadNotifications() {
+      try {
+        const res = await fetch("/api/notifications", {
+          credentials: "include",
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const notifications = Array.isArray(data.notifications)
+          ? data.notifications
+          : [];
+
+        renderNotifications(notifications);
+      } catch (err) {
+        console.warn("Notification load failed:", err);
+      }
+    }
+
+    // ---------------------------
+    // Render list + badge
+    // ---------------------------
+    function renderNotifications(list) {
+      notifList.innerHTML = "";
+
+      if (!list.length) {
+        notifList.innerHTML =
+          `<li class="empty">No notifications yet</li>`;
+        notifCount.style.display = "none";
+        return;
+      }
+
+      const unread = list.filter((n) => !n.read).length;
+
+      if (unread > 0) {
+        notifCount.textContent = unread;
+        notifCount.style.display = "inline-block";
+      } else {
+        notifCount.style.display = "none";
+      }
+
+      list.forEach((n) => {
+        const li = document.createElement("li");
+
+        // 🔥 TYPE-BASED STYLING (STEP 1.2)
+        li.className = `notif-item notif-${n.type || "info"} ${n.read ? "" : "unread"
+          }`;
+
+        const time = n.createdAt
+          ? new Date(n.createdAt).toLocaleString()
+          : "";
+
+        li.innerHTML = `
+    <div>${n.message || ""}</div>
+    <div style="font-size:0.7rem;opacity:0.7;margin-top:2px;">
+      ${time}
+    </div>
+  `;
+        li.addEventListener("click", () => markAsRead(n._id, li));
+        notifList.appendChild(li);
+      });
+    }
+
+    // ---------------------------
+    // Mark notification as read
+    // ---------------------------
+    async function markAsRead(id, li) {
+      try {
+        await fetch(`/api/notifications/${id}/read`, {
+          method: "POST",
+          credentials: "include",
+        });
+
+        li.classList.remove("unread");
+
+        // Update badge count
+        const current = parseInt(notifCount.textContent || "0", 10);
+        if (current > 1) {
+          notifCount.textContent = current - 1;
+        } else {
+          notifCount.style.display = "none";
+        }
+      } catch (err) {
+        console.warn("Failed to mark notification read", err);
+      }
+    }
+
+
+
+    async function markAllAsRead() {
+      try {
+        await fetch("/api/notifications/read-all", {
+          method: "POST",
+          credentials: "include",
+        });
+
+        // Remove unread styling instantly
+        document.querySelectorAll("#notifList li.unread")
+          .forEach(li => li.classList.remove("unread"));
+
+        notifCount.style.display = "none";
+      } catch (err) {
+        console.warn("Failed to mark all as read", err);
+      }
+    }
+
+    // ---------------------------
+    // Toggle dropdown
+    // ---------------------------
+    notifBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      notifDropdown.classList.toggle("hidden");
+    });
+
+    // Close when clicking outside
+    document.addEventListener("click", () => {
+      notifDropdown.classList.add("hidden");
+    });
+
+    notifDropdown.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+
+    // Initial load
+    loadNotifications();
+
+    // ---------------------------
+    // Auto refresh notifications (every 30s)
+    // ---------------------------
+    setInterval(() => {
+      loadNotifications();
+    }, 30000); // 30 seconds
+
   });
 
   // Initialize suggestions & recommendations

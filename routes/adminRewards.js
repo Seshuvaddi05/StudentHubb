@@ -3,7 +3,7 @@
 
 const express = require("express");
 const PdfSubmission = require("../models/PdfSubmission");
-const WithdrawalRequest = require("../models/WithdrawalRequest");
+const Withdrawal = require("./models/Withdrawal");
 const User = require("../models/User");
 const { addNotification } = require("../utils/notifications");
 
@@ -154,7 +154,7 @@ router.get("/admin/withdrawals", requireAdmin, async (req, res) => {
   try {
     const { status = "pending" } = req.query;
 
-    const requests = await WithdrawalRequest.find({ status })
+    const requests = await Withdrawal.find(query)
       .populate("userId", "email name walletCoins")
       .sort({ createdAt: -1 })
       .lean();
@@ -175,7 +175,7 @@ router.post(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const request = await WithdrawalRequest.findById(id);
+      const request = await Withdrawal.findById(id);
 
       if (!request)
         return res.status(404).json({ ok: false, message: "Request not found." });
@@ -216,7 +216,7 @@ router.post(
       const { id } = req.params;
       const { reason } = req.body;
 
-      const request = await WithdrawalRequest.findById(id);
+      const request = await Withdrawal.findById(id);
       if (!request)
         return res.status(404).json({ ok: false, message: "Request not found." });
 
@@ -253,5 +253,7 @@ router.post(
     }
   }
 );
+
+
 
 module.exports = router;
