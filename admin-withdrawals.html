@@ -8,152 +8,164 @@
   <link rel="stylesheet" href="styles.css" />
 
   <style>
+    /* ============================= */
+    /* ADMIN WITHDRAWALS – FINAL CSS */
+    /* ============================= */
+
     .admin-shell {
       min-height: 100vh;
       background: #f1f5f9;
     }
 
     body.dark .admin-shell {
-      background: #020617;
+      background: radial-gradient(1200px 600px at 50% -200px, #0f172a, #020617);
     }
 
-    .admin-header {
-      background: #020617;
-      color: #e5e7eb;
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.6);
-    }
-
-    .admin-header-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0.7rem 1.25rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-
-    .admin-brand {
-      font-weight: 600;
-    }
-
-    .admin-nav {
-      display: flex;
-      gap: 0.6rem;
-      font-size: 0.85rem;
-      flex-wrap: wrap;
-    }
-
-    .admin-nav a {
-      color: #e5e7eb;
-      text-decoration: none;
-      padding: 0.25rem 0.7rem;
-      border-radius: 999px;
-    }
-
-    .admin-nav a:hover {
-      background: rgba(148, 163, 184, 0.15);
-    }
-
-    .admin-nav .active {
-      background: #fbbf24;
-      color: #1f2937;
-      font-weight: 600;
-    }
-
-    .admin-actions {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 0.85rem;
-    }
-
-    .admin-view-link {
-      color: #e5e7eb;
-      text-decoration: none;
-      border-radius: 999px;
-      padding: 0.25rem 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-    }
-
-    .admin-main {
-      max-width: 1100px;
-      margin: 2rem auto;
-      padding: 0 1.25rem 2rem;
-    }
-
+    /* ---------- CARD ---------- */
     .admin-card {
       background: #ffffff;
-      border-radius: 0.9rem;
-      padding: 1.5rem 1.75rem;
+      border-radius: 16px;
+      padding: 1.6rem 1.8rem;
       border: 1px solid #e5e7eb;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
     }
 
     body.dark .admin-card {
+      background: linear-gradient(180deg, #020617, #020617);
+      border-color: #1f2937;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+    }
+
+    /* ---------- HEADINGS ---------- */
+    .admin-card h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    body.dark .subtitle {
+      color: #9ca3af;
+    }
+
+    /* ---------- FILTER BUTTONS ---------- */
+    .admin-card .btn {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      color: #0f172a;
+      cursor: pointer;
+    }
+
+    .admin-card .btn.primary {
+      background: #facc15;
+      border-color: #facc15;
+    }
+
+    body.dark .admin-card .btn {
       background: #020617;
+      color: #e5e7eb;
       border-color: #1f2937;
     }
 
+    body.dark .admin-card .btn.primary {
+      background: #facc15;
+      color: #0f172a;
+    }
+
+    /* ---------- SEARCH INPUT ---------- */
+    .admin-card input[type="text"] {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #e5e7eb;
+      padding: 7px 12px;
+      border-radius: 8px;
+    }
+
+    body.dark .admin-card input[type="text"] {
+      background: #020617;
+      color: #e5e7eb;
+      border-color: #1f2937;
+    }
+
+    /* ---------- TABLE ---------- */
     table.admin-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.85rem;
     }
 
-    table.admin-table th,
-    table.admin-table td {
-      padding: 0.55rem 0.6rem;
-      border-bottom: 1px solid #e5e7eb;
-      text-align: left;
-    }
-
     table.admin-table thead {
-      background: #f9fafb;
+      background: #f8fafc;
     }
 
     body.dark table.admin-table thead {
       background: #020617;
     }
 
-    body.dark table.admin-table th,
+    table.admin-table th {
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #64748b;
+      padding: 0.6rem;
+    }
+
+    body.dark table.admin-table th {
+      color: #9ca3af;
+    }
+
+    table.admin-table td {
+      padding: 0.6rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
     body.dark table.admin-table td {
       border-color: #1f2937;
+      color: #e5e7eb;
     }
 
-    .btn-approve,
-    .btn-reject {
-      border: none;
-      border-radius: 999px;
-      padding: 0.25rem 0.65rem;
-      font-size: 0.78rem;
-      cursor: pointer;
-      margin-right: 0.25rem;
-    }
-
-    .btn-approve {
-      background: #16a34a;
-      color: #fff;
-    }
-
-    .btn-reject {
-      background: #b91c1c;
-      color: #fff;
-    }
-
+    /* ---------- STATUS TEXT ---------- */
     #withdrawals-status {
-      margin-top: 0.7rem;
+      margin-top: 0.8rem;
       font-size: 0.85rem;
-      color: #6b7280;
+      color: #64748b;
     }
 
     body.dark #withdrawals-status {
       color: #9ca3af;
     }
 
+    /* ---------- MARK PAID BUTTON ---------- */
+    .btn-mark-paid {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #ffffff;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(22, 163, 74, 0.4);
+    }
+
+    .btn-mark-paid:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-mark-paid:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* ---------- RESPONSIVE ---------- */
     @media (max-width: 720px) {
 
       table.admin-table th:nth-child(2),
@@ -165,42 +177,69 @@
     }
 
     /* ============================= */
-    /* Mark Paid Button (Admin) */
+    /* APPROVE / REJECT BUTTONS */
     /* ============================= */
 
-    .btn-mark-paid {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: #ffffff;
-      border: none;
-      border-radius: 999px;
+    .btn-approve,
+    .btn-reject {
       padding: 6px 14px;
+      border-radius: 999px;
       font-size: 0.78rem;
       font-weight: 600;
+      border: none;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(22, 163, 74, 0.35);
       transition: all 0.2s ease;
+      margin-right: 6px;
       white-space: nowrap;
     }
 
-    .btn-mark-paid:hover {
+    /* ✅ APPROVE */
+    .btn-approve {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #ffffff;
+      box-shadow: 0 6px 16px rgba(22, 163, 74, 0.35);
+    }
+
+    .btn-approve:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 6px 14px rgba(22, 163, 74, 0.45);
+      box-shadow: 0 10px 22px rgba(22, 163, 74, 0.45);
     }
 
-    .btn-mark-paid:active {
+    .btn-approve:active:not(:disabled) {
       transform: translateY(0);
-      box-shadow: 0 3px 8px rgba(22, 163, 74, 0.35);
     }
 
-    .btn-mark-paid:disabled {
-      opacity: 0.6;
+    /* ❌ REJECT */
+    .btn-reject {
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      color: #ffffff;
+      box-shadow: 0 6px 16px rgba(185, 28, 28, 0.35);
+    }
+
+    .btn-reject:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(185, 28, 28, 0.45);
+    }
+
+    .btn-reject:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    /* 🚫 DISABLED STATE */
+    .btn-approve:disabled,
+    .btn-reject:disabled {
+      opacity: 0.55;
       cursor: not-allowed;
       box-shadow: none;
     }
 
-    /* Dark mode support */
-    body.dark .btn-mark-paid {
-      background: linear-gradient(135deg, #16a34a, #15803d);
+    /* 🌙 DARK MODE SUPPORT */
+    body.dark .btn-approve {
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.45);
+    }
+
+    body.dark .btn-reject {
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
     }
   </style>
 </head>
@@ -208,22 +247,29 @@
 <body>
   <div class="admin-shell">
 
-    <header class="admin-header">
-      <div class="admin-header-inner">
+    <!-- ================= ADMIN NAVBAR (GLOBAL) ================= -->
+    <nav class="admin-navbar">
+      <div class="admin-navbar-inner">
+
         <div class="admin-brand">StudentHub Admin</div>
-        <nav class="admin-nav">
+
+        <div class="admin-nav">
           <a href="/admin.html">Upload</a>
           <a href="/admin-materials.html">Materials</a>
           <a href="/admin-submissions.html">Submissions</a>
           <a href="/admin-approved.html">Approved</a>
           <a href="/admin-withdrawals.html" class="active">Withdrawals</a>
-        </nav>
+          <a href="/admin-requests.html">📩 Requests</a>
+        </div>
+
         <div class="admin-actions">
           <a href="/" class="admin-view-link">View site</a>
           <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
         </div>
+
       </div>
-    </header>
+    </nav>
+
 
     <main class="admin-main">
       <div class="admin-card">
@@ -246,7 +292,7 @@
         </div>
 
         <input type="text" placeholder="Search by email" oninput="searchByEmail(this.value)"
-          style="padding:6px 10px;border-radius:6px;border:1px solid #ccc;margin-bottom:1rem;width:260px;" />
+          style="padding:6px 10px;border-radius:8px;margin-bottom:1rem;width:260px;" />
 
         <div style="overflow-x:auto;">
           <table class="admin-table">
@@ -273,7 +319,9 @@
       </div>
     </main>
   </div>
+  <script src="admin-withdrawals.js"></script>
+  <script src="admin-theme.js"></script>
 </body>
-<script src="admin-withdrawals.js"></script>
+
 
 </html>

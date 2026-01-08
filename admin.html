@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>StudentHub Admin – Upload</title>
@@ -9,120 +10,200 @@
 
   <style>
     /* Page-specific admin upload styles (keeps look consistent with your UI) */
-    .admin-shell { min-height: 100vh; background: #f1f5f9; }
-    body.dark .admin-shell { background: #020617; }
+    .admin-shell {
+      min-height: 100vh;
+      background: #f1f5f9;
+    }
 
-    .admin-header {
+    body.dark .admin-shell {
       background: #020617;
-      color: #e5e7eb;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.6);
-      position: sticky;
-      top: 0;
-      z-index: 40;
     }
-    .admin-header-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0.7rem 1.25rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-    .admin-brand { font-weight: 600; letter-spacing: 0.02em; }
-    .admin-nav { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.88rem; }
-    .admin-nav a {
-      color: #e5e7eb;
-      text-decoration: none;
-      padding: 0.25rem 0.75rem;
-      border-radius: 999px;
-      border: 1px solid transparent;
-    }
-    .admin-nav a:hover { background: rgba(148, 163, 184, 0.15); color: #fff; }
-    .admin-nav .active { background: #fbbf24; color: #1f2937; border-color: #fbbf24; font-weight: 600; }
 
-    .admin-actions { display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; }
-    .admin-view-link {
-      color: #e5e7eb; text-decoration: none; border-radius: 999px; padding: 0.25rem 0.75rem;
-      border: 1px solid rgba(148,163,184,0.6);
+    .admin-main {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1.25rem 2rem;
     }
-    .admin-view-link:hover { background: rgba(148,163,184,0.18); }
 
-    .admin-main { max-width: 1100px; margin: 2rem auto; padding: 0 1.25rem 2rem; }
     .admin-card {
-      background: #ffffff; border-radius: 0.9rem; padding: 1.5rem 1.75rem;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12); border: 1px solid #e5e7eb;
-    }
-    body.dark .admin-card { background: #020617; border-color: #1f2937; box-shadow: 0 10px 30px rgba(15,23,42,0.7); }
-
-    .admin-card h1 { font-size: 1.4rem; font-weight: 600; margin-bottom: 0.25rem; }
-    .admin-card p.subtitle { font-size: 0.9rem; color: #6b7280; margin-bottom: 1.1rem; }
-    body.dark .admin-card p.subtitle { color: #9ca3af; }
-
-    .form-grid { display: grid; grid-template-columns: 1fr; gap: 0.85rem; }
-
-    .form-group label { display: block; font-size: 0.86rem; font-weight: 500; margin-bottom: 0.2rem; }
-    .form-group input, .form-group select, .form-group textarea {
-      width: 100%; padding: 0.55rem 0.7rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; font-size: 0.9rem;
-    }
-    .form-group textarea { min-height: 110px; resize: vertical; }
-    body.dark .form-group input, body.dark .form-group select, body.dark .form-group textarea {
-      background: #020617; border-color: #1f2937; color: #e5e7eb;
+      background: #ffffff;
+      border-radius: 0.9rem;
+      padding: 1.5rem 1.75rem;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+      border: 1px solid #e5e7eb;
     }
 
-    .inline-row { display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center; }
-    .inline-row .form-group { flex: 1 1 180px; }
+    body.dark .admin-card {
+      background: #020617;
+      border-color: #1f2937;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
+    }
 
-    .price-note { font-size: 0.78rem; color:#6b7280; margin-top:0.2rem; }
-    body.dark .price-note { color:#9ca3af; }
+    .admin-card h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
 
-    #file-selected { margin-top:0.35rem; font-size:0.9rem; color:#374151; }
-    body.dark #file-selected { color:#cbd5e1; }
+    .admin-card p.subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 1.1rem;
+    }
 
-    .btn { display:inline-block; padding:.55rem .9rem; border-radius:.6rem; border:none; cursor:pointer; font-weight:600; }
-    .btn.primary { background:#f59e0b; color:#0f172a; }
-    .btn.primary:disabled { opacity:0.65; cursor:not-allowed; }
+    body.dark .admin-card p.subtitle {
+      color: #9ca3af;
+    }
 
-    #upload-status { margin-top:0.7rem; font-size:0.95rem; color:#6b7280; }
-    body.dark #upload-status { color:#9ca3af; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.85rem;
+    }
 
-    .help-inline { font-size:0.82rem; color:#6b7280; margin-top:0.25rem; }
-    body.dark .help-inline { color:#9ca3af; }
+    .form-group label {
+      display: block;
+      font-size: 0.86rem;
+      font-weight: 500;
+      margin-bottom: 0.2rem;
+    }
 
-    @media (max-width: 640px) {
-      .admin-header-inner { flex-wrap:wrap; justify-content:center; }
-      .admin-main { margin-top: 1.25rem; }
-      .admin-card { padding: 1.25rem 1.1rem; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.55rem 0.7rem;
+      border-radius: 0.5rem;
+      border: 1px solid #e5e7eb;
+      font-size: 0.9rem;
+    }
+
+    .form-group textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    body.dark .form-group input,
+    body.dark .form-group select,
+    body.dark .form-group textarea {
+      background: #020617;
+      border-color: #1f2937;
+      color: #e5e7eb;
+    }
+
+    .inline-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .inline-row .form-group {
+      flex: 1 1 180px;
+    }
+
+    .price-note {
+      font-size: 0.78rem;
+      color: #6b7280;
+      margin-top: 0.2rem;
+    }
+
+    body.dark .price-note {
+      color: #9ca3af;
+    }
+
+    #file-selected {
+      margin-top: 0.35rem;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+
+    body.dark #file-selected {
+      color: #cbd5e1;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: .55rem .9rem;
+      border-radius: .6rem;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn.primary {
+      background: #f59e0b;
+      color: #0f172a;
+    }
+
+    .btn.primary:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    #upload-status {
+      margin-top: 0.7rem;
+      font-size: 0.95rem;
+      color: #6b7280;
+    }
+
+    body.dark #upload-status {
+      color: #9ca3af;
+    }
+
+    .help-inline {
+      font-size: 0.82rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    body.dark .help-inline {
+      color: #9ca3af;
+    }
+
+      .admin-main {
+        margin-top: 1.25rem;
+      }
+
+      .admin-card {
+        padding: 1.25rem 1.1rem;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="admin-shell">
     <!-- Admin top bar shared by all admin pages -->
-    <header class="admin-header">
-      <div class="admin-header-inner">
-        <div class="admin-brand">StudentHub Admin</div>
+      <!-- ================= ADMIN NAVBAR (GLOBAL) ================= -->
+      <nav class="admin-navbar">
+        <div class="admin-navbar-inner">
 
-        <nav class="admin-nav" aria-label="Admin navigation">
-          <a href="/admin.html" class="active">Upload</a>
-          <a href="/admin-materials.html">Materials</a>
-          <a href="/admin-submissions.html">Submissions</a>
-          <a href="/admin-approved.html">Approved</a>
-          <a href="/admin-withdrawals.html">Withdrawals</a>
-        </nav>
+          <div class="admin-brand">StudentHub Admin</div>
 
-        <div class="admin-actions">
-          <a href="/" class="admin-view-link" title="View public site">View site</a>
-          <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">🌙</button>
+          <div class="admin-nav">
+            <a href="/admin.html" class="active">Upload</a>
+            <a href="/admin-materials.html">Materials</a>
+            <a href="/admin-submissions.html">Submissions</a>
+            <a href="/admin-approved.html">Approved</a>
+            <a href="/admin-withdrawals.html">Withdrawals</a>
+            <a href="/admin-requests.html">📩 Requests</a>
+          </div>
+
+          <div class="admin-actions">
+            <a href="/" class="admin-view-link">View site</a>
+            <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+          </div>
+
         </div>
-      </div>
-    </header>
+      </nav>
 
     <main class="admin-main">
       <div class="admin-card" role="region" aria-labelledby="upload-heading">
         <h1 id="upload-heading">Upload material</h1>
         <p class="subtitle">
-          Upload e-books or question papers. Leave price as <strong>0 = Free</strong>, or mark it as paid and set a price.
+          Upload e-books or question papers. Leave price as <strong>0 = Free</strong>, or mark it as paid and set a
+          price.
         </p>
 
         <form id="upload-form" enctype="multipart/form-data" novalidate>
@@ -138,12 +219,14 @@
 
             <div class="form-group">
               <label for="title">Title</label>
-              <input id="title" name="title" type="text" required placeholder="Example: Quantitative Aptitude Shortcut Guide" />
+              <input id="title" name="title" type="text" required
+                placeholder="Example: Quantitative Aptitude Shortcut Guide" />
             </div>
 
             <div class="form-group">
               <label for="description">Description</label>
-              <textarea id="description" name="description" placeholder="Briefly describe what this PDF contains and which exam/subject it helps with."></textarea>
+              <textarea id="description" name="description"
+                placeholder="Briefly describe what this PDF contains and which exam/subject it helps with."></textarea>
               <div class="help-inline">A clear description increases discoverability and helps admins decide.</div>
             </div>
 
@@ -172,7 +255,8 @@
 
               <div class="form-group" style="max-width:200px;">
                 <label for="price">Price (₹)</label>
-                <input id="price" name="price" type="number" min="0" step="1" value="0" disabled aria-describedby="price-note" />
+                <input id="price" name="price" type="number" min="0" step="1" value="0" disabled
+                  aria-describedby="price-note" />
                 <div id="price-note" class="price-note">Set &gt; 0 only when "Mark as paid" is checked.</div>
               </div>
             </div>
@@ -181,7 +265,8 @@
               <label for="file">PDF file</label>
               <input id="file" name="file" type="file" accept="application/pdf" required />
               <div id="file-selected" aria-live="polite">No file chosen</div>
-              <div class="help-inline">Upload a PDF file (max 25 MB recommended). We store your submission for admin review.</div>
+              <div class="help-inline">Upload a PDF file (max 25 MB recommended). We store your submission for admin
+                review.</div>
             </div>
 
             <div style="display:flex; gap:0.6rem; align-items:center;">
@@ -198,27 +283,7 @@
   <!-- Keep your existing admin.js to handle the upload; inline helpers only improve UI -->
   <script>
     // Theme toggle (keeps parity with other admin pages)
-    (function () {
-      function applyTheme(t) {
-        const btn = document.getElementById("theme-toggle");
-        if (t === "dark") {
-          document.body.classList.add("dark");
-          btn.textContent = "☀️";
-        } else {
-          document.body.classList.remove("dark");
-          btn.textContent = "🌙";
-        }
-        localStorage.setItem("studenthub-theme", t);
-      }
-
-      document.addEventListener("DOMContentLoaded", () => {
-        applyTheme(localStorage.getItem("studenthub-theme") || "light");
-        const btn = document.getElementById("theme-toggle");
-        btn.addEventListener("click", () => {
-          applyTheme(document.body.classList.contains("dark") ? "light" : "dark");
-        });
-      });
-    })();
+    
 
     // Small UI helpers for upload form (no server logic here)
     (function () {
@@ -309,4 +374,5 @@
   <!-- Your existing admin.js handles upload + DB calls — leave it as-is -->
   <script src="admin.js" defer></script>
 </body>
+
 </html>

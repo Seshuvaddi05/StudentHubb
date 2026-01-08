@@ -139,6 +139,10 @@
     #read-later-filters {
       gap: 0.6rem;
     }
+
+    #read-later-list>* {
+      width: 100%;
+    }
   </style>
 </head>
 
@@ -226,7 +230,7 @@
 
     <div id="read-later-list" class="cards-grid" aria-live="polite"></div>
 
-    <div id="read-later-empty" class="card"
+    <div id="read-later-empty" class="rl-card"
       style="display:none; margin-top:1rem; border:1px dashed #d1d5db; background:#f9fafb;">
       <h3 style="font-size:1rem; margin-bottom:0.4rem;">Nothing saved yet.</h3>
       <p style="font-size:0.95rem; color:#6b7280; margin-bottom:0.6rem;">

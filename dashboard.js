@@ -39,6 +39,7 @@
   const navLinks = document.getElementById("nav-links");
   const themeToggleBtn = document.getElementById("theme-toggle");
 
+
   /* ---------------- HELPERS ---------------- */
 
   async function safeJsonFetch(url, options = {}) {
@@ -108,6 +109,16 @@
     });
   }
 
+  async function ensureLoggedIn() {
+    try {
+      const res = await fetch("/api/me", { credentials: "include" });
+      if (!res.ok) throw new Error("Not logged in");
+    } catch {
+      window.location.href = "/login.html?next=/dashboard.html";
+    }
+  }
+
+
   /* ---------------- USER ---------------- */
 
   async function loadUser() {
@@ -116,9 +127,8 @@
       const u = data.user;
 
       dashTitle.textContent = `Welcome, ${u.name || u.email}`;
-      dashSubtitle.textContent = `You joined StudentHub on ${
-        u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"
-      }`;
+      dashSubtitle.textContent = `You joined StudentHub on ${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"
+        }`;
 
       accountInfo.textContent = u.email || "";
     } catch (err) {
@@ -170,7 +180,7 @@
   async function loadLibrary() {
     try {
       const data = await safeJsonFetch(`${BASE_URL}/api/my-library`);
-      const items = data.items || [];
+      const items = Array.isArray(data.items) ? data.items : [];
 
       metricLibrary.textContent = items.length;
       accountExtra.textContent = `Purchased items: ${items.length}`;
@@ -207,20 +217,20 @@
 
   /* ---------------- READ LATER ---------------- */
 
-async function loadReadLater() {
-  try {
-    const data = await safeJsonFetch(`${BASE_URL}/api/read-later`);
+  async function loadReadLater() {
+    try {
+      const data = await safeJsonFetch(`${BASE_URL}/api/read-later`);
 
-    // data.ids = array of material IDs
-    // data.items = actual items
-    const count = Array.isArray(data.ids) ? data.ids.length : 0;
+      // ✅ CORRECT: count only real visible items
+      const count = Array.isArray(data.items) ? data.items.length : 0;
 
-    metricReadLater.textContent = count;
-  } catch (err) {
-    console.error("Failed to load Read Later count", err);
-    metricReadLater.textContent = "0";
+      metricReadLater.textContent = count;
+    } catch (err) {
+      console.error("Failed to load Read Later count", err);
+      metricReadLater.textContent = "0";
+    }
   }
-}
+
 
   /* ---------------- WALLET & WITHDRAWALS ---------------- */
 
@@ -309,20 +319,22 @@ async function loadReadLater() {
 
   /* ---------------- INIT ---------------- */
 
-  function init() {
+  async function init() {
     if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+
+    await ensureLoggedIn(); // 🔐 CHECK LOGIN FIRST
 
     initTheme();
     initMobileNav();
     initBackToTop();
     initLogout();
 
-    loadUser();
-    loadMaterialStats();
-    loadLibrary();
-    loadReadLater();
-    loadWallet();
-    loadSubmissions();
+    await loadUser();
+    await loadMaterialStats();
+    await loadLibrary();
+    await loadReadLater();
+    await loadWallet();
+    await loadSubmissions();
   }
 
   document.addEventListener("DOMContentLoaded", init);

@@ -61,6 +61,8 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 <body>
   <!-- Navbar -->
   <header class="navbar">
@@ -78,7 +80,9 @@
       <a href="#ebooks">E-Books</a>
       <a href="#question-papers">Question Papers</a>
       <a href="#about">About</a>
-      <a href="#contact">Contact</a>
+      <!--<a href="#contact">Contact</a>
+      <a href="/request.html">Request Material</a>-->
+
 
       <a href="/login.html" id="nav-auth-link" data-auth-link>
         Sign in
@@ -315,54 +319,6 @@
     <p id="share-status" class="form-note" style="margin-top:0.4rem;"></p>
   </section>
 
-  <!-- Contact / Request Section -->
-  <section id="contact" class="section">
-    <h2>Request a Book or Question Paper</h2>
-    <p class="section-subtitle">
-      Tell us which e-book or previous year question paper you need. This will open your email app with the
-      details filled in.
-    </p>
-
-    <form id="request-form" class="request-form">
-      <div class="form-row">
-        <label for="req-name">Your Name</label>
-        <input type="text" id="req-name" required placeholder="Enter your name" />
-      </div>
-
-      <div class="form-row">
-        <label for="req-email">Your Email</label>
-        <input type="email" id="req-email" required placeholder="Enter your email" />
-      </div>
-
-      <div class="form-row">
-        <label for="req-type">Material Type</label>
-        <select id="req-type" required>
-          <option value="">Select type</option>
-          <option value="E-Book">E-Book</option>
-          <option value="Question Paper">Question Paper</option>
-          <option value="Both">Both</option>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <label for="req-exam">Exam / Subject</label>
-        <input type="text" id="req-exam" required placeholder="e.g. RRB NTPC, SSC CGL, Aptitude, Reasoning" />
-      </div>
-
-      <div class="form-row">
-        <label for="req-details">Details (Book name, year, etc.)</label>
-        <textarea id="req-details" rows="3" required
-          placeholder="Example: RS Aggarwal Reasoning, 2023 edition, or RRB NTPC PYQ 2021..."></textarea>
-      </div>
-
-      <button type="submit" class="btn primary">Send Request</button>
-
-      <p class="form-note">
-        When you click "Send Request", your email app (Gmail / Outlook / phone mail) will open with the
-        message ready to send.
-      </p>
-    </form>
-  </section>
 
   <!-- PDF Preview Modal -->
   <div id="pdf-modal" class="pdf-modal">
@@ -370,7 +326,9 @@
     <div class="pdf-modal-dialog">
       <button id="pdf-modal-close" class="pdf-modal-close" aria-label="Close preview">×</button>
       <h3 id="pdf-modal-title" class="pdf-modal-title">PDF Preview</h3>
-      <iframe id="pdf-modal-frame" class="pdf-modal-frame" src="" frameborder="0"></iframe>
+      <iframe id="pdf-modal-frame" class="pdf-modal-frame" src="" frameborder="0" oncontextmenu="return false">
+      </iframe>
+
     </div>
   </div>
 

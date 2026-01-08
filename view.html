@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>StudentHub – Reader</title>
@@ -17,148 +18,242 @@
       padding: 1.25rem 1.5rem 2rem;
       background: #ffffff;
       border-radius: 0.9rem;
-      box-shadow: 0 10px 30px rgba(15,23,42,0.15);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
     }
+
     body.dark .reader-shell {
       background: #020617;
       border: 1px solid #1f2937;
-      box-shadow: 0 10px 30px rgba(15,23,42,0.7);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
     }
 
     .reader-header {
-      display:flex;
-      justify-content:space-between;
-      gap:1rem;
-      align-items:flex-start;
-      margin-bottom:0.75rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
     }
 
     .reader-title {
-      font-size:1.25rem;
-      font-weight:600;
-      margin-bottom:0.25rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
     }
 
     .reader-meta {
-      font-size:0.85rem;
-      color:#6b7280;
+      font-size: 0.85rem;
+      color: #6b7280;
     }
-    body.dark .reader-meta { color:#9ca3af; }
+
+    body.dark .reader-meta {
+      color: #9ca3af;
+    }
 
     .reader-badges {
-      display:flex;
-      flex-wrap:wrap;
-      gap:0.4rem;
-      align-items:center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
     }
 
     .price-chip {
-      padding:0.1rem 0.6rem;
-      border-radius:999px;
-      font-size:0.8rem;
-      background:#fef3c7;
-      color:#92400e;
+      padding: 0.1rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: #fef3c7;
+      color: #92400e;
     }
+
     body.dark .price-chip {
-      background:#4b5563;
-      color:#f9fafb;
+      background: #4b5563;
+      color: #f9fafb;
     }
 
     .pill {
-      padding:0.1rem 0.55rem;
-      border-radius:999px;
-      font-size:0.75rem;
-      background:#e0f2fe;
-      color:#0369a1;
+      padding: 0.1rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: #e0f2fe;
+      color: #0369a1;
     }
+
     body.dark .pill {
-      background:#0f172a;
-      color:#60a5fa;
+      background: #0f172a;
+      color: #60a5fa;
     }
 
     .reader-paywall {
-      margin:1rem 0 1.25rem;
-      padding:0.9rem 1rem;
-      border-radius:0.8rem;
-      border:1px dashed #e5e7eb;
-      background:#f9fafb;
-      font-size:0.9rem;
+      margin: 1rem 0 1.25rem;
+      padding: 0.9rem 1rem;
+      border-radius: 0.8rem;
+      border: 1px dashed #e5e7eb;
+      background: #f9fafb;
+      font-size: 0.9rem;
     }
+
     body.dark .reader-paywall {
-      border-color:#1f2937;
-      background:#020617;
+      border-color: #1f2937;
+      background: #020617;
     }
 
     .reader-frame {
-      width:100%;
-      min-height:70vh;
-      border-radius:0.75rem;
-      border:1px solid #e5e7eb;
-      background:#111827;
+      width: 100%;
+      min-height: 70vh;
+      border-radius: 0.75rem;
+      border: 1px solid #e5e7eb;
+      background: #111827;
     }
-    body.dark .reader-frame { border-color:#1f2937; }
+
+    body.dark .reader-frame {
+      border-color: #1f2937;
+    }
 
     @media (max-width:640px) {
-      .reader-header { flex-direction:column; }
-      .reader-badges { justify-content:flex-start; }
+      .reader-header {
+        flex-direction: column;
+      }
+
+      .reader-badges {
+        justify-content: flex-start;
+      }
+    }
+
+    .reader-frame {
+      user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+    }
+
+    .reader-frame {
+      pointer-events: auto;
+      -webkit-user-drag: none;
+    }
+
+    /* 🔒 Disable text selection inside reader */
+    .reader-shell,
+    .reader-frame {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 🔐 Watermark overlay */
+    #pdf-watermark {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.15;
+      font-size: 14px;
+      color: #000;
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    body.dark #pdf-watermark {
+      color: #e5e7eb;
+    }
+
+    #pdf-watermark span {
+      margin: 40px;
+      transform: rotate(-30deg);
+      white-space: nowrap;
+    }
+
+    .reader-shell {
+      position: relative;
+    }
+
+    .pdf-watermark {
+      position: absolute;
+      inset: 0;
+    }
+
+    body.dark .pdf-watermark {
+      color: #ffffff;
+    }
+
+    .pdf-watermark span {
+      white-space: nowrap;
     }
   </style>
 </head>
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+  document.addEventListener("keydown", function (e) {
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      (e.key === "p" || e.key === "P")
+    ) {
+      e.preventDefault();
+      alert("Printing is disabled for this document.");
+    }
+  });
+</script>
+
+
 <body>
 
-<header class="navbar">
-  <div class="logo">StudentHub</div>
+  <header class="navbar">
+    <div class="logo">StudentHub</div>
 
-  <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
-    <span></span><span></span><span></span>
-  </button>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
 
-  <nav class="nav-links" id="nav-links">
-    <a href="/">Home</a>
-    <a href="/#ebooks">E-Books</a>
-    <a href="/#question-papers">Question Papers</a>
-    <a href="/#about">About</a>
-    <a href="/#contact">Contact</a>
-    <a href="/dashboard.html" id="nav-dashboard-link">My dashboard</a>
-    <a href="/login.html" id="nav-login-link" style="display:none;">Sign in</a>
-  </nav>
+    <nav class="nav-links" id="nav-links">
+      <a href="/">Home</a>
+      <a href="/#ebooks">E-Books</a>
+      <a href="/#question-papers">Question Papers</a>
+      <a href="/#about">About</a>
+      <a href="/#contact">Contact</a>
+      <a href="/dashboard.html" id="nav-dashboard-link">My dashboard</a>
+      <a href="/login.html" id="nav-login-link" style="display:none;">Sign in</a>
+    </nav>
 
-  <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
-</header>
+    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+  </header>
 
-<main class="section">
-  <div class="reader-shell">
+  <main class="section">
+    <div class="reader-shell">
+      <!-- 🔐 USER WATERMARK OVERLAY -->
+      <div id="pdf-watermark" class="pdf-watermark"></div>
 
-    <div class="reader-header">
-      <div>
-        <div class="reader-meta" id="reader-breadcrumb">Loading material…</div>
-        <h1 class="reader-title" id="reader-title"></h1>
-        <p class="reader-meta" id="reader-meta-line"></p>
+
+      <div class="reader-header">
+        <div>
+          <div class="reader-meta" id="reader-breadcrumb">Loading material…</div>
+          <h1 class="reader-title" id="reader-title"></h1>
+          <p class="reader-meta" id="reader-meta-line"></p>
+        </div>
+
+        <div class="reader-badges">
+          <span class="pill" id="reader-type-pill"></span>
+          <span class="price-chip" id="reader-price-chip"></span>
+          <span class="pill" id="reader-downloads-pill" style="display:none;"></span>
+        </div>
       </div>
 
-      <div class="reader-badges">
-        <span class="pill" id="reader-type-pill"></span>
-        <span class="price-chip" id="reader-price-chip"></span>
-        <span class="pill" id="reader-downloads-pill" style="display:none;"></span>
+      <div id="reader-paywall" class="reader-paywall" style="display:none;">
+        <div class="paywall-title">Unlock this premium PDF</div>
+        <p style="font-size:0.8rem">Demo mode – no real payment processed.</p>
+        <button class="btn primary" id="paywall-unlock-btn">Unlock PDF</button>
+        <div id="paywall-status"></div>
       </div>
+
+      <!-- ✅ PDF will now load correctly -->
+      <iframe id="pdf-frame" class="reader-frame" oncontextmenu="return false" loading="lazy">
+      </iframe>
+
+
+
     </div>
+  </main>
 
-    <div id="reader-paywall" class="reader-paywall" style="display:none;">
-      <div class="paywall-title">Unlock this premium PDF</div>
-      <p style="font-size:0.8rem">Demo mode – no real payment processed.</p>
-      <button class="btn primary" id="paywall-unlock-btn">Unlock PDF</button>
-      <div id="paywall-status"></div>
-    </div>
-
-    <!-- ✅ PDF will now load correctly -->
-    <iframe id="pdf-frame" class="reader-frame"></iframe>
-
-  </div>
-</main>
-
-<script src="/script.js"></script>
-<script src="/view.js"></script>
-
+  <script src="/script.js"></script>
+  <script src="/view.js"></script>
 </body>
+
 </html>

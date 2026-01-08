@@ -166,6 +166,133 @@ body {
   transform: translateY(-5px) rotate(-45deg);
 }
 
+
+/* =====================================================
+   🔥 GLOBAL ADMIN NAVBAR – LEFT ALIGNED VERSION
+===================================================== */
+
+.admin-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(180deg, #0b1220, #0f172a);
+  box-shadow: 0 6px 24px rgba(2, 6, 23, 0.45);
+}
+
+.admin-navbar-inner {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  gap: 28px; /* spacing between brand & links */
+}
+
+/* ================= BRAND ================= */
+.admin-brand {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+/* ================= NAV LINKS ================= */
+.admin-nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+/* push actions to far right */
+.admin-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ================= LINKS ================= */
+.admin-nav a {
+  text-decoration: none;
+  color: #cbd5f5;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 6px 2px;
+  position: relative;
+}
+
+.admin-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 0;
+  height: 2px;
+  background: #fbbf24;
+  transition: width 0.25s ease;
+}
+
+.admin-nav a:hover {
+  color: #ffffff;
+}
+
+.admin-nav a:hover::after {
+  width: 100%;
+}
+
+.admin-nav a.active {
+  color: #fbbf24;
+}
+
+.admin-nav a.active::after {
+  width: 100%;
+}
+
+/* ================= ACTIONS ================= */
+.admin-view-link {
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  border: 1px solid rgba(148,163,184,0.35);
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+
+.admin-view-link:hover {
+  background: rgba(148,163,184,0.15);
+}
+
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #fbbf24;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 900px) {
+  .admin-navbar-inner {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .admin-nav {
+    width: 100%;
+    gap: 14px;
+  }
+
+  .admin-actions {
+    margin-left: 0;
+  }
+}
+
+
+
+
 /* Hero */
 .hero {
   padding: 3rem 1.5rem;
@@ -1159,10 +1286,6 @@ body.dark .form-input {
 #walletMessage.warning { color: orange; }
 
 
-.status.pending { color: orange; font-weight: 600; }
-.status.approved { color: green; font-weight: 600; }
-.status.rejected { color: red; font-weight: 600; }
-
 .btn.small {
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
@@ -1350,4 +1473,440 @@ body.dark .notif-item {
   #read-later-filters {
     gap: 0.5rem;
   }
+}
+
+
+/* ================================
+   ADMIN REQUESTS TABLE
+================================ */
+
+body.dark .admin-table {
+  background: #020617;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: top;
+}
+
+body.dark .admin-table th,
+body.dark .admin-table td {
+  border-color: #1f2937;
+}
+
+.admin-table th {
+  background: #f1f5f9;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+body.dark .admin-table th {
+  background: #020617;
+}
+
+.admin-table tr:hover {
+  background: #f9fafb;
+}
+
+body.dark .admin-table tr:hover {
+  background: #020617;
+}
+
+/* Status pills */
+
+.req-status.pending {
+  background: #fde68a;
+  color: #92400e;
+}
+
+.req-status.completed {
+  background: #bbf7d0;
+  color: #065f46;
+}
+
+.req-status.rejected {
+  background: #fecaca;
+  color: #7f1d1d;
+}
+
+/* ===============================
+   ADMIN – REQUESTS (FINAL)
+================================ */
+.admin-navbar a.active {
+  color: #facc15;
+}
+
+
+/* Table */
+
+#reqTable th,
+#reqTable td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Status Pills (ADMIN ONLY) */
+.req-status {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.req-status.pending {
+  background: #fde68a;
+  color: #92400e;
+}
+
+.req-status.completed {
+  background: #bbf7d0;
+  color: #065f46;
+}
+
+.req-status.rejected {
+  background: #fecaca;
+  color: #7f1d1d;
+}
+
+/* Buttons */
+.btn.success {
+  background: #16a34a;
+  color: #fff;
+}
+
+.btn.danger {
+  background: #dc2626;
+  color: #fff;
+}
+
+.btn.success:hover {
+  background: #15803d;
+}
+
+.btn.danger:hover {
+  background: #b91c1c;
+}
+
+
+/* ========================================= */
+/* ADMIN REQUESTS – LIGHT & DARK MODE FIX */
+/* ========================================= */
+
+/* ---------- HEADINGS ---------- */
+.admin-page .admin-title {
+  color: #0f172a;
+}
+
+.admin-page .admin-subtitle {
+  color: #475569;
+}
+
+
+.admin-page td {
+  color: #0f172a;
+}
+
+/* Loading text */
+.admin-page .loading {
+  color: #64748b;
+}
+
+/* ---------- STATUS BADGE ---------- */
+.admin-page .status-pill,
+.admin-page .completed {
+  background: #bbf7d0;
+  color: #065f46;
+  font-weight: 600;
+}
+
+/* ========================================= */
+/* DARK MODE (SAFE OVERRIDES) */
+/* ========================================= */
+
+body.dark.admin-page .admin-title {
+  color: #e5e7eb;
+}
+
+body.dark.admin-page .admin-subtitle {
+  color: #9ca3af;
+}
+
+body.dark.admin-page th {
+  background: transparent;
+  color: #9ca3af;
+}
+
+body.dark.admin-page td {
+  color: #e5e7eb;
+}
+
+body.dark.admin-page .loading {
+  color: #9ca3af;
+}
+
+body.dark.admin-page .status-pill,
+body.dark.admin-page .completed {
+  background: #14532d;
+  color: #bbf7d0;
+}
+
+
+/* =====================================
+   ADMIN – BASE LAYOUT (FINAL)
+===================================== */
+
+body.dark.admin-page {
+  background: #020617;
+}
+
+body.dark .admin-card {
+  background: #020617;
+  border-color: #1f2937;
+  box-shadow: 0 30px 70px rgba(0,0,0,0.6);
+}
+
+.admin-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.admin-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 1.2rem;
+}
+
+body.dark .admin-subtitle {
+  color: #9ca3af;
+}
+
+
+/* ==================================================
+   ADMIN REQUESTS – FINAL SINGLE SOURCE OF TRUTH
+================================================== */
+
+.admin-page {
+  background: #f4f5fb;
+  min-height: 100vh;
+}
+
+body.dark.admin-page {
+  background: radial-gradient(1200px 600px at 50% -200px, #0f172a, #020617);
+}
+
+/* Container */
+.admin-container {
+  max-width: 1200px;
+  margin: 2.5rem auto;
+  padding: 0 1.25rem;
+}
+
+/* Card */
+.admin-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.75rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 18px 45px rgba(15,23,42,0.12);
+}
+
+body.dark .admin-card {
+  background: #020617;
+  border-color: #1f2937;
+  box-shadow: 0 30px 70px rgba(0,0,0,0.6);
+}
+
+/* Titles */
+.admin-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #0f172a;
+}
+
+.admin-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 1.25rem;
+}
+
+body.dark .admin-title {
+  color: #e5e7eb;
+}
+
+body.dark .admin-subtitle {
+  color: #9ca3af;
+}
+
+/* Table Wrapper */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+/* Table */
+#reqTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+body.dark #reqTable {
+  background: #020617;
+}
+
+#reqTable th,
+#reqTable td {
+  padding: 0.85rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: top;
+}
+
+body.dark #reqTable th,
+body.dark #reqTable td {
+  border-color: #1f2937;
+  color: #e5e7eb;
+}
+
+#reqTable th {
+  background: #f8fafc;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+body.dark #reqTable th {
+  background: transparent;
+  color: #9ca3af;
+}
+
+#reqTable tr:hover {
+  background: #f9fafb;
+}
+
+body.dark #reqTable tr:hover {
+  background: #020617;
+}
+
+/* Status Pills */
+.req-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.req-status.pending {
+  background: #fde68a;
+  color: #92400e;
+}
+
+.req-status.completed {
+  background: #bbf7d0;
+  color: #065f46;
+}
+
+.req-status.rejected {
+  background: #fecaca;
+  color: #7f1d1d;
+}
+
+body.dark .req-status.completed {
+  background: #14532d;
+  color: #bbf7d0;
+}
+
+
+/* ===============================
+   REQUEST PAGE – CENTERED CARD
+================================ */
+
+.request-page {
+  min-height: calc(100vh - 140px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: #f8fafc;
+}
+
+body.dark .request-page {
+  background: #020617;
+}
+
+.request-container {
+  width: 100%;
+  max-width: 720px;
+  background: #ffffff;
+  padding: 2.2rem;
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(15, 23, 42, 0.15);
+  border: 1px solid #e5e7eb;
+}
+
+body.dark .request-container {
+  background: #020617;
+  border-color: #1f2937;
+}
+
+.request-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.request-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin-bottom: 1.6rem;
+}
+
+body.dark .request-subtitle {
+  color: #94a3b8;
+}
+
+.request-form .form-row {
+  margin-bottom: 1.2rem;
+}
+
+.request-form input,
+.request-form select,
+.request-form textarea {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+}
+
+.request-form textarea {
+  resize: vertical;
+}
+
+body.dark .request-form input,
+body.dark .request-form select,
+body.dark .request-form textarea {
+  background: #020617;
+  border-color: #334155;
+  color: #e5e7eb;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-message {
+  margin-top: 0.8rem;
+  font-size: 0.9rem;
+  text-align: center;
 }

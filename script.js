@@ -200,16 +200,27 @@ function createCard(item, highlightTerms = []) {
   previewBtn.addEventListener("click", () => openPdfPreview(item));
   btnRow.appendChild(previewBtn);
 
-  // Reader
-  const viewLink = document.createElement("a");
-  viewLink.href = `/view/${slugify(item.title)}?id=${encodeURIComponent(
-    item.id
-  )}`;
-  viewLink.target = "_blank";
-  viewLink.rel = "noopener";
-  viewLink.className = "btn small primary";
-  viewLink.textContent = isOwned(item) ? "Read again" : "Open reader";
-  btnRow.appendChild(viewLink);
+  // Reader / Buy button logic
+  if (isPaidItem(item) && !isOwned(item)) {
+    const buyBtn = document.createElement("button");
+    buyBtn.type = "button";
+    buyBtn.className = "btn small primary";
+    buyBtn.textContent = `Buy ₹${item.price}`;
+    buyBtn.addEventListener("click", () => {
+      buyPdf(item.id, item.price);
+    });
+    btnRow.appendChild(buyBtn);
+  } else {
+    const viewLink = document.createElement("a");
+    viewLink.href = `/view/${slugify(item.title)}?id=${encodeURIComponent(
+      item.id
+    )}`;
+    viewLink.target = "_blank";
+    viewLink.rel = "noopener";
+    viewLink.className = "btn small primary";
+    viewLink.textContent = isOwned(item) ? "Read again" : "Open reader";
+    btnRow.appendChild(viewLink);
+  }
 
   // Add to Library (only for FREE items, and only if not already owned)
   if (!isPaidItem(item) && !isOwned(item)) {
@@ -1780,3 +1791,58 @@ document.addEventListener("DOMContentLoaded", async () => {
   initSearchSuggestions();
   renderRecommendations();
 });
+
+
+// ================================
+// RAZORPAY BUY PDF FUNCTION
+// ================================
+async function buyPdf(pdfId, price) {
+  const res = await fetch("/api/create-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include", // 🔥 VERY IMPORTANT (cookies auth)
+    body: JSON.stringify({ pdfId, amount: price }),
+  });
+
+  const data = await res.json();
+
+  if (!data.success) {
+    alert("Unable to start payment");
+    return;
+  }
+
+  const options = {
+    key: data.key,
+    amount: data.amount,
+    currency: "INR",
+    name: "StudentHub",
+    description: "PDF Purchase",
+    order_id: data.orderId,
+
+    handler: async function (response) {
+      const verifyRes = await fetch("/api/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+          paymentId: data.paymentId,
+        }),
+      });
+
+      const verifyData = await verifyRes.json();
+
+      if (verifyData.success) {
+        alert("Payment Successful!");
+        window.location.reload(); // or redirect to library
+      } else {
+        alert("Payment verification failed");
+      }
+    },
+  };
+
+  const rzp = new Razorpay(options);
+  rzp.open();
+}

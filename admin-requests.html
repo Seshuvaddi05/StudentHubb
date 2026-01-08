@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin – User Requests | StudentHub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body class="admin-page">
+
+    <nav class="admin-navbar">
+        <div class="admin-navbar-inner">
+
+            <span class="admin-brand">StudentHub Admin</span>
+
+            <div class="admin-nav">
+                <a href="/admin.html">Upload</a>
+                <a href="/admin-materials.html">Materials</a>
+                <a href="/admin-submissions.html">Submissions</a>
+                <a href="/admin-approved.html">Approved</a>
+                <a href="/admin-withdrawals.html">Withdrawals</a>
+                <a href="/admin-requests.html" class="active">📩 Requests</a>
+                <a href="/" class="view-site">View site</a>
+                <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+            </div>
+
+        </div>
+    </nav>
+
+
+    <!-- ================= PAGE CONTENT ================= -->
+    <main class="admin-container">
+        <div class="admin-card">
+
+            <h2 class="admin-title">📩 User Requests</h2>
+            <p class="admin-subtitle">
+                Requests submitted by users for new e-books or question papers
+            </p>
+
+            <div class="table-wrapper">
+                <table id="reqTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Type</th>
+                            <th>Exam / Subject</th>
+                            <th>Details</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="7" class="loading">Loading requests…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ================= SCRIPT ================= -->
+    <script src="admin-requests.js"></script>
+    <script src="admin-theme.js"></script>
+</body>
+
+</html>

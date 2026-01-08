@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>StudentHub Admin – Materials</title>
@@ -12,74 +13,9 @@
       min-height: 100vh;
       background: #f1f5f9;
     }
+
     body.dark .admin-shell {
       background: #020617;
-    }
-
-    /* HEADER */
-    .admin-header {
-      background: #020617;
-      color: #e5e7eb;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.6);
-      position: sticky;
-      top: 0;
-      z-index: 40;
-    }
-    .admin-header-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0.7rem 1.25rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-    .admin-brand {
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      font-size: 1rem;
-    }
-
-    /* NAV */
-    .admin-nav {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      font-size: 0.88rem;
-    }
-    .admin-nav a {
-      color: #e5e7eb;
-      text-decoration: none;
-      padding: 0.25rem 0.75rem;
-      border-radius: 999px;
-      border: 1px solid transparent;
-    }
-    .admin-nav a:hover {
-      background: rgba(148, 163, 184, 0.15);
-    }
-    .admin-nav .active {
-      background: #fbbf24;
-      color: #1f2937;
-      border-color: #fbbf24;
-      font-weight: 600;
-    }
-
-    /* ACTION BUTTONS */
-    .admin-actions {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 0.85rem;
-    }
-    .admin-view-link {
-      color: #e5e7eb;
-      text-decoration: none;
-      border-radius: 999px;
-      padding: 0.25rem 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-    }
-    .admin-view-link:hover {
-      background: rgba(148, 163, 184, 0.18);
     }
 
     /* MAIN */
@@ -96,6 +32,7 @@
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
       border: 1px solid #e5e7eb;
     }
+
     body.dark .admin-card {
       background: #020617;
       border-color: #1f2937;
@@ -107,11 +44,13 @@
       font-weight: 600;
       margin-bottom: 0.3rem;
     }
+
     .admin-card .subtitle {
       font-size: 0.9rem;
       color: #6b7280;
       margin-bottom: 1rem;
     }
+
     body.dark .admin-card .subtitle {
       color: #9ca3af;
     }
@@ -123,6 +62,7 @@
       gap: 0.6rem;
       margin-bottom: 0.8rem;
     }
+
     .materials-controls input,
     .materials-controls select {
       padding: 0.5rem 0.7rem;
@@ -130,6 +70,7 @@
       border: 1px solid #e5e7eb;
       font-size: 0.9rem;
     }
+
     body.dark .materials-controls input,
     body.dark .materials-controls select {
       background: #020617;
@@ -143,15 +84,18 @@
       border-collapse: collapse;
       font-size: 0.85rem;
     }
+
     table.admin-table thead {
       background: #f9fafb;
     }
+
     table.admin-table th,
     table.admin-table td {
       padding: 0.55rem 0.6rem;
       border-bottom: 1px solid #e5e7eb;
       text-align: left;
     }
+
     table.admin-table th {
       font-weight: 600;
       font-size: 0.8rem;
@@ -159,9 +103,11 @@
       letter-spacing: 0.04em;
       color: #6b7280;
     }
+
     body.dark table.admin-table thead {
       background: #020617;
     }
+
     body.dark table.admin-table th,
     body.dark table.admin-table td {
       border-color: #1f2937;
@@ -177,9 +123,11 @@
       border: none;
       cursor: pointer;
     }
+
     .btn-danger:hover {
       background: #991b1b;
     }
+
     .btn-danger:disabled {
       opacity: 0.7;
       cursor: default;
@@ -191,6 +139,7 @@
       font-size: 0.85rem;
       color: #6b7280;
     }
+
     body.dark #materials-list-status {
       color: #9ca3af;
     }
@@ -199,6 +148,7 @@
       .admin-card {
         padding: 1.25rem 1.1rem;
       }
+
       /* Hide ID and downloads on mobile */
       table.admin-table th:nth-child(1),
       table.admin-table td:nth-child(1),
@@ -213,25 +163,28 @@
 <body>
   <div class="admin-shell">
 
-    <!-- HEADER -->
-    <header class="admin-header">
-      <div class="admin-header-inner">
+    <!-- ================= ADMIN NAVBAR (GLOBAL) ================= -->
+    <nav class="admin-navbar">
+      <div class="admin-navbar-inner">
+
         <div class="admin-brand">StudentHub Admin</div>
 
-        <nav class="admin-nav">
+        <div class="admin-nav">
           <a href="/admin.html">Upload</a>
           <a href="/admin-materials.html" class="active">Materials</a>
           <a href="/admin-submissions.html">Submissions</a>
           <a href="/admin-approved.html">Approved</a>
           <a href="/admin-withdrawals.html">Withdrawals</a>
-        </nav>
+          <a href="/admin-requests.html">📩 Requests</a>
+        </div>
 
         <div class="admin-actions">
           <a href="/" class="admin-view-link">View site</a>
           <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
         </div>
+
       </div>
-    </header>
+    </nav>
 
     <!-- MAIN -->
     <main class="admin-main">
@@ -240,12 +193,8 @@
         <p class="subtitle">Search, filter and delete uploaded e-books and question papers.</p>
 
         <div class="materials-controls">
-          <input
-            type="text"
-            id="materials-search"
-            placeholder="Search by title, exam, subject…"
-            style="flex:1 1 220px;"
-          />
+          <input type="text" id="materials-search" placeholder="Search by title, exam, subject…"
+            style="flex:1 1 220px;" />
           <select id="materials-type-filter" style="flex:0 0 160px;">
             <option value="">All types</option>
             <option value="ebook">E-Books</option>
@@ -268,7 +217,9 @@
               </tr>
             </thead>
             <tbody id="materials-table-body">
-              <tr><td colspan="8">Loading materials…</td></tr>
+              <tr>
+                <td colspan="8">Loading materials…</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -281,4 +232,5 @@
   <!-- Script that loads materials + handles delete -->
   <script src="admin.js" defer></script>
 </body>
+
 </html>

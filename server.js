@@ -15,6 +15,12 @@ const nodemailer = require("nodemailer");
 const { OAuth2Client } = require("google-auth-library");
 const { MongoClient, ObjectId } = require("mongodb");
 const mongoose = require("mongoose");
+const Request = require("./models/Request");
+// Razorpay
+const razorpay = require("./utils/razorpay");
+const Payment = require("./models/Payment");
+const crypto = require("crypto");
+
 
 const app = express();
 
@@ -78,6 +84,8 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+
+
 
 // -----------------------------
 // Auth helpers
@@ -209,6 +217,43 @@ app.post("/api/admin/login", async (req, res) => {
   });
 
   return res.json({ ok: true, message: "Admin logged in" });
+});
+
+
+// ================================
+// USER: MATERIAL REQUEST API
+// ================================
+app.post("/api/requests", async (req, res) => {
+  try {
+    const { name, email, materialType, examSubject, details } = req.body;
+
+    if (!name || !email || !materialType || !details) {
+      return res.status(400).json({
+        ok: false,
+        message: "Name, email, material type and details are required",
+      });
+    }
+
+    await Request.create({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      materialType,
+      examSubject: examSubject || "",
+      details: details || "",
+      createdAt: new Date(),
+    });
+
+    return res.json({
+      ok: true,
+      message: "Request submitted successfully",
+    });
+  } catch (err) {
+    console.error("/api/requests error:", err);
+    return res.status(500).json({
+      ok: false,
+      message: "Server error",
+    });
+  }
 });
 
 
@@ -379,6 +424,170 @@ app.post("/api/auth/logout", (req, res) => {
   res.clearCookie("token");
   return res.json({ ok: true });
 });
+
+
+
+// =======================
+// 👉 ADD RAZORPAY CODE HERE 👇
+// =======================
+app.post("/api/create-order", requireAuth, async (req, res) => {
+  try {
+    const { pdfId, amount } = req.body;
+
+    if (!pdfId || !amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid data" });
+    }
+
+    const order = await razorpay.orders.create({
+      amount: Math.round(amount * 100), // paise
+      currency: "INR",
+      receipt: `pdf_${pdfId.toString().slice(-8)}`, // 🔥 FIX
+    });
+
+    const payment = await Payment.create({
+      userId: req.user.id,
+      pdfId,
+      razorpayOrderId: order.id,
+      amount,
+      status: "created",
+      createdAt: new Date(),
+    });
+
+    res.json({
+      success: true,
+      orderId: order.id,
+      amount: order.amount,
+      key: process.env.RAZORPAY_KEY_ID,
+      paymentId: payment._id,
+    });
+  } catch (err) {
+    console.error("create-order error:", err);
+    res.status(500).json({
+      success: false,
+      message: err?.error?.description || "Order creation failed",
+    });
+  }
+});
+
+
+// ================================
+// VERIFY RAZORPAY PAYMENT (FINAL)
+// ================================
+app.post("/api/verify-payment", requireAuth, async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      paymentId,
+    } = req.body;
+
+    if (
+      !razorpay_order_id ||
+      !razorpay_payment_id ||
+      !razorpay_signature ||
+      !paymentId
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing payment verification data",
+      });
+    }
+
+    // 🔐 VERIFY SIGNATURE
+    const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body)
+      .digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment signature",
+      });
+    }
+
+    // 🔎 FETCH PAYMENT RECORD
+    const payment = await Payment.findById(paymentId);
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment record not found",
+      });
+    }
+
+    // 🚫 PREVENT DOUBLE CONFIRMATION
+    if (payment.status === "success") {
+      return res.json({ success: true, alreadyVerified: true });
+    }
+
+    // ✅ UPDATE PAYMENT STATUS
+    payment.razorpayPaymentId = razorpay_payment_id;
+    payment.razorpaySignature = razorpay_signature;
+    payment.status = "success";
+    await payment.save();
+
+    await ordersCollection().updateOne(
+      {
+        userId: req.user.id,
+        itemType: "ebook",
+        itemId: payment.pdfId.toString(),
+      },
+      {
+        $set: {
+          userId: req.user.id,
+          userEmail: req.user.email,
+          itemType: "ebook",
+          itemId: payment.pdfId.toString(),
+          price: payment.amount,
+          status: "success",
+          paymentMethod: "razorpay",
+          paymentId: razorpay_payment_id,
+          createdAt: new Date(),
+        },
+      },
+      { upsert: true }
+    );
+
+    // 📚 ADD TO USER LIBRARY (orders collection)
+    await ordersCollection().updateOne(
+      {
+        userId: req.user.id,
+        itemType: "ebook", // later you can derive dynamically
+        itemId: payment.pdfId.toString(),
+      },
+      {
+        $setOnInsert: {
+          userId: req.user.id,
+          userEmail: req.user.email,
+          itemType: "ebook",
+          itemId: payment.pdfId.toString(),
+          price: payment.amount,
+          status: "success",
+          paymentMethod: "razorpay",
+          paymentId: razorpay_payment_id,
+          createdAt: new Date(),
+        },
+      },
+      { upsert: true }
+    );
+
+    return res.json({
+      success: true,
+      message: "Payment verified successfully",
+    });
+  } catch (err) {
+    console.error("verify-payment error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Payment verification failed",
+    });
+  }
+});
+
+
+
 
 app.post("/api/auth/google", async (req, res) => {
   try {
@@ -602,104 +811,100 @@ const uploadSubmission = multer({
 // POST create submission (supports either file upload or JSON with pdfUrl)
 // NOTE: call multer middleware directly. multer will only parse if request
 // is multipart/form-data; no need for manual content-type checks.
-app.post(
-  "/api/user-submissions",
-  requireAuth,
-  uploadSubmission.single("file"),
-  async (req, res) => {
-    try {
-      // Debug logs to inspect what arrived (helpful for troubleshooting)
-      console.log("[SUBMISSION] POST /api/user-submissions hit");
-      console.log("  content-type:", req.headers["content-type"] || "(none)");
-      console.log("  body keys:", req.body ? Object.keys(req.body) : "(no body)");
-      console.log("  file:", req.file ? {
-        originalname: req.file.originalname,
-        filename: req.file.filename,
-        path: req.file.path,
-        size: req.file.size
-      } : "(none uploaded)");
+app.post("/api/user-submissions", requireAuth, uploadSubmission.single("file"), async (req, res) => {
+  try {
+    // Debug logs to inspect what arrived (helpful for troubleshooting)
+    console.log("[SUBMISSION] POST /api/user-submissions hit");
+    console.log("  content-type:", req.headers["content-type"] || "(none)");
+    console.log("  body keys:", req.body ? Object.keys(req.body) : "(no body)");
+    console.log("  file:", req.file ? {
+      originalname: req.file.originalname,
+      filename: req.file.filename,
+      path: req.file.path,
+      size: req.file.size
+    } : "(none uploaded)");
 
-      // Accept either fields from form-data or JSON body
-      const title =
-        (req.body && (req.body.title || req.body.pdfTitle)) ||
-        (req.body && req.body.name) ||
-        "";
+    // Accept either fields from form-data or JSON body
+    const title =
+      (req.body && (req.body.title || req.body.pdfTitle)) ||
+      (req.body && req.body.name) ||
+      "";
 
-      const description = (req.body && req.body.description) || "";
+    const description = (req.body && req.body.description) || "";
 
-      // ✅ NEW: read extra metadata from submission form
-      const exam = (req.body && req.body.exam) || "";
-      const subject = (req.body && req.body.subject) || "";
-      const year = (req.body && req.body.year) || "";
+    // ✅ NEW: read extra metadata from submission form
+    const exam = (req.body && req.body.exam) || "";
+    const subject = (req.body && req.body.subject) || "";
+    const year = (req.body && req.body.year) || "";
 
-      const pdfUrlFromBody =
-        (req.body && (req.body.pdfUrl || req.body.fileUrl)) || "";
+    const pdfUrlFromBody =
+      (req.body && (req.body.pdfUrl || req.body.fileUrl)) || "";
 
 
-      const user = req.user || null;
+    const user = req.user || null;
 
-      if (!title || (!pdfUrlFromBody && !req.file)) {
-        return res
-          .status(400)
-          .json({ ok: false, message: "title and pdfUrl are required" });
-      }
-
-      // If file was uploaded via multer, build the relative web path
-      let storedFilePath = null; // relative like "pdfs/submissions/....pdf"
-      let publicFileUrl = null; // web path like "/pdfs/submissions/....pdf"
-
-      if (req.file && req.file.path) {
-        // req.file.path might be absolute on Windows; convert to relative web path
-        let rel = path.relative(__dirname, req.file.path);
-        rel = rel.split(path.sep).join("/"); // normalize to forward slashes
-        storedFilePath = rel; // e.g. "pdfs/submissions/12345-file.pdf"
-        publicFileUrl = "/" + storedFilePath; // e.g. "/pdfs/submissions/..."
-      } else if (pdfUrlFromBody) {
-        // Accept arbitrary URL (external links) - keep as-is
-        publicFileUrl = pdfUrlFromBody.trim();
-      }
-
-      const doc = {
-        title: (title || "").trim(),
-        description: (description || "").trim(),
-
-        // ✅ STORE METADATA
-        exam: (exam || "").trim(),
-        subject: (subject || "").trim(),
-        year: (year || "").trim(),
-
-        file: storedFilePath,
-        pdfUrl: storedFilePath ? null : (publicFileUrl || null),
-
-        userId: user ? user.id : null,
-        userEmail: user ? user.email : null,
-
-        status: "pending",
-        adminNote: "",
-        createdAt: new Date(),
-        processedAt: null,
-        type: req.body.type === "ebook"
-          ? "ebook"
-          : req.body.type === "questionPaper"
-            ? "questionPaper"
-            : "ebook", // default = ebook
-      };
-
-      const result = await submissionsCollection().insertOne(doc);
-      doc._id = result.insertedId;
-
-      console.log("[SUBMISSION] stored id:", doc._id.toString(), "file:", doc.file, "pdfUrl:", doc.pdfUrl);
-
-      return res.json({
-        ok: true,
-        message: "Submitted",
-        submission: { id: doc._id.toString() },
-      });
-    } catch (err) {
-      console.error("/api/user-submissions (POST) error:", err);
-      return res.status(500).json({ ok: false, message: "Server error" });
+    if (!title || (!pdfUrlFromBody && !req.file)) {
+      return res
+        .status(400)
+        .json({ ok: false, message: "title and pdfUrl are required" });
     }
+
+    // If file was uploaded via multer, build the relative web path
+    let storedFilePath = null; // relative like "pdfs/submissions/....pdf"
+    let publicFileUrl = null; // web path like "/pdfs/submissions/....pdf"
+
+    if (req.file && req.file.path) {
+      // req.file.path might be absolute on Windows; convert to relative web path
+      let rel = path.relative(__dirname, req.file.path);
+      rel = rel.split(path.sep).join("/"); // normalize to forward slashes
+      storedFilePath = rel; // e.g. "pdfs/submissions/12345-file.pdf"
+      publicFileUrl = "/" + storedFilePath; // e.g. "/pdfs/submissions/..."
+    } else if (pdfUrlFromBody) {
+      // Accept arbitrary URL (external links) - keep as-is
+      publicFileUrl = pdfUrlFromBody.trim();
+    }
+
+    const doc = {
+      title: (title || "").trim(),
+      description: (description || "").trim(),
+
+      // ✅ STORE METADATA
+      exam: (exam || "").trim(),
+      subject: (subject || "").trim(),
+      year: (year || "").trim(),
+
+      file: storedFilePath,
+      pdfUrl: storedFilePath ? null : (publicFileUrl || null),
+
+      userId: user ? user.id : null,
+      userEmail: user ? user.email : null,
+
+      status: "pending",
+      adminNote: "",
+      createdAt: new Date(),
+      processedAt: null,
+      type: req.body.type === "ebook"
+        ? "ebook"
+        : req.body.type === "questionPaper"
+          ? "questionPaper"
+          : "ebook", // default = ebook
+    };
+
+    const result = await submissionsCollection().insertOne(doc);
+    doc._id = result.insertedId;
+
+    console.log("[SUBMISSION] stored id:", doc._id.toString(), "file:", doc.file, "pdfUrl:", doc.pdfUrl);
+
+    return res.json({
+      ok: true,
+      message: "Submitted",
+      submission: { id: doc._id.toString() },
+    });
+  } catch (err) {
+    console.error("/api/user-submissions (POST) error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
   }
+}
 );
 
 // GET list submissions (USER – their own submissions only)
@@ -754,158 +959,149 @@ app.get("/api/user-submissions", requireAuth, async (req, res) => {
 // POST approve (admin)
 // NOTE: This handler marks submission as "approved" but DOES NOT auto-publish to ebooks.
 // Approved submissions remain in submissions collection and will be visible in the admin "Approved" page.
-app.post(
-  "/api/user-submissions/:id/approve",
-  requireAuth,
-  requireAdmin,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({ ok: false, message: "Missing submission id" });
-      }
+app.post("/api/user-submissions/:id/approve", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ ok: false, message: "Missing submission id" });
+    }
 
-      const _id = new ObjectId(id);
-      const adminNote = req.body?.adminNote || "";
-      const coinsAwarded = Number.isFinite(Number(req.body?.coinsAwarded))
-        ? Number(req.body.coinsAwarded)
-        : 0;
+    const _id = new ObjectId(id);
+    const adminNote = req.body?.adminNote || "";
+    const coinsAwarded = Number.isFinite(Number(req.body?.coinsAwarded))
+      ? Number(req.body.coinsAwarded)
+      : 0;
 
-      // ✅ 1️⃣ FETCH SUBMISSION FIRST
-      const sub = await submissionsCollection().findOne({ _id });
-      if (!sub) {
-        return res.status(404).json({ ok: false, message: "Submission not found" });
-      }
+    // ✅ 1️⃣ FETCH SUBMISSION FIRST
+    const sub = await submissionsCollection().findOne({ _id });
+    if (!sub) {
+      return res.status(404).json({ ok: false, message: "Submission not found" });
+    }
 
-      // 🚫 2️⃣ PREVENT DOUBLE APPROVAL (CORRECT PLACE)
-      if (sub.status === "approved") {
-        return res.status(400).json({
-          ok: false,
-          message: "Submission already approved",
-        });
-      }
-
-      // ✅ 3️⃣ UPDATE STATUS
-      await submissionsCollection().updateOne(
-        { _id },
-        {
-          $set: {
-            status: "approved",
-            processedAt: new Date(),
-            adminNote,
-          },
-        }
-      );
-
-      // ✅ 4️⃣ AWARD COINS
-      if (coinsAwarded > 0 && sub.userId) {
-        await usersCollection().updateOne(
-          { _id: new ObjectId(sub.userId) },
-          { $inc: { walletCoins: coinsAwarded } }
-        );
-
-        await walletLedgerCollection().insertOne({
-          userId: sub.userId,
-          type: "submission-reward",
-          amount: coinsAwarded,
-          ref: sub._id.toString(),
-          createdAt: new Date(),
-        });
-      }
-
-      // 🔔 5️⃣ NOTIFY USER
-      if (sub.userId) {
-        const { addNotification } = require("./utils/notifications");
-        await addNotification(
-          sub.userId,
-          `Your submission "${sub.title}" was approved. You earned ${coinsAwarded} coins.`,
-          "success"
-        );
-      }
-
-      return res.json({
-        ok: true,
-        message: "Submission approved successfully",
-        coinsAwarded,
-      });
-    } catch (err) {
-      console.error("/api/user-submissions/:id/approve error:", err);
-      return res.status(500).json({
+    // 🚫 2️⃣ PREVENT DOUBLE APPROVAL (CORRECT PLACE)
+    if (sub.status === "approved") {
+      return res.status(400).json({
         ok: false,
-        message: "Server error while approving submission",
+        message: "Submission already approved",
       });
     }
+
+    // ✅ 3️⃣ UPDATE STATUS
+    await submissionsCollection().updateOne(
+      { _id },
+      {
+        $set: {
+          status: "approved",
+          processedAt: new Date(),
+          adminNote,
+        },
+      }
+    );
+
+    // ✅ 4️⃣ AWARD COINS
+    if (coinsAwarded > 0 && sub.userId) {
+      await usersCollection().updateOne(
+        { _id: new ObjectId(sub.userId) },
+        { $inc: { walletCoins: coinsAwarded } }
+      );
+
+      await walletLedgerCollection().insertOne({
+        userId: sub.userId,
+        type: "submission-reward",
+        amount: coinsAwarded,
+        ref: sub._id.toString(),
+        createdAt: new Date(),
+      });
+    }
+
+    // 🔔 5️⃣ NOTIFY USER
+    if (sub.userId) {
+      const { addNotification } = require("./utils/notifications");
+      await addNotification(
+        sub.userId,
+        `Your submission "${sub.title}" was approved. You earned ${coinsAwarded} coins.`,
+        "success"
+      );
+    }
+
+    return res.json({
+      ok: true,
+      message: "Submission approved successfully",
+      coinsAwarded,
+    });
+  } catch (err) {
+    console.error("/api/user-submissions/:id/approve error:", err);
+    return res.status(500).json({
+      ok: false,
+      message: "Server error while approving submission",
+    });
   }
+}
 );
 
 
 // POST reject (admin)
 // Behavior: reject marks submission as "rejected" (kept for history)
 // If a file was uploaded and stored on disk, it will be removed as well.
-app.post(
-  "/api/user-submissions/:id/reject",
-  requireAuth,
-  requireAdmin,
-  async (req, res) => {
+app.post("/api/user-submissions/:id/reject", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reason = (req.body && req.body.reason) || "";
+    if (!id) return res.status(400).json({ ok: false, message: "Missing id" });
 
-    try {
-      const { id } = req.params;
-      const reason = (req.body && req.body.reason) || "";
-      if (!id) return res.status(400).json({ ok: false, message: "Missing id" });
+    const _id = new ObjectId(id);
+    // find the submission to check for stored file
+    const sub = await submissionsCollection().findOne({ _id });
+    if (!sub) return res.status(404).json({ ok: false, message: "Submission not found" });
 
-      const _id = new ObjectId(id);
-      // find the submission to check for stored file
-      const sub = await submissionsCollection().findOne({ _id });
-      if (!sub) return res.status(404).json({ ok: false, message: "Submission not found" });
-
-      // If the submission has a stored file path (file field), remove it from disk
-      if (sub.file) {
-        try {
-          const filePath = path.join(__dirname, sub.file);
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            console.log("[SUBMISSION DELETE] removed file:", filePath);
-          }
-        } catch (e) {
-          console.warn("[SUBMISSION DELETE] unable to delete file:", e && e.message ? e.message : e);
+    // If the submission has a stored file path (file field), remove it from disk
+    if (sub.file) {
+      try {
+        const filePath = path.join(__dirname, sub.file);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log("[SUBMISSION DELETE] removed file:", filePath);
         }
+      } catch (e) {
+        console.warn("[SUBMISSION DELETE] unable to delete file:", e && e.message ? e.message : e);
       }
+    }
 
-      // delete the submission document
-      await submissionsCollection().updateOne(
-        { _id },
+    // delete the submission document
+    await submissionsCollection().updateOne(
+      { _id },
+      {
+        $set: {
+          status: "rejected",
+          adminNote: reason,
+          processedAt: new Date(),
+        },
+      }
+    );
+
+
+    // 🔔 STEP 2: Notify user
+    if (sub?.userId) {
+      const { addNotification } = require("./utils/notifications");
+      await addNotification(
+        sub.userId,
+        `Your submission "${sub.title}" was rejected.`,
         {
-          $set: {
-            status: "rejected",
-            adminNote: reason,
-            processedAt: new Date(),
-          },
+          type: "error",
+          meta: { reason }
         }
       );
-
-
-      // 🔔 STEP 2: Notify user
-      if (sub?.userId) {
-        const { addNotification } = require("./utils/notifications");
-        await addNotification(
-          sub.userId,
-          `Your submission "${sub.title}" was rejected.`,
-          {
-            type: "error",
-            meta: { reason }
-          }
-        );
-      }
-
-
-      // Optionally log the rejection reason somewhere (adminNote or separate collection).
-      // For now we simply return the reason in response for auditing in client logs.
-      return res.json({ ok: true, message: "Submission rejected and removed", reason });
-    } catch (err) {
-      console.error("/api/user-submissions/:id/reject error:", err);
-      return res.status(500).json({ ok: false, message: "Server error" });
     }
-  });
+
+
+    // Optionally log the rejection reason somewhere (adminNote or separate collection).
+    // For now we simply return the reason in response for auditing in client logs.
+    return res.json({ ok: true, message: "Submission rejected and removed", reason });
+  } catch (err) {
+    console.error("/api/user-submissions/:id/reject error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
 
 
 
@@ -1333,6 +1529,37 @@ app.post("/api/read-later/remove", requireAuth, async (req, res) => {
       .json({ ok: false, message: "Server error updating Read Later." });
   }
 });
+
+/* ================================
+   ADMIN: GET ALL REQUESTS
+================================ */
+app.get("/api/admin/requests", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const list = await Request.find().sort({ createdAt: -1 });
+    res.json({ ok: true, requests: list });
+  } catch (err) {
+    res.status(500).json({ ok: false });
+  }
+});
+
+/* ================================
+   ADMIN: UPDATE REQUEST STATUS
+================================ */
+app.post("/api/admin/requests/:id", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { status, adminNote } = req.body;
+
+    await Request.findByIdAndUpdate(req.params.id, {
+      status,
+      adminNote,
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false });
+  }
+});
+
 
 // ================================
 // NOTIFICATIONS – USER APIs
@@ -2127,10 +2354,7 @@ app.post("/api/purchases", requireAuth, async (req, res) => {
   }
 });
 
-// -----------------------------
-// Serve PDFs only for logged-in users
-// -----------------------------
-app.use("/pdfs", requireAuth, express.static(path.join(__dirname, "pdfs")));
+
 
 // -----------------------------
 // Materials API (public listing; files still protected by /pdfs above)
@@ -2353,8 +2577,9 @@ app.post("/api/materials/:id/track-read", requireAuth, async (req, res) => {
   }
 });
 
+
 // -----------------------------
-// Track download (login required)
+// Track download (FREE PDFs ONLY)
 // -----------------------------
 app.get("/api/download/:type/:index", requireAuth, async (req, res) => {
   try {
@@ -2374,50 +2599,32 @@ app.get("/api/download/:type/:index", requireAuth, async (req, res) => {
     const col = collectionByType(type);
     const price = typeof item.price === "number" ? item.price : 0;
 
+    // 🔒 BLOCK DIRECT DOWNLOAD FOR PAID PDFs
     if (price > 0) {
-      const existingOrder = await ordersCollection().findOne({
-        userId: req.user.id,
-        itemType: type,
-        itemId: item._id.toString(),
+      return res.status(403).json({
+        error: "Paid PDFs must be accessed via reader only",
       });
-
-      if (!existingOrder) {
-        await ordersCollection().insertOne({
-          userId: req.user.id,
-          userEmail: req.user.email,
-          itemType: type,
-          itemId: item._id.toString(),
-          price,
-          status: "success",
-          paymentMethod: "test-free",
-          paymentId: null,
-          createdAt: new Date(),
-        });
-        console.log(
-          `[ORDER] Created test purchase for user ${req.user.email} on ${type} ${item._id.toString()} for ₹${price}`
-        );
-      }
     }
 
+    // ✅ FREE PDF → allow download + track
     await col.updateOne(
       { _id: item._id },
-      { $set: { downloads: (item.downloads || 0) + 1 } }
+      { $inc: { downloads: 1 } }
     );
 
-    // If file is stored as relative path, redirect to '/pdfs/...' else to given file path
     if (item.file) {
-      // ensure leading slash
       let url = item.file.split(path.sep).join("/");
       if (!url.startsWith("/")) url = "/" + url;
       return res.redirect(url);
     }
 
-    return res.redirect("/" + (item.file || "").replace(/\\/g, "/"));
+    return res.redirect("/");
   } catch (err) {
     console.error("Download error:", err);
     res.status(500).json({ error: "Download tracking failed" });
   }
 });
+
 
 // -----------------------------
 // HTML page routes (user side)
@@ -2483,10 +2690,12 @@ app.get("/admin-approved.html", requireAuth, requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, "admin-approved.html"));
 });
 
-// -----------------------------
-// Static files
-// -----------------------------
-app.use(express.static(__dirname));
+// Admin user requests
+app.get("/admin-requests.html", requireAuth, requireAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, "admin-requests.html"));
+});
+
+
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -2529,6 +2738,87 @@ async function startServer() {
     // Make db accessible to routes and other code
     app.locals.db = db;
     app.locals.mongoClient = client;
+
+    // ===============================
+    // 🔐 SECURE PDF DELIVERY (REGEX – EXPRESS SAFE)
+    // ===============================
+    app.get(/^\/pdfs\/(.+)/, requireAuth, async (req, res) => {
+      try {
+        const relativePath = req.params[0]; // ebooks/abc.pdf OR submissions/x.pdf
+        const baseDir = path.join(__dirname, "pdfs");
+        const filePath = path.join(baseDir, relativePath);
+
+        // 🔒 Path traversal protection
+        if (!filePath.startsWith(baseDir)) {
+          return res.status(403).send("Access denied");
+        }
+
+        if (!fs.existsSync(filePath)) {
+          return res.status(404).send("PDF not found");
+        }
+
+        // Normalize DB path
+        const normalizedDbPath = `pdfs/${relativePath.replace(/^pdfs\//, "")}`;
+
+        // 🔍 Find material
+        // 🔍 1️⃣ Check EBOOKS / QUESTION PAPERS
+        let item =
+          (await ebooksCollection().findOne({ file: normalizedDbPath })) ||
+          (await questionPapersCollection().findOne({ file: normalizedDbPath }));
+
+        // 🔍 2️⃣ If NOT material → check SUBMISSIONS
+        if (!item) {
+          const submission = await submissionsCollection().findOne({
+            file: normalizedDbPath,
+          });
+
+          // ❌ Not submission either
+          if (!submission) {
+            return res.status(403).send("Unauthorized");
+          }
+
+          // 🔐 Submission PDFs → ADMIN ONLY
+          if (req.user.email !== process.env.ADMIN_EMAIL) {
+            return res.status(403).send("Admin access only");
+          }
+
+          // ✅ Admin allowed → serve PDF
+          res.setHeader("Content-Type", "application/pdf");
+          res.setHeader("Content-Disposition", "inline");
+          res.setHeader("Cache-Control", "no-store");
+          res.removeHeader("X-Frame-Options");
+          return res.sendFile(filePath);
+        }
+
+        // 🔐 Paid check (FIXED)
+        if (item.price > 0) {
+          const paid = await ordersCollection().findOne({
+            userId: req.user.id,
+            itemId: item._id.toString(),
+            status: { $in: ["success", "free", "library-add"] },
+          });
+
+          if (!paid) {
+            return res.status(403).send("Payment required");
+          }
+        }
+
+        // ✅ REQUIRED HEADERS FOR CHROME PDF VIEW
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", "inline");
+        res.setHeader("Cache-Control", "no-store");
+        // ❌ DO NOT SET X-Frame-Options (Chrome blocks PDFs)
+        res.removeHeader("X-Frame-Options");
+        res.setHeader("X-Content-Type-Options", "nosniff");
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.sendFile(filePath);
+      } catch (err) {
+        console.error("Secure PDF error:", err);
+        res.status(403).send("Access denied");
+      }
+    });
+
 
     // Mongoose connect (so models/* based on mongoose still work)
     try {
@@ -2593,6 +2883,117 @@ async function startServer() {
     } catch (err) {
       console.warn("[Routes] Could not mount routes/adminRewards:", err && err.message ? err.message : err);
     }
+
+
+
+    // ===============================
+    // ADMIN: PREVIEW SUBMISSION PDF
+    // ===============================
+    app.get(
+      "/admin/preview/submission/:id",
+      requireAuth,
+      requireAdmin,
+      async (req, res) => {
+        try {
+          const sub = await submissionsCollection().findOne({
+            _id: new ObjectId(req.params.id),
+          });
+
+          if (!sub || !sub.file) {
+            return res.status(404).send("PDF not found");
+          }
+
+          const filePath = path.join(__dirname, sub.file);
+
+          if (!fs.existsSync(filePath)) {
+            return res.status(404).send("PDF missing on disk");
+          }
+
+          res.setHeader("Content-Type", "application/pdf");
+          res.setHeader("Content-Disposition", "inline");
+          res.setHeader("Cache-Control", "no-store");
+
+          res.sendFile(filePath);
+        } catch (err) {
+          console.error("Admin preview error:", err);
+          res.status(403).send("Unauthorized");
+        }
+      }
+    );
+
+
+
+
+    // ===============================
+    // STATIC FILES (HTML / CSS / JS / IMAGES)
+    // ===============================
+    app.use(
+      express.static(path.join(__dirname), {
+        index: false,
+        extensions: ["html", "css", "js", "png", "jpg", "svg"],
+      })
+    );
+
+
+
+    // ===============================
+    // CHECK MATERIAL ACCESS (READER)
+    // ===============================
+    app.get("/api/materials/:id/access", async (req, res) => {
+      try {
+        const id = req.params.id;
+        let item = null;
+        let itemType = null;
+
+        const _id = new ObjectId(id);
+
+        item = await ebooksCollection().findOne({ _id });
+        if (item) itemType = "ebook";
+
+        if (!item) {
+          item = await questionPapersCollection().findOne({ _id });
+          if (item) itemType = "questionPaper";
+        }
+
+        if (!item) return res.status(404).json({});
+
+        let canAccess = item.price === 0;
+        let userId = null;
+
+        try {
+          const token = req.cookies?.token;
+          if (token) {
+            const decoded = jwt.verify(token, JWT_SECRET);
+            userId = decoded.id;
+          }
+        } catch { }
+
+        if (item.price > 0 && userId) {
+          const paid = await ordersCollection().findOne({
+            userId,
+            itemType,
+            itemId: id,
+            status: "success",
+          });
+          if (paid) canAccess = true;
+        }
+
+        res.json({
+          id,
+          title: item.title,
+          exam: item.exam,
+          subject: item.subject,
+          year: item.year,
+          price: item.price,
+          downloads: item.downloads,
+          canAccess,
+        });
+      } catch {
+        res.status(500).json({});
+      }
+    });
+
+
 
     app.listen(PORT, () => {
       console.log(`StudentHub server running at http://127.0.0.1:${PORT}`);

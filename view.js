@@ -24,6 +24,25 @@ function getSlugFromLocation() {
   return decodeURIComponent(parts[1]?.split(/[?#]/)[0] || "");
 }
 
+// ---------- 🔒 BASIC READER SECURITY ----------
+document.addEventListener("contextmenu", e => e.preventDefault());
+
+document.addEventListener("keydown", e => {
+  if (
+    (e.ctrlKey || e.metaKey) &&
+    ["s", "p", "u"].includes(e.key.toLowerCase())
+  ) {
+    e.preventDefault();
+    alert("This action is disabled for security reasons.");
+  }
+
+  if (e.key === "PrintScreen") {
+    e.preventDefault();
+    alert("Screenshots are disabled.");
+  }
+});
+
+
 // ---------- 🔐 AUTH CHECK ----------
 async function ensureLoggedIn() {
   const res = await fetch("/api/me");
@@ -58,27 +77,15 @@ async function fetchMyLibrary() {
   }
 }
 
+const trackedReads = new Set();
+
 async function trackRead(id) {
+  if (trackedReads.has(id)) return;
+  trackedReads.add(id);
+
   try {
     await fetch(`/api/materials/${id}/track-read`, { method: "POST" });
-  } catch {}
-}
-
-async function markPurchase(material, amountPaid, reference) {
-  const res = await fetch("/api/purchases", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      materialId: material.id,
-      amountPaid: Number(amountPaid) || 0,
-      paymentId: reference || `manual-${Date.now()}`
-    }),
-  });
-
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || data.ok === false) {
-    throw new Error(data.message || "Purchase failed");
-  }
+  } catch { }
 }
 
 // ---------- ✅ SECURE PDF LOADER (FIXED) ----------
@@ -86,12 +93,49 @@ function loadPdfIntoFrame(item) {
   const frame = document.getElementById("pdf-frame");
   if (!frame || !item?.file) return;
 
-  // 🔐 FORCE PDF THROUGH /pdfs/* ROUTE
-  const cleanPath = item.file.replace(/^\/+/, "").replace(/^pdfs\//, "");
-  frame.src = `/pdfs/${cleanPath}`;
+  // ✅ Always use DB path as-is
+  const normalized = item.file.startsWith("/")
+    ? item.file
+    : "/" + item.file;
+
+  frame.src = normalized;   // <-- THIS IS THE KEY FIX
 
   trackRead(item.id);
 }
+
+
+// ---------- 🔒 Blur PDF when tab inactive ----------
+document.addEventListener("visibilitychange", () => {
+  const frame = document.getElementById("pdf-frame");
+  if (!frame) return;
+  frame.style.filter = document.hidden ? "blur(10px)" : "none";
+});
+
+
+// ---------- 🔐 USER WATERMARK ----------
+async function applyWatermark() {
+  try {
+    const res = await fetch("/api/me", { credentials: "include" });
+    if (!res.ok) return;
+
+    const data = await res.json();
+    const email = data.user.email;
+    const time = new Date().toLocaleString();
+
+    const wm = document.getElementById("pdf-watermark");
+    if (!wm) return;
+
+    wm.innerHTML = "";
+    for (let i = 0; i < 30; i++) {
+      const span = document.createElement("span");
+      span.textContent = `${email} • ${time}`;
+      wm.appendChild(span);
+    }
+  } catch (err) {
+    console.error("Watermark error", err);
+  }
+}
+
 
 // ---------- MAIN ----------
 document.addEventListener("DOMContentLoaded", async () => {
@@ -113,6 +157,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     // 🔐 LOGIN CHECK
     await ensureLoggedIn();
+    applyWatermark();
 
     const slug = getSlugFromLocation();
     const materials = await fetchAllMaterials();
@@ -139,7 +184,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ---------- FREE PDF ----------
     if (!isPaidItem(material)) {
       paywallBox.style.display = "none";
-      loadPdfIntoFrame(material);
+      const frame = document.getElementById("pdf-frame");
+      frame.src = ""; // force reset
+      setTimeout(() => loadPdfIntoFrame(material), 100);
       return;
     }
 
@@ -154,7 +201,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (owned) {
       paywallBox.style.display = "none";
-      loadPdfIntoFrame(material);
+      const frame = document.getElementById("pdf-frame");
+      frame.src = ""; // force reset
+      setTimeout(() => loadPdfIntoFrame(material), 100);
       return;
     }
 
@@ -162,21 +211,74 @@ document.addEventListener("DOMContentLoaded", async () => {
     paywallBtn.addEventListener("click", async () => {
       try {
         paywallBtn.disabled = true;
-        paywallBtn.textContent = "Unlocking…";
+        paywallBtn.textContent = "Redirecting to payment…";
 
-        await markPurchase(material, material.price, "");
+        // 1️⃣ Create Razorpay order
+        const orderRes = await fetch("/api/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pdfId: material.id,
+            amount: material.price,
+          }),
+        });
 
-        paywallBox.style.display = "none";
-        loadPdfIntoFrame(material);
+        const orderData = await orderRes.json();
+        if (!orderData.success) {
+          throw new Error(orderData.message || "Failed to create order");
+        }
+
+        // 2️⃣ Open Razorpay Checkout
+        const rzp = new Razorpay({
+          key: orderData.key,
+          amount: orderData.amount,
+          currency: "INR",
+          order_id: orderData.orderId,
+          name: "StudentHub",
+          description: material.title,
+
+          handler: async function (response) {
+            // 3️⃣ Verify payment
+            const verifyRes = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                paymentId: orderData.paymentId,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+            if (!verifyData.success) {
+              throw new Error("Payment verification failed");
+            }
+
+            // ✅ SUCCESS → unlock PDF
+            paywallBox.style.display = "none";
+            const frame = document.getElementById("pdf-frame");
+            frame.src = ""; // force reset
+            setTimeout(() => loadPdfIntoFrame(material), 100);
+          },
+
+          modal: {
+            ondismiss: () => {
+              paywallBtn.disabled = false;
+              paywallBtn.textContent = "Unlock PDF";
+            },
+          },
+        });
+
+        rzp.open();
       } catch (err) {
-        setStatus(err.message || "Unlock failed", "error");
-      } finally {
         paywallBtn.disabled = false;
         paywallBtn.textContent = "Unlock PDF";
+        setStatus(err.message || "Payment failed", "error");
       }
     });
-
   } catch (err) {
     console.warn("Reader stopped:", err.message);
   }
 });
+

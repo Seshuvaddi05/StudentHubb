@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Request Material | StudentHub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Main styles -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Theme color -->
+  <meta name="theme-color" content="#111827" />
+</head>
+
+<body>
+
+  <!-- ===============================
+       SHARED STUDENT NAVBAR
+  ================================ -->
+  <header class="navbar">
+    <div class="logo">StudentHub</div>
+
+    <!-- Mobile hamburger -->
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <!-- Nav links -->
+    <nav class="nav-links" id="nav-links">
+      <a href="/">Home</a>
+      <a href="/#ebooks">E-Books</a>
+      <a href="/#question-papers">Question Papers</a>
+      <a href="/#about">About</a>
+      <a href="/#contact">Contact</a>
+      <a href="/dashboard.html">My Dashboard</a>
+      <a href="/login.html" id="nav-login-link" style="display:none;">Sign in</a>
+    </nav>
+
+    <!-- Right actions -->
+    <div class="nav-actions">
+      <button id="notifications-btn" class="nav-icon-btn" type="button" aria-label="Notifications">
+        🔔
+        <span id="notifications-count" class="nav-badge" style="display:none;">0</span>
+      </button>
+
+      <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+    </div>
+  </header>
+
+  <!-- ===============================
+       REQUEST PAGE CONTENT
+  ================================ -->
+  <main class="request-page">
+    <div class="request-container">
+
+      <h1 class="request-title">Request a Book or Question Paper</h1>
+      <p class="request-subtitle">
+        Tell us which e-book or question paper you need. Our team will review your request.
+      </p>
+
+      <form id="requestForm" class="request-form">
+
+        <div class="form-row">
+          <label for="name">Name</label>
+          <input type="text" id="name" required placeholder="Enter your name" />
+        </div>
+
+        <div class="form-row">
+          <label for="email">Email</label>
+          <input type="email" id="email" required placeholder="Enter your email" />
+        </div>
+
+        <div class="form-row">
+          <label for="type">Material Type</label>
+          <select id="type" required>
+            <option value="">Select type</option>
+            <option value="ebook">E-Book</option>
+            <option value="questionPaper">Question Paper</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="exam">Exam / Subject</label>
+          <input type="text" id="exam" placeholder="e.g. RRB NTPC, SSC CGL, Aptitude" />
+        </div>
+
+        <div class="form-row">
+          <label for="details">Details</label>
+          <textarea id="details" rows="4" required
+            placeholder="Book name, year, edition, or any specific details..."></textarea>
+        </div>
+
+        <button class="btn primary full-width" type="submit">
+          Send Request
+        </button>
+
+        <p id="reqMsg" class="form-message"></p>
+      </form>
+
+    </div>
+  </main>
+
+  <!-- ===============================
+       FOOTER
+  ================================ -->
+  <footer class="footer">
+    <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
+  </footer>
+
+  <!-- ===============================
+     SCRIPTS
+=============================== -->
+
+<!-- Main user script (THEME + NAV + AUTH) -->
+<script src="script.js"></script>
+
+<!-- Request form logic -->
+<script src="request.js"></script>
+
+<script>
+  // Footer year
+  document.getElementById("year").textContent = new Date().getFullYear();
+</script>
+
+
+</body>
+
+</html>
