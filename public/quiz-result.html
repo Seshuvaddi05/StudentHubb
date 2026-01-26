@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz Result | StudentHub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="/styles/styles.css" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui;
+      background: linear-gradient(135deg, #0f172a, #111827);
+      color: white;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    .brand {
+      font-size: 26px;
+      font-weight: 800;
+      color: #facc15;
+      margin-bottom: 25px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: #111827;
+      padding: 18px;
+      border-radius: 14px;
+      text-align: center;
+    }
+
+    .value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #facc15;
+    }
+
+    .actions {
+      margin-top: 30px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .yellow {
+      background: #facc15;
+      color: #111
+    }
+
+    .blue {
+      background: #3b82f6;
+      color: white
+    }
+
+    .green {
+      background: #22c55e;
+      color: white
+    }
+
+    .red {
+      background: #ef4444;
+      color: white
+    }
+
+    .purple {
+      background: #8b5cf6;
+      color: white
+    }
+
+    .review-item {
+      background: #1f2937;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .correct {
+      color: #22c55e
+    }
+
+    .wrong {
+      color: #ef4444
+    }
+
+    table {
+      width: 100%;
+      margin-top: 30px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      text-align: center
+    }
+
+    th {
+      background: #1f2937
+    }
+
+    tr:nth-child(even) {
+      background: #111827
+    }
+
+    .highlight {
+      background: #facc15 !important;
+      color: #111;
+      font-weight: 700;
+    }
+
+    #chart {
+      margin-top: 40px;
+      height: 300px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="brand">🎓 StudentHub — Quiz Result</div>
+
+    <!-- STATS -->
+    <div class="grid">
+      <div class="card">Total<div id="total" class="value">0</div>
+      </div>
+      <div class="card">Correct<div id="correct" class="value">0</div>
+      </div>
+      <div class="card">Wrong<div id="wrong" class="value">0</div>
+      </div>
+      <div class="card">Score<div id="score" class="value">0</div>
+      </div>
+      <div class="card">Accuracy<div id="accuracy" class="value">0%</div>
+      </div>
+      <div class="card">Time<div id="time" class="value">0m 0s</div>
+      </div>
+      <div class="card">Rank<div id="rank" class="value">-</div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="actions">
+      <button class="btn yellow" onclick="retake()">Retake</button>
+      <button class="btn purple" onclick="practiceWrong()">Wrong Practice</button>
+      <button class="btn blue" onclick="shareResult()">Share</button>
+      <button class="btn blue" onclick="downloadPDF()">PDF</button>
+      <button class="btn green" onclick="downloadCertificate()">Certificate</button>
+      <button class="btn red" onclick="back()">Back</button>
+    </div>
+
+    <canvas id="chart"></canvas>
+
+    <h2 style="margin-top:40px">📝 Answer Review</h2>
+    <div id="reviewList"></div>
+
+    <h2 style="margin-top:40px">🏆 Leaderboard</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>User</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboardBody"></tbody>
+    </table>
+
+  </div>
+
+
+  <script>
+    /* ================= LOAD RESULT ================= */
+    const raw = localStorage.getItem("quizResult");
+    if (!raw) location.href = "/quiz.html";
+
+    const r = JSON.parse(raw);
+
+    /* ================= ELEMENTS ================= */
+    const totalEl = document.getElementById("total");
+    const correctEl = document.getElementById("correct");
+    const wrongEl = document.getElementById("wrong");
+    const scoreEl = document.getElementById("score");
+    const accuracyEl = document.getElementById("accuracy");
+    const timeEl = document.getElementById("time");
+    const rankEl = document.getElementById("rank");
+    const reviewList = document.getElementById("reviewList");
+    const leaderboardBody = document.getElementById("leaderboardBody");
+
+    /* ================= VALUES (FROM SERVER ONLY) ================= */
+    const {
+      totalQuestions = 0,
+      correct = 0,
+      wrong = 0,
+      score = 0,
+      accuracy = 0,
+      timeTaken = 0,
+      review = [],
+      quizId
+    } = r;
+
+    totalEl.textContent = totalQuestions;
+    correctEl.textContent = correct;
+    wrongEl.textContent = wrong;
+    scoreEl.textContent = score;
+    accuracyEl.textContent = accuracy + "%";
+
+    const m = Math.floor(timeTaken / 60);
+    const s = timeTaken % 60;
+    timeEl.textContent = `${m}m ${s}s`;
+
+    /* ================= CHART ================= */
+    new Chart(document.getElementById("chart"), {
+      type: "bar",
+      data: {
+        labels: ["Correct", "Wrong"],
+        datasets: [{
+          label: "Questions",
+          data: [correct, wrong],
+          backgroundColor: ["#22c55e", "#ef4444"]
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+
+    /* ================= REVIEW (FIXED) ================= */
+    reviewList.innerHTML = "";
+
+    review.forEach((q, i) => {
+      const user = q.userAnswer ?? "-";
+      const correctAns = q.correctAnswer ?? "-";
+      const ok =
+        String(user).trim() === String(correctAns).trim();
+
+      reviewList.innerHTML += `
+    <div class="review-item">
+      <b>Q${i + 1}. ${q.questionText}</b><br>
+      Your: <span class="${ok ? "correct" : "wrong"}">${user}</span><br>
+      Correct: <span class="correct">${correctAns}</span>
+    </div>
+  `;
+    });
+
+    /* ================= LEADERBOARD + RANK (FIXED) ================= */
+    async function loadLeaderboard() {
+      try {
+        const res = await fetch(`/api/quiz/leaderboard?quizId=${quizId}`, {
+          credentials: "include"
+        });
+
+        const data = await res.json();
+
+        leaderboardBody.innerHTML = "";
+
+        (data.leaderboard || []).forEach(u => {
+          const row = document.createElement("tr");
+
+          // highlight ONLY if both score + first match
+          if (u.score === score && rankEl.textContent === "-") {
+            row.classList.add("highlight");
+            rankEl.textContent = u.rank;
+          }
+
+          row.innerHTML = `
+        <td>${u.rank}</td>
+        <td>${u.user || "Guest"}</td>
+        <td>${u.score}</td>
+      `;
+
+          leaderboardBody.appendChild(row);
+        });
+
+      } catch (e) {
+        console.log("Leaderboard error", e);
+      }
+    }
+
+    if (quizId) loadLeaderboard();
+
+    /* ================= BUTTONS ================= */
+    function practiceWrong() {
+      const wrongOnly = review.filter(q => q.userAnswer !== q.correctAnswer);
+      localStorage.setItem("practiceWrong", JSON.stringify(wrongOnly));
+      location.href = "/quiz-practice.html";
+    }
+
+    function shareResult() {
+      navigator.clipboard.writeText(location.href);
+      alert("Link copied!");
+    }
+
+    function back() {
+      localStorage.removeItem("quizResult");
+      location.href = "/quiz.html";
+    }
+
+    function retake() {
+      history.back();
+    }
+  </script>
+
+
+</body>
+
+</html>

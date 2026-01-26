@@ -4,7 +4,7 @@
 
 const express = require("express");
 const { ObjectId } = require("mongodb");
-const requireAuth = require("../middleware/auth"); // keep existing auth middleware
+const auth = require("../middleware/auth"); // keep existing auth middleware
 
 module.exports = function (db) {
   if (!db) {
@@ -38,7 +38,7 @@ module.exports = function (db) {
    * POST /api/user-submissions
    * User sends a PDF to admin for review
    */
-  router.post("/user-submissions", requireAuth, async (req, res) => {
+  router.post("/user-submissions", auth, async (req, res) => {
     try {
       const { title, description, fileUrl } = req.body || {};
       if (!title || !fileUrl) {
@@ -77,7 +77,7 @@ module.exports = function (db) {
    * GET /api/user-submissions
    * User sees their submissions
    */
-  router.get("/user-submissions", requireAuth, async (req, res) => {
+  router.get("/user-submissions", auth, async (req, res) => {
     try {
       const subs = await pdfSubmissionsCol()
         .find({ userId: req.user.id })
@@ -95,7 +95,7 @@ module.exports = function (db) {
    * GET /api/wallet
    * Return wallet coins and notifications + pending withdrawals
    */
-  router.get("/wallet", requireAuth, async (req, res) => {
+  router.get("/wallet", auth, async (req, res) => {
     try {
       const userDoc = await usersCol().findOne(
         { _id: (() => {
@@ -142,7 +142,7 @@ module.exports = function (db) {
    * POST /api/withdraw
    * Create a withdrawal request and deduct coins
    */
-  router.post("/withdraw", requireAuth, async (req, res) => {
+  router.post("/withdraw", auth, async (req, res) => {
     try {
       let { amountCoins } = req.body || {};
       amountCoins = Number(amountCoins) || 0;

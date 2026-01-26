@@ -34,9 +34,16 @@ const googleClient = GOOGLE_CLIENT_ID
   ? new OAuth2Client(GOOGLE_CLIENT_ID)
   : null;
 
+
+// admin quiz routes must be protected
+const auth = require("./middleware/auth");
+const adminOnly = require("./middleware/adminOnly");
+
+
 // ---- MongoDB setup ----
 const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = process.env.MONGODB_DB || "studenthub";
+
 
 if (!MONGODB_URI) {
   console.error(
@@ -73,6 +80,7 @@ function walletLedgerCollection() {
   return db.collection("walletLedger");
 }
 
+
 // -----------------------------
 // Middleware (global)
 // -----------------------------
@@ -86,6 +94,21 @@ app.use(express.json());
 app.use(cookieParser());
 
 
+app.use(
+  "/api/admin/quiz",
+  auth,
+  adminOnly,
+  require("./routes/adminQuiz")
+);
+
+// ✅ USER QUIZ ROUTES (leaderboard, submit, etc)
+const quizRoutes = require("./routes/quiz");
+app.use("/api/quiz", quizRoutes);
+
+
+// ✅ ADD THESE TWO LINES EXACTLY HERE
+const adminQuizQuestions = require("./routes/adminQuizQuestions");
+app.use("/api", adminQuizQuestions);
 
 // -----------------------------
 // Auth helpers
@@ -118,27 +141,6 @@ function attachUserFromCookie(req, res, next) {
 
 app.use(attachUserFromCookie);
 
-// require auth middleware (for protected routes)
-function requireAuth(req, res, next) {
-  if (req.user) return next();
-
-  const accept = req.headers.accept || "";
-  if (accept.includes("text/html")) {
-    const redirectTo =
-      "/login.html?next=" + encodeURIComponent(req.originalUrl || "/");
-    return res.redirect(redirectTo);
-  }
-
-  return res.status(401).json({ ok: false, error: "Not authenticated" });
-}
-
-
-function requireAdmin(req, res, next) {
-  if (!req.user || req.user.email !== process.env.ADMIN_EMAIL) {
-    return res.status(403).json({ ok: false, message: "Admin access only" });
-  }
-  next();
-}
 
 // -----------------------------
 // In-memory OTP stores
@@ -204,15 +206,18 @@ app.post("/api/admin/login", async (req, res) => {
       id: "admin",
       email: process.env.ADMIN_EMAIL,
       name: "Admin",
+      role: "admin", // 🔥 REQUIRED
     },
     JWT_SECRET,
     { expiresIn: "7d" }
   );
 
+
   res.cookie("token", token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
+    path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
@@ -407,6 +412,7 @@ app.post("/api/auth/login", async (req, res) => {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
+      path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -430,7 +436,7 @@ app.post("/api/auth/logout", (req, res) => {
 // =======================
 // 👉 ADD RAZORPAY CODE HERE 👇
 // =======================
-app.post("/api/create-order", requireAuth, async (req, res) => {
+app.post("/api/create-order", auth, async (req, res) => {
   try {
     const { pdfId, amount } = req.body;
 
@@ -473,7 +479,7 @@ app.post("/api/create-order", requireAuth, async (req, res) => {
 // ================================
 // VERIFY RAZORPAY PAYMENT (FINAL)
 // ================================
-app.post("/api/verify-payment", requireAuth, async (req, res) => {
+app.post("/api/verify-payment", auth, async (req, res) => {
   try {
     const {
       razorpay_order_id,
@@ -642,6 +648,7 @@ app.post("/api/auth/google", async (req, res) => {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
+      path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -655,7 +662,7 @@ app.post("/api/auth/google", async (req, res) => {
   }
 });
 
-app.get("/api/me", requireAuth, async (req, res) => {
+app.get("/api/me", auth, async (req, res) => {
   try {
     const user = await usersCollection().findOne({ email: req.user.email });
     if (!user) {
@@ -811,7 +818,7 @@ const uploadSubmission = multer({
 // POST create submission (supports either file upload or JSON with pdfUrl)
 // NOTE: call multer middleware directly. multer will only parse if request
 // is multipart/form-data; no need for manual content-type checks.
-app.post("/api/user-submissions", requireAuth, uploadSubmission.single("file"), async (req, res) => {
+app.post("/api/user-submissions", auth, uploadSubmission.single("file"), async (req, res) => {
   try {
     // Debug logs to inspect what arrived (helpful for troubleshooting)
     console.log("[SUBMISSION] POST /api/user-submissions hit");
@@ -908,7 +915,7 @@ app.post("/api/user-submissions", requireAuth, uploadSubmission.single("file"), 
 );
 
 // GET list submissions (USER – their own submissions only)
-app.get("/api/user-submissions", requireAuth, async (req, res) => {
+app.get("/api/user-submissions", auth, async (req, res) => {
   try {
     const { status } = req.query; // optional ?status=approved|rejected|pending
     const q = {
@@ -959,7 +966,7 @@ app.get("/api/user-submissions", requireAuth, async (req, res) => {
 // POST approve (admin)
 // NOTE: This handler marks submission as "approved" but DOES NOT auto-publish to ebooks.
 // Approved submissions remain in submissions collection and will be visible in the admin "Approved" page.
-app.post("/api/user-submissions/:id/approve", requireAuth, requireAdmin, async (req, res) => {
+app.post("/api/user-submissions/:id/approve", auth, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
     if (!id) {
@@ -1043,7 +1050,7 @@ app.post("/api/user-submissions/:id/approve", requireAuth, requireAdmin, async (
 // POST reject (admin)
 // Behavior: reject marks submission as "rejected" (kept for history)
 // If a file was uploaded and stored on disk, it will be removed as well.
-app.post("/api/user-submissions/:id/reject", requireAuth, requireAdmin, async (req, res) => {
+app.post("/api/user-submissions/:id/reject", auth, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
     const reason = (req.body && req.body.reason) || "";
@@ -1108,7 +1115,7 @@ app.post("/api/user-submissions/:id/reject", requireAuth, requireAdmin, async (r
 // ================================
 // ADMIN: GET ALL SUBMISSIONS
 // ================================
-app.get("/api/admin/submissions", requireAuth, requireAdmin, async (req, res) => {
+app.get("/api/admin/submissions", auth, adminOnly, async (req, res) => {
   try {
     const { status } = req.query; // optional ?status=pending|approved|rejected
 
@@ -1210,7 +1217,7 @@ function collectionByType(type) {
 // -----------------------------
 // My Library (purchased items)
 // -----------------------------
-app.get("/api/my-library", requireAuth, async (req, res) => {
+app.get("/api/my-library", auth, async (req, res) => {
   try {
     const userIdStr = req.user.id;
     let userObjectId = null;
@@ -1301,7 +1308,7 @@ app.get("/api/my-library", requireAuth, async (req, res) => {
 // -----------------------------
 // Add FREE items to library
 // -----------------------------
-app.post("/api/library/add", requireAuth, async (req, res) => {
+app.post("/api/library/add", auth, async (req, res) => {
   try {
     const { materialId } = req.body || {};
     if (!materialId) {
@@ -1365,7 +1372,7 @@ app.post("/api/library/add", requireAuth, async (req, res) => {
 // -----------------------------
 // READ-LATER APIs
 // -----------------------------
-app.get("/api/read-later", requireAuth, async (req, res) => {
+app.get("/api/read-later", auth, async (req, res) => {
   try {
     const docs = await readLaterCollection()
       .find({ userId: req.user.id })
@@ -1452,7 +1459,7 @@ app.get("/api/read-later", requireAuth, async (req, res) => {
   }
 });
 
-app.post("/api/read-later/add", requireAuth, async (req, res) => {
+app.post("/api/read-later/add", auth, async (req, res) => {
   try {
     const { materialId } = req.body || {};
     if (!materialId) {
@@ -1507,7 +1514,7 @@ app.post("/api/read-later/add", requireAuth, async (req, res) => {
   }
 });
 
-app.post("/api/read-later/remove", requireAuth, async (req, res) => {
+app.post("/api/read-later/remove", auth, async (req, res) => {
   try {
     const { materialId } = req.body || {};
     if (!materialId) {
@@ -1533,7 +1540,7 @@ app.post("/api/read-later/remove", requireAuth, async (req, res) => {
 /* ================================
    ADMIN: GET ALL REQUESTS
 ================================ */
-app.get("/api/admin/requests", requireAuth, requireAdmin, async (req, res) => {
+app.get("/api/admin/requests", auth, adminOnly, async (req, res) => {
   try {
     const list = await Request.find().sort({ createdAt: -1 });
     res.json({ ok: true, requests: list });
@@ -1545,7 +1552,7 @@ app.get("/api/admin/requests", requireAuth, requireAdmin, async (req, res) => {
 /* ================================
    ADMIN: UPDATE REQUEST STATUS
 ================================ */
-app.post("/api/admin/requests/:id", requireAuth, requireAdmin, async (req, res) => {
+app.post("/api/admin/requests/:id", auth, adminOnly, async (req, res) => {
   try {
     const { status, adminNote } = req.body;
 
@@ -1564,7 +1571,7 @@ app.post("/api/admin/requests/:id", requireAuth, requireAdmin, async (req, res) 
 // ================================
 // NOTIFICATIONS – USER APIs
 // ================================
-app.get("/api/notifications", requireAuth, async (req, res) => {
+app.get("/api/notifications", auth, async (req, res) => {
   try {
     const user = await usersCollection().findOne(
       { email: req.user.email },
@@ -1586,7 +1593,7 @@ app.get("/api/notifications", requireAuth, async (req, res) => {
 });
 
 
-app.post("/api/notifications/:index/read", requireAuth, async (req, res) => {
+app.post("/api/notifications/:index/read", auth, async (req, res) => {
   try {
     const index = Number(req.params.index);
 
@@ -1621,7 +1628,7 @@ app.post("/api/notifications/:index/read", requireAuth, async (req, res) => {
 // ================================
 // WALLET APIs  👈 ADD HERE
 // ================================
-app.get("/api/wallet", requireAuth, async (req, res) => {
+app.get("/api/wallet", auth, async (req, res) => {
   try {
     const user = await usersCollection().findOne({ email: req.user.email });
     if (!user) {
@@ -1656,7 +1663,7 @@ app.get("/api/wallet", requireAuth, async (req, res) => {
 // ================================
 // WALLET LEDGER (USER HISTORY)
 // ================================
-app.get("/api/wallet/ledger", requireAuth, async (req, res) => {
+app.get("/api/wallet/ledger", auth, async (req, res) => {
   try {
     const list = await walletLedgerCollection()
       .find({ userId: req.user.id })
@@ -1677,7 +1684,7 @@ app.get("/api/wallet/ledger", requireAuth, async (req, res) => {
 // ================================
 // WALLET ANALYTICS (USER)
 // ================================
-app.get("/api/wallet/analytics", requireAuth, async (req, res) => {
+app.get("/api/wallet/analytics", auth, async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -1721,7 +1728,7 @@ app.get("/api/wallet/analytics", requireAuth, async (req, res) => {
 // ================================
 // USER: Withdrawal History
 // ================================
-app.get("/api/withdrawals/history", requireAuth, async (req, res) => {
+app.get("/api/withdrawals/history", auth, async (req, res) => {
   try {
     const list = await withdrawalsCollection()
       .find({ userId: req.user.id })
@@ -1755,7 +1762,7 @@ app.get("/api/withdrawals/history", requireAuth, async (req, res) => {
 });
 
 
-app.post("/api/withdraw", requireAuth, async (req, res) => {
+app.post("/api/withdraw", auth, async (req, res) => {
   const session = mongoClientInstance.startSession();
 
   try {
@@ -1912,7 +1919,7 @@ app.post("/api/withdraw", requireAuth, async (req, res) => {
 });
 
 
-app.get("/api/admin/withdrawals", requireAuth, requireAdmin, async (req, res) => {
+app.get("/api/admin/withdrawals", auth, adminOnly, async (req, res) => {
   try {
     const { status, email } = req.query;
 
@@ -2003,8 +2010,8 @@ app.get("/api/admin/withdrawals", requireAuth, requireAdmin, async (req, res) =>
 // ================================
 app.get(
   "/api/admin/withdrawals/export",
-  requireAuth,
-  requireAdmin,
+  auth,
+  adminOnly,
   async (req, res) => {
     try {
       const list = await withdrawalsCollection()
@@ -2048,8 +2055,8 @@ app.get(
 
 app.post(
   "/api/admin/withdrawals/:id/approve",
-  requireAuth,
-  requireAdmin,
+  auth,
+  adminOnly,
   async (req, res) => {
 
     try {
@@ -2120,7 +2127,7 @@ app.post(
     }
   });
 
-app.post("/api/admin/withdrawals/:id/reject", requireAuth, requireAdmin, async (req, res) => {
+app.post("/api/admin/withdrawals/:id/reject", auth, adminOnly, async (req, res) => {
   try {
 
     const _id = new ObjectId(req.params.id);
@@ -2198,7 +2205,7 @@ app.post("/api/admin/withdrawals/:id/reject", requireAuth, requireAdmin, async (
 // ================================
 // ADMIN: MARK WITHDRAWAL AS PAID
 // ================================
-app.post("/api/admin/withdrawals/:id/paid", requireAuth, requireAdmin, async (req, res) => {
+app.post("/api/admin/withdrawals/:id/paid", auth, adminOnly, async (req, res) => {
   try {
     const _id = new ObjectId(req.params.id);
 
@@ -2289,7 +2296,7 @@ app.post("/api/admin/withdrawals/:id/paid", requireAuth, requireAdmin, async (re
 // -----------------------------
 // Purchases (unchanged)
 // -----------------------------
-app.post("/api/purchases", requireAuth, async (req, res) => {
+app.post("/api/purchases", auth, async (req, res) => {
   try {
     const { materialId, amountPaid, paymentId } = req.body || {};
 
@@ -2453,7 +2460,7 @@ app.post("/api/upload", (req, res) => {
 // -----------------------------
 // Delete a material + its PDF
 // -----------------------------
-app.delete("/api/materials/:type/:index", requireAuth, requireAdmin, async (req, res) => {
+app.delete("/api/materials/:type/:index", auth, adminOnly, async (req, res) => {
   try {
     const { type, index } = req.params;
     const i = parseInt(index, 10);
@@ -2494,7 +2501,7 @@ app.delete("/api/materials/:type/:index", requireAuth, requireAdmin, async (req,
 // ================================
 // ADMIN: Delete material by ID (PRODUCTION SAFE)
 // ================================
-app.delete("/api/admin/materials/:id", requireAuth, requireAdmin, async (req, res) => {
+app.delete("/api/admin/materials/:id", auth, adminOnly, async (req, res) => {
   try {
 
     const { id } = req.params;
@@ -2538,7 +2545,7 @@ app.delete("/api/admin/materials/:id", requireAuth, requireAdmin, async (req, re
 // -----------------------------
 // Track a "read" (view in reader)
 // -----------------------------
-app.post("/api/materials/:id/track-read", requireAuth, async (req, res) => {
+app.post("/api/materials/:id/track-read", auth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -2581,7 +2588,7 @@ app.post("/api/materials/:id/track-read", requireAuth, async (req, res) => {
 // -----------------------------
 // Track download (FREE PDFs ONLY)
 // -----------------------------
-app.get("/api/download/:type/:index", requireAuth, async (req, res) => {
+app.get("/api/download/:type/:index", auth, async (req, res) => {
   try {
     const { type, index } = req.params;
     const i = parseInt(index, 10);
@@ -2635,25 +2642,25 @@ app.get("/", (req, res) => {
 app.get("/login.html", (req, res) => {
   res.sendFile(path.join(__dirname, "login.html"));
 });
-app.get("/dashboard.html", requireAuth, (req, res) => {
+app.get("/dashboard.html", auth, (req, res) => {
   res.sendFile(path.join(__dirname, "dashboard.html"));
 });
-app.get("/view/:slug", requireAuth, (req, res) => {
+app.get("/view/:slug", auth, (req, res) => {
   res.sendFile(path.join(__dirname, "view.html"));
 });
-app.get("/library.html", requireAuth, (req, res) => {
+app.get("/library.html", auth, (req, res) => {
   res.sendFile(path.join(__dirname, "library.html"));
 });
-app.get("/read-later.html", requireAuth, (req, res) => {
+app.get("/read-later.html", auth, (req, res) => {
   res.sendFile(path.join(__dirname, "read-later.html"));
 });
-app.get("/submit-pdf.html", requireAuth, (req, res) => {
+app.get("/submit-pdf.html", auth, (req, res) => {
   res.sendFile(path.join(__dirname, "submit-pdf.html"));
 });
-app.get("/my-submissions.html", requireAuth, (req, res) => {
+app.get("/my-submissions.html", auth, (req, res) => {
   res.sendFile(path.join(__dirname, "my-submissions.html"));
 });
-app.get("/wallet.html", requireAuth, (req, res) => {
+app.get("/wallet.html", auth, (req, res) => {
   res.sendFile(path.join(__dirname, "wallet.html"));
 });
 
@@ -2662,39 +2669,43 @@ app.get("/wallet.html", requireAuth, (req, res) => {
 // -----------------------------
 
 // Admin dashboard
-app.get("/admin.html", requireAuth, requireAdmin, (req, res) => {
+app.get("/admin.html", adminOnly, (req, res) => {
   res.sendFile(path.join(__dirname, "admin.html"));
 });
 
-app.get("/admin", requireAuth, requireAdmin, (req, res) => {
+app.get("/admin", auth, adminOnly, (req, res) => {
   res.sendFile(path.join(__dirname, "admin.html"));
 });
 
 // Admin materials
-app.get("/admin-materials.html", requireAuth, requireAdmin, (req, res) => {
+app.get("/admin-materials.html", auth, adminOnly, (req, res) => {
   res.sendFile(path.join(__dirname, "admin-materials.html"));
 });
 
 // Admin submissions
-app.get("/admin-submissions.html", requireAuth, requireAdmin, (req, res) => {
+app.get("/admin-submissions.html", auth, adminOnly, (req, res) => {
   res.sendFile(path.join(__dirname, "admin-submissions.html"));
 });
 
 // Admin withdrawals
-app.get("/admin-withdrawals.html", requireAuth, requireAdmin, (req, res) => {
+app.get("/admin-withdrawals.html", auth, adminOnly, (req, res) => {
   res.sendFile(path.join(__dirname, "admin-withdrawals.html"));
 });
 
 // Admin approved submissions (optional page)
-app.get("/admin-approved.html", requireAuth, requireAdmin, (req, res) => {
+app.get("/admin-approved.html", auth, adminOnly, (req, res) => {
   res.sendFile(path.join(__dirname, "admin-approved.html"));
 });
 
 // Admin user requests
-app.get("/admin-requests.html", requireAuth, requireAdmin, (req, res) => {
+app.get("/admin-requests.html", auth, adminOnly, (req, res) => {
   res.sendFile(path.join(__dirname, "admin-requests.html"));
 });
 
+// Admin quiz generator
+app.get("/admin-quiz.html", auth, adminOnly, (req, res) => {
+  res.sendFile(path.join(__dirname, "admin-quiz.html"));
+});
 
 
 // Global error handler
@@ -2742,7 +2753,7 @@ async function startServer() {
     // ===============================
     // 🔐 SECURE PDF DELIVERY (REGEX – EXPRESS SAFE)
     // ===============================
-    app.get(/^\/pdfs\/(.+)/, requireAuth, async (req, res) => {
+    app.get(/^\/pdfs\/(.+)/, auth, async (req, res) => {
       try {
         const relativePath = req.params[0]; // ebooks/abc.pdf OR submissions/x.pdf
         const baseDir = path.join(__dirname, "pdfs");
@@ -2839,7 +2850,7 @@ async function startServer() {
       if (typeof userRewardsModule === "function") {
         try {
           const router = userRewardsModule(db, {
-            requireAuth,
+            auth,
             addNotification: require("./utils/notifications")?.addNotification,
             ObjectId,
           });
@@ -2865,7 +2876,7 @@ async function startServer() {
       const adminRewards = require("./routes/adminRewards");
       if (typeof adminRewards === "function") {
         try {
-          const router = adminRewards(db, { requireAuth, ObjectId });
+          const router = adminRewards(db, { auth, ObjectId });
           app.use("/api", router);
           console.log("[Routes] Mounted routes/adminRewards (factory)");
         } catch (callErr) {
@@ -2891,8 +2902,8 @@ async function startServer() {
     // ===============================
     app.get(
       "/admin/preview/submission/:id",
-      requireAuth,
-      requireAdmin,
+      auth,
+      adminOnly,
       async (req, res) => {
         try {
           const sub = await submissionsCollection().findOne({
@@ -2933,6 +2944,11 @@ async function startServer() {
         extensions: ["html", "css", "js", "png", "jpg", "svg"],
       })
     );
+
+
+
+    app.use(express.static(path.join(__dirname, "public")));
+
 
 
 

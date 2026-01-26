@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>StudentHub Admin | Generate Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- GLOBAL SITE STYLES (same as admin upload page) -->
+  <link rel="stylesheet" href="/styles/styles.css" />
+
+  <!-- ADMIN QUIZ PAGE STYLES -->
+  <link rel="stylesheet" href="/admin/admin-quiz.css" />
+</head>
+
+<body>
+
+  <div class="admin-shell">
+
+    <!-- ================= ADMIN NAVBAR (SHARED) ================= -->
+    <nav class="admin-navbar">
+      <div class="admin-navbar-inner">
+
+        <div class="admin-brand">StudentHub Admin</div>
+
+        <div class="admin-nav">
+          <a href="/admin.html">Upload</a>
+          <a href="/admin-materials.html">Materials</a>
+          <a href="/admin-submissions.html">Submissions</a>
+          <a href="/admin-approved.html">Approved</a>
+          <a href="/admin-withdrawals.html">Withdrawals</a>
+          <a href="/admin-requests.html">📩 Requests</a>
+          <a href="/admin/admin-quiz.html" class="active">Generate Quiz</a>
+          <a href="/admin/admin-quizzes.html">All Quizzes</a>
+        </div>
+
+        <div class="admin-actions">
+          <a href="/" class="admin-view-link">View site</a>
+          <button id="theme-toggle" class="theme-toggle-btn" type="button">🌙</button>
+        </div>
+
+      </div>
+    </nav>
+
+    <!-- ================= PAGE CONTENT ================= -->
+    <main class="admin-page">
+      <div class="admin-container">
+
+        <div class="admin-card">
+          <h2>Generate New Quiz</h2>
+          <p class="muted">
+            Create and store quizzes for students. Only admins can access this.
+          </p>
+
+          <!-- Quiz Title -->
+          <label for="title">Quiz Title</label>
+          <input
+            id="title"
+            type="text"
+            placeholder="e.g. Quantitative Aptitude – Set 1"
+          />
+
+          <!-- Topic -->
+          <label for="topic">Topic</label>
+          <select id="topic">
+            <option value="">Select topic</option>
+            <option value="quantitative">Quantitative Aptitude</option>
+            <option value="reasoning">General Reasoning</option>
+            <option value="gk">General Knowledge</option>
+            <option value="current_affairs">Current Affairs</option>
+            <option value="programming">Programming</option>
+          </select>
+
+          <!-- Programming Language -->
+          <div id="languageBox" style="display:none;">
+            <label for="language">Programming Language</label>
+            <select id="language">
+              <option>Python</option>
+              <option>Java</option>
+              <option>C++</option>
+              <option>JavaScript</option>
+            </select>
+          </div>
+
+          <!-- Submit -->
+          <button id="generateBtn" class="btn-primary" onclick="generateQuiz()">
+            Generate & Save Quiz
+          </button>
+
+          <!-- Status -->
+          <p id="status" class="status-text"></p>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ================= SCRIPTS ================= -->
+  <script src="/admin/admin-quiz.js" defer></script>
+  <script src="/admin/admin-theme.js" defer></script>
+
+</body>
+</html>

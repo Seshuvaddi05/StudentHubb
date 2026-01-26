@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <title>Admin – User Requests | StudentHub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="/styles/styles.css">
 </head>
 
 <body class="admin-page">
@@ -13,22 +13,26 @@
     <nav class="admin-navbar">
         <div class="admin-navbar-inner">
 
-            <span class="admin-brand">StudentHub Admin</span>
+            <div class="admin-brand">StudentHub Admin</div>
 
             <div class="admin-nav">
-                <a href="/admin.html">Upload</a>
+                <a href="/admin.html" class="active">Upload</a>
                 <a href="/admin-materials.html">Materials</a>
                 <a href="/admin-submissions.html">Submissions</a>
                 <a href="/admin-approved.html">Approved</a>
                 <a href="/admin-withdrawals.html">Withdrawals</a>
-                <a href="/admin-requests.html" class="active">📩 Requests</a>
-                <a href="/" class="view-site">View site</a>
+                <a href="/admin-requests.html">📩 Requests</a>
+                <a href="/admin/admin-quiz.html">Generate Quiz</a>
+                <a href="/admin/admin-quizzes.html" class="active">All Quizzes</a>
+            </div>
+
+            <div class="admin-actions">
+                <a href="/" class="admin-view-link">View site</a>
                 <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
             </div>
 
         </div>
     </nav>
-
 
     <!-- ================= PAGE CONTENT ================= -->
     <main class="admin-container">

@@ -1,17 +1,21 @@
 // middleware/auth.js
-// Shared auth middleware for routes (userRewards, adminRewards, etc.)
+// Shared authentication middleware for protected routes
 
 const jwt = require("jsonwebtoken");
 
-// Same secret as in server.js
+// MUST match the same secret used in server.js
 const JWT_SECRET = process.env.JWT_SECRET || "changeme_jwt_secret";
 
-function requireAuth(req, res, next) {
+module.exports = function auth(req, res, next) {
   try {
-    // 1) Try cookie (main flow from your site)
-    let token = req.cookies && req.cookies.token;
+    let token = null;
 
-    // 2) Fallback to Authorization: Bearer <token> (useful for Postman)
+    // 1️⃣ Primary: Cookie-based auth (your website flow)
+    if (req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    }
+
+    // 2️⃣ Fallback: Authorization header (Postman / API testing)
     if (!token && req.headers.authorization) {
       const parts = req.headers.authorization.split(" ");
       if (parts.length === 2 && parts[0] === "Bearer") {
@@ -19,24 +23,30 @@ function requireAuth(req, res, next) {
       }
     }
 
+    // ❌ No token → not authenticated
     if (!token) {
-      return res.status(401).json({ ok: false, message: "Not authenticated" });
+      return res.status(401).json({
+        ok: false,
+        message: "Not authenticated",
+      });
     }
 
+    // 🔐 Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // Attach user info to request so routes can use it
+    // ✅ Attach user to request
     req.user = {
       id: decoded.id,
       email: decoded.email,
-      name: decoded.name,
+      username: decoded.username
     };
 
-    return next();
+    next();
   } catch (err) {
-    console.error("[auth middleware] error verifying token:", err.message);
-    return res.status(401).json({ ok: false, message: "Not authenticated" });
+    console.error("[AUTH] Invalid or expired token:", err.message);
+    return res.status(401).json({
+      ok: false,
+      message: "Not authenticated",
+    });
   }
-}
-
-module.exports = requireAuth;
+};

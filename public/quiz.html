@@ -1,0 +1,258 @@
+<!-- public/quiz.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quizzes | StudentHub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles/styles.css" />
+
+  <style>
+    body{
+      background:linear-gradient(135deg,#0f172a,#111827);
+      color:white;
+      font-family:system-ui;
+      margin:0;
+    }
+
+    .container{
+      max-width:1200px;
+      margin:40px auto;
+      padding:20px;
+    }
+
+    h1{
+      font-size:28px;
+      margin-bottom:20px;
+      color:#facc15;
+    }
+
+    /* ================= HEADER TOOLS ================= */
+
+    .toolbar{
+      display:flex;
+      gap:12px;
+      margin-bottom:25px;
+      flex-wrap:wrap;
+    }
+
+    .toolbar input,
+    .toolbar select{
+      padding:8px 12px;
+      border-radius:8px;
+      border:none;
+      outline:none;
+    }
+
+    /* ================= GRID ================= */
+
+    .quiz-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+      gap:20px;
+    }
+
+    /* ================= CARD ================= */
+
+    .quiz-card{
+      padding:20px;
+      border-radius:16px;
+      background:#111827;
+      box-shadow:0 10px 30px rgba(0,0,0,.4);
+      transition:all .25s;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+
+    .quiz-card:hover{
+      transform:translateY(-5px);
+      box-shadow:0 18px 40px rgba(0,0,0,.6);
+    }
+
+    .quiz-title{
+      font-size:18px;
+      font-weight:700;
+      margin-bottom:10px;
+    }
+
+    .quiz-meta{
+      font-size:14px;
+      opacity:.85;
+      margin-bottom:12px;
+      line-height:1.5;
+    }
+
+    .badge{
+      background:#1f2937;
+      padding:4px 8px;
+      border-radius:6px;
+      font-size:12px;
+      margin-right:6px;
+    }
+
+    .start-btn{
+      background:#facc15;
+      color:#111;
+      border:none;
+      padding:10px 14px;
+      border-radius:8px;
+      font-weight:700;
+      cursor:pointer;
+      margin-top:12px;
+      width:100%;
+    }
+
+    .start-btn:hover{
+      opacity:.9;
+    }
+
+    /* ================= STATES ================= */
+
+    .loading,
+    .empty{
+      opacity:.7;
+      text-align:center;
+      margin-top:40px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>🎓 StudentHub — Quizzes</h1>
+
+  <!-- 🔍 Toolbar -->
+  <div class="toolbar">
+    <input id="search" placeholder="Search quiz..." />
+    <select id="topicFilter">
+      <option value="">All Topics</option>
+    </select>
+  </div>
+
+  <div id="quizList" class="quiz-grid loading">
+    Loading quizzes...
+  </div>
+
+</div>
+
+
+<script>
+let allQuizzes = [];
+
+
+/* =========================================
+   LOAD QUIZZES
+========================================= */
+async function loadQuizzes() {
+  const list = document.getElementById("quizList");
+  list.innerHTML = "Loading quizzes...";
+
+  try {
+    const res = await fetch("/api/quiz", {
+      credentials: "include"
+    });
+
+    if (!res.ok) throw new Error("Fetch failed");
+
+    const data = await res.json();
+
+    allQuizzes = data.quizzes || [];
+
+    buildTopicFilter();
+    render(allQuizzes);
+
+  } catch (err) {
+    console.error(err);
+    list.innerHTML = "<div class='empty'>❌ Failed to load quizzes</div>";
+  }
+}
+
+
+/* =========================================
+   RENDER
+========================================= */
+function render(quizzes) {
+  const list = document.getElementById("quizList");
+
+  list.innerHTML = "";
+
+  if (!quizzes.length) {
+    list.innerHTML = "<div class='empty'>No quizzes found</div>";
+    return;
+  }
+
+  quizzes.forEach(q => {
+    const card = document.createElement("div");
+    card.className = "quiz-card";
+
+    card.innerHTML = `
+      <div>
+        <div class="quiz-title">${q.title}</div>
+
+        <div class="quiz-meta">
+          <span class="badge">${q.topic}</span>
+          <span class="badge">${q.totalQuestions} Questions</span>
+        </div>
+      </div>
+
+      <button class="start-btn" onclick="startQuiz('${q.id}')">
+        Start Quiz
+      </button>
+    `;
+
+    list.appendChild(card);
+  });
+}
+
+
+/* =========================================
+   START QUIZ
+========================================= */
+function startQuiz(id){
+  window.location.href = `/quiz-attempt.html?quizId=${id}`;
+}
+
+
+/* =========================================
+   SEARCH + FILTER
+========================================= */
+document.getElementById("search").addEventListener("input", filter);
+document.getElementById("topicFilter").addEventListener("change", filter);
+
+function filter(){
+  const term = search.value.toLowerCase();
+  const topic = topicFilter.value;
+
+  const filtered = allQuizzes.filter(q =>
+    q.title.toLowerCase().includes(term) &&
+    (!topic || q.topic === topic)
+  );
+
+  render(filtered);
+}
+
+
+/* =========================================
+   BUILD TOPIC FILTER
+========================================= */
+function buildTopicFilter(){
+  const topics = [...new Set(allQuizzes.map(q=>q.topic))];
+  const select = document.getElementById("topicFilter");
+
+  topics.forEach(t=>{
+    const opt=document.createElement("option");
+    opt.value=t;
+    opt.textContent=t;
+    select.appendChild(opt);
+  });
+}
+
+
+loadQuizzes();
+</script>
+
+</body>
+</html>

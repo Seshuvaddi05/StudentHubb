@@ -1,0 +1,258 @@
+/* ===============================
+   STUDENTHUB QUIZ THEME (FINAL)
+   =============================== */
+
+:root {
+  --bg-dark: #020617;
+  --bg-card: #ffffff;
+  --primary: #facc15;
+  --secondary: #1e293b;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --text-dark: #0f172a;
+  --text-light: #64748b;
+  --border: #e5e7eb;
+  --radius: 14px;
+}
+
+/* ===============================
+   GLOBAL
+   =============================== */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f8fafc;
+  color: var(--text-dark);
+}
+
+/* ===============================
+   NAVBAR (MATCHES STUDENTHUB)
+   =============================== */
+.quiz-navbar {
+  background: linear-gradient(135deg, #020617, #0f172a);
+  padding: 16px 40px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quiz-navbar h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.quiz-navbar a {
+  color: #e5e7eb;
+  text-decoration: none;
+  margin-left: 24px;
+  font-weight: 500;
+}
+
+.quiz-navbar a:hover {
+  color: var(--primary);
+}
+
+/* ===============================
+   CONTAINER
+   =============================== */
+.quiz-container {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+/* ===============================
+   CARD
+   =============================== */
+.quiz-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 32px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ===============================
+   HEADINGS
+   =============================== */
+.quiz-title {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+/* ===============================
+   SELECT + BUTTON (START QUIZ)
+   =============================== */
+.quiz-select,
+.quiz-button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.quiz-button {
+  background: var(--primary);
+  border: none;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.quiz-button:hover {
+  opacity: 0.9;
+}
+
+/* ===============================
+   TIMER
+   =============================== */
+.quiz-timer {
+  text-align: right;
+  font-weight: 700;
+  color: var(--danger);
+  margin-bottom: 10px;
+}
+
+/* ===============================
+   QUESTION
+   =============================== */
+.quiz-question {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+/* ===============================
+   OPTIONS
+   =============================== */
+.quiz-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.option-btn {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+.option-btn:hover {
+  border-color: var(--primary);
+}
+
+.option-btn.selected {
+  background: #fef9c3;
+  border-color: var(--primary);
+  font-weight: 700;
+}
+
+/* ===============================
+   NAVIGATION BUTTONS
+   =============================== */
+.quiz-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28px;
+}
+
+.quiz-btn {
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quiz-btn.primary {
+  background: var(--secondary);
+  color: #fff;
+}
+
+.quiz-btn.secondary {
+  background: #111827;
+  color: #fff;
+}
+
+.quiz-btn.warning {
+  background: var(--warning);
+  color: #fff;
+}
+
+.quiz-btn:hover {
+  opacity: 0.9;
+}
+
+.quiz-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===============================
+   QUESTION PALETTE
+   =============================== */
+.palette-card {
+  background: #ffffff;
+  margin-top: 30px;
+  padding: 22px;
+  border-radius: var(--radius);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+.palette-title {
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  gap: 10px;
+}
+
+.palette-btn {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+}
+
+/* Palette states */
+.palette-btn.not-attempted {
+  background: var(--danger);
+}
+
+.palette-btn.attempted {
+  background: var(--success);
+}
+
+.palette-btn.revisit {
+  background: var(--warning);
+}
+
+/* ===============================
+   RESULT PAGE
+   =============================== */
+.quiz-result p {
+  font-size: 16px;
+  margin: 8px 0;
+}
+
+.quiz-score {
+  font-size: 30px;
+  font-weight: 900;
+  margin-top: 20px;
+}

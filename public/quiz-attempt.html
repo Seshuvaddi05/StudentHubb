@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Attempt Quiz | StudentHub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles/styles.css" />
+
+  <style>
+    /* ================= GLOBAL ================= */
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system;
+      background: linear-gradient(135deg, #0f172a, #111827);
+      color: white;
+      transition: .25s;
+    }
+
+    body.light {
+      background: #f6f8fb;
+      color: #111;
+    }
+
+    .layout {
+      display: flex;
+      height: 100vh
+    }
+
+    /* ================= SIDEBAR ================= */
+
+    .sidebar {
+      width: 230px;
+      background: #0b1220;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    body.light .sidebar {
+      background: #fff
+    }
+
+    .q-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .q-btn {
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      background: #1f2937;
+      color: white;
+    }
+
+    .q-btn.active {
+      background: #facc15;
+      color: #111
+    }
+
+    .q-btn.answered {
+      background: #16a34a
+    }
+
+    .q-btn.review {
+      background: #ef4444
+    }
+
+    /* ================= MAIN ================= */
+
+    .main {
+      flex: 1;
+      padding: 30px 60px
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      font-size: 22px;
+      font-weight: 700;
+      color: #facc15;
+    }
+
+    .right-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* timer */
+    .timer {
+      background: #facc15;
+      color: #111;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .timer.danger {
+      background: #ef4444;
+      color: white;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: .5
+      }
+    }
+
+    .toggle {
+      cursor: pointer
+    }
+
+    /* progress */
+    .progress {
+      height: 6px;
+      background: #1f2937;
+      border-radius: 6px;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+
+    .progress-inner {
+      height: 100%;
+      width: 0%;
+      background: #facc15;
+      transition: .3s;
+    }
+
+    /* card */
+    .card {
+      background: #111827;
+      padding: 28px;
+      border-radius: 14px;
+    }
+
+    body.light .card {
+      background: #fff
+    }
+
+    .option {
+      display: block;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      background: #1f2937;
+      cursor: pointer;
+    }
+
+    body.light .option {
+      background: #eef2f7
+    }
+
+    .option:hover {
+      transform: translateX(4px)
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .yellow {
+      background: #facc15;
+      color: #111
+    }
+
+    .red {
+      background: #ef4444;
+      color: white
+    }
+
+    .blue {
+      background: #3b82f6;
+      color: white
+    }
+
+    .submit-wrap {
+      text-align: center;
+      margin-top: 20px
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <h3>Questions</h3>
+      <div id="qGrid" class="q-grid"></div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <div class="topbar">
+        <div class="brand">StudentHub</div>
+
+        <div class="right-controls">
+          <button id="pauseBtn" class="btn blue">Pause</button>
+          <div id="timer" class="timer">00:00</div>
+          <span id="modeToggle" class="toggle">🌙</span>
+        </div>
+      </div>
+
+      <div class="progress">
+        <div id="progressBar" class="progress-inner"></div>
+      </div>
+
+      <div id="questionBox"></div>
+
+      <div class="submit-wrap">
+        <button id="submitBtn" class="btn yellow">Submit Quiz</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <script>
+    const quizId = new URLSearchParams(location.search).get("quizId");
+
+    let questions = [];
+    let answers = {};   // ⭐ DO NOT use localStorage here
+    let review = new Set(JSON.parse(localStorage.getItem("quizReview") || "[]"));
+
+    let current = 0;
+    let paused = false;
+    let remaining = 0;
+    let timerInterval;
+    let startTime = new Date();
+
+
+    // =================================================
+    // LOAD QUIZ
+    // =================================================
+    async function loadQuiz() {
+      const res = await fetch(`/api/quiz/${quizId}`, { credentials: "include" });
+      const data = await res.json();
+
+      questions = data.questions; // keep server order
+      
+      createSidebar();
+      showQuestion(0);
+
+      remaining = questions.length * 60;
+      startTimer();
+    }
+
+
+    // =================================================
+    // SIDEBAR
+    // =================================================
+    function createSidebar() {
+      const grid = document.getElementById("qGrid");
+      questions.forEach((_, i) => {
+        const b = document.createElement("button");
+        b.className = "q-btn";
+        b.textContent = i + 1;
+        b.onclick = () => showQuestion(i);
+        grid.appendChild(b);
+      });
+    }
+
+    function updateSidebar() {
+      document.querySelectorAll(".q-btn").forEach((b, i) => {
+        b.className = "q-btn";
+        if (i === current) b.classList.add("active");
+        if (answers[questions[i]._id]) b.classList.add("answered");
+        if (review.has(i)) b.classList.add("review");
+      });
+    }
+
+
+    // =================================================
+    // QUESTION
+    // =================================================
+    function showQuestion(i) {
+      current = i;
+      const q = questions[i];
+
+      document.getElementById("questionBox").innerHTML = `
+  <div class="card">
+    <h2>Q${i + 1}. ${q.questionText}</h2>
+    ${q.options.map(o => `
+      <label class="option">
+        <input type="radio" name="opt" value="${o}" ${answers[i] === o ? 'checked' : ''}/> ${o}
+      </label>`).join("")}
+    <div class="nav-buttons">
+      <button class="btn yellow" onclick="prev()">Prev</button>
+      <button class="btn red" onclick="markReview()">Review</button>
+      <button class="btn yellow" onclick="next()">Next</button>
+    </div>
+  </div>`;
+
+      document.querySelectorAll("input").forEach(r => {
+        r.onchange = () => {
+          answers[q._id] = r.value;
+          localStorage.setItem("quizAnswers", JSON.stringify(answers));
+          updateSidebar();
+          updateProgress();
+        }
+      });
+
+      updateSidebar();
+      updateProgress();
+    }
+
+    function next() { if (current < questions.length - 1) showQuestion(current + 1) }
+    function prev() { if (current > 0) showQuestion(current - 1) }
+
+    function markReview() {
+      review.add(current);
+      localStorage.setItem("quizReview", JSON.stringify([...review]));
+      updateSidebar();
+    }
+
+
+    // =================================================
+    // TIMER
+    // =================================================
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        if (paused) return;
+
+        remaining--;
+
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+
+        const el = document.getElementById("timer");
+        el.textContent=`${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+
+        if (remaining <= 60) el.classList.add("danger");
+        if (remaining === 60) alert("⚠️ 1 minute left!");
+
+        if (remaining <= 0) {
+          alert("⏰ Auto submitting...");
+          submitQuiz(true);
+        }
+
+      }, 1000);
+    }
+
+    pauseBtn.onclick = () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? "Resume" : "Pause";
+    };
+
+
+    // =================================================
+    // PROGRESS
+    // =================================================
+    function updateProgress() {
+      const percent = (Object.keys(answers).length / questions.length) * 100;
+      progressBar.style.width = percent + "%";
+    }
+
+
+    // =================================================
+    // SUBMIT
+    // =================================================
+    async function submitQuiz(auto = false) {
+
+      if (!auto && !confirm("Submit quiz now?")) return;
+
+      clearInterval(timerInterval);
+
+      const payload = answers;
+
+      const res = await fetch(`/api/quiz/${quizId}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          answers: payload,
+          startedAt: startTime
+        })
+      });
+
+      const result = await res.json();
+
+      localStorage.removeItem("quizAnswers");
+      localStorage.removeItem("quizReview");
+
+      result.quizId = quizId;   // ⭐ needed for leaderboard
+      localStorage.setItem("quizResult", JSON.stringify(result));
+      location.href = "/quiz-result.html";
+    }
+
+    submitBtn.onclick = () => submitQuiz(false);
+
+
+    // =================================================
+    // KEYBOARD SHORTCUTS (RESTORED)
+    // =================================================
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowLeft") prev();
+      if (["1", "2", "3", "4"].includes(e.key)) {
+        const radios = document.querySelectorAll("input[type=radio]");
+        if (radios[e.key - 1]) radios[e.key - 1].click();
+      }
+      if (e.key.toLowerCase() === "r") markReview();
+      if (e.key === "Enter") submitQuiz(false);
+    });
+
+
+    // =================================================
+    // THEME
+    // =================================================
+    modeToggle.onclick = () => {
+      document.body.classList.toggle("light");
+      modeToggle.textContent = document.body.classList.contains("light") ? "☀️" : "🌙";
+    };
+
+    window.onbeforeunload = () => true;
+
+    loadQuiz();
+  </script>
+
+</body>
+
+</html>

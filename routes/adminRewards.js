@@ -12,7 +12,7 @@ const router = express.Router();
 // ------------------------------------------------------------
 // ADMIN AUTH (IMPORTANT FIX)
 // ------------------------------------------------------------
-// You tried importing requireAdmin from auth.js but it doesn't exist.
+// You tried importing adminOnly from auth.js but it doesn't exist.
 // This is the correct working admin guard used by server.js login:
 //
 // To call admin APIs, send header:
@@ -21,7 +21,7 @@ const router = express.Router();
 // No crashing, no undefined middleware.
 const ADMIN_SECRET = process.env.ADMIN_SECRET || "changeme123";
 
-function requireAdmin(req, res, next) {
+function adminOnly(req, res, next) {
   const incoming =
     req.headers["x-admin-secret"] ||
     req.query.adminSecret ||
@@ -36,7 +36,7 @@ function requireAdmin(req, res, next) {
 // ------------------------------------------------------------
 // GET /api/admin/submissions   ?status=pending|approved|rejected
 // ------------------------------------------------------------
-router.get("/admin/submissions", requireAdmin, async (req, res) => {
+router.get("/admin/submissions", adminOnly, async (req, res) => {
   try {
     const { status = "pending" } = req.query;
 
@@ -58,7 +58,7 @@ router.get("/admin/submissions", requireAdmin, async (req, res) => {
 // POST /api/admin/submissions/:id/approve
 // body: { coinsAwarded }
 // ------------------------------------------------------------
-router.post("/admin/submissions/:id/approve", requireAdmin, async (req, res) => {
+router.post("/admin/submissions/:id/approve", adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
     let { coinsAwarded } = req.body;
@@ -109,7 +109,7 @@ router.post("/admin/submissions/:id/approve", requireAdmin, async (req, res) => 
 // POST /api/admin/submissions/:id/reject
 // body: { reason }
 // ------------------------------------------------------------
-router.post("/admin/submissions/:id/reject", requireAdmin, async (req, res) => {
+router.post("/admin/submissions/:id/reject", adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
@@ -150,7 +150,7 @@ router.post("/admin/submissions/:id/reject", requireAdmin, async (req, res) => {
 // ------------------------------------------------------------
 // GET /api/admin/withdrawals
 // ------------------------------------------------------------
-router.get("/admin/withdrawals", requireAdmin, async (req, res) => {
+router.get("/admin/withdrawals", adminOnly, async (req, res) => {
   try {
     const { status = "pending" } = req.query;
 
@@ -171,7 +171,7 @@ router.get("/admin/withdrawals", requireAdmin, async (req, res) => {
 // ------------------------------------------------------------
 router.post(
   "/admin/withdrawals/:id/approve",
-  requireAdmin,
+  adminOnly,
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -210,7 +210,7 @@ router.post(
 // ------------------------------------------------------------
 router.post(
   "/admin/withdrawals/:id/reject",
-  requireAdmin,
+  adminOnly,
   async (req, res) => {
     try {
       const { id } = req.params;

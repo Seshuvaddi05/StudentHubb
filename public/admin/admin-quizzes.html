@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>StudentHub Admin | All Quizzes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+```
+<!-- MAIN STYLES -->
+<link rel="stylesheet" href="/styles/styles.css" />
+<link rel="stylesheet" href="/admin/admin-quizzes.css" />
+
+<meta name="theme-color" content="#0f172a" />
+
+<style>
+    /* =================================================
+       FILTER BAR
+    ================================================= */
+    .filter-bar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 16px 0 10px;
+    }
+
+    .filter-input,
+    .filter-select {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        font-size: 14px;
+        background: #fff;
+        min-width: 180px;
+    }
+
+    .filter-input:focus,
+    .filter-select:focus {
+        outline: none;
+        border-color: #6366f1;
+    }
+
+    /* =================================================
+       TABLE WRAPPER (SCROLL ONLY BODY)
+    ================================================= */
+    .table-wrapper {
+        max-height: 70vh;
+        overflow-y: auto;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+    }
+
+    /* =================================================
+       TABLE
+    ================================================= */
+    .quiz-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .quiz-table th,
+    .quiz-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    /* ⭐ Clean light sticky header (NO BLACK BAR) */
+    .quiz-table thead th {
+        position: sticky;
+        top: 0;
+        background: #f9fafb;
+        color: #374151;
+        font-weight: 600;
+        z-index: 10;
+        box-shadow: 0 1px 0 #e5e7eb;
+    }
+
+    /* =================================================
+       STATUS BADGE
+    ================================================= */
+    .status-badge {
+        padding: 4px 10px;
+        font-size: 12px;
+        border-radius: 999px;
+        font-weight: 600;
+    }
+
+    .active {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .disabled {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* =================================================
+       BUTTONS
+    ================================================= */
+    .btn {
+        padding: 6px 10px;
+        font-size: 13px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        margin-right: 6px;
+    }
+
+    .btn-toggle {
+        background: #e5e7eb;
+    }
+
+    .btn-delete {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn:hover {
+        opacity: 0.85;
+    }
+</style>
+```
+
+</head>
+
+<body>
+
+```
+<!-- NAVBAR -->
+<div class="admin-navbar">
+    <div class="admin-navbar-inner">
+        <div class="admin-brand">StudentHub Admin</div>
+
+        <nav class="admin-nav">
+            <a href="/admin.html">Upload</a>
+            <a href="/admin-materials.html">Materials</a>
+            <a href="/admin-submissions.html">Submissions</a>
+            <a href="/admin-approved.html">Approved</a>
+            <a href="/admin-withdrawals.html">Withdrawals</a>
+            <a href="/admin-requests.html">Requests</a>
+            <a href="/admin/admin-quiz.html">Generate Quiz</a>
+            <a href="/admin/admin-quizzes.html" class="active">All Quizzes</a>
+        </nav>
+
+        <div class="admin-actions">
+            <a href="/" target="_blank" class="admin-view-link">View site</a>
+            <button class="theme-toggle-btn" id="themeToggle">🌙</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- PAGE -->
+<main class="admin-page">
+    <div class="admin-container">
+        <div class="admin-card">
+
+            <h1>All Quizzes</h1>
+            <p class="muted">
+                Manage generated quizzes, enable, disable or delete them
+            </p>
+
+
+            <!-- =========================
+                 SEARCH + FILTERS
+            ========================== -->
+            <div class="filter-bar">
+                <input id="searchInput" class="filter-input" placeholder="🔍 Search title..." />
+                <select id="topicFilter" class="filter-select">
+                    <option value="">All Topics</option>
+                    <option value="quantitative">Quantitative</option>
+                    <option value="reasoning">Reasoning</option>
+                    <option value="gk">GK</option>
+                    <option value="programming">Programming</option>
+                </select>
+                <select id="statusFilter" class="filter-select">
+                    <option value="">All Status</option>
+                    <option value="true">Active</option>
+                    <option value="false">Disabled</option>
+                </select>
+            </div>
+
+
+            <!-- TABLE -->
+            <div class="table-wrapper">
+                <table class="quiz-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Topic</th>
+                            <th>Questions</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quizTableBody"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+
+
+<!-- =================================================
+     SCRIPT (SEARCH + FILTER + DELETE + TOGGLE)
+================================================== -->
+<script>
+    const tbody = document.getElementById("quizTableBody");
+    const searchInput = document.getElementById("searchInput");
+    const topicFilter = document.getElementById("topicFilter");
+    const statusFilter = document.getElementById("statusFilter");
+
+    let quizzes = [];
+
+
+    async function loadQuizzes() {
+        const res = await fetch("/api/admin/quiz/all", {
+            credentials: "include"
+        });
+
+        const data = await res.json();
+        quizzes = data.quizzes || [];
+        render();
+    }
+
+
+    function render() {
+        const search = searchInput.value.toLowerCase();
+        const topic = topicFilter.value;
+        const status = statusFilter.value;
+
+        tbody.innerHTML = "";
+
+        quizzes
+            .filter(q => {
+                if (search && !q.title.toLowerCase().includes(search)) return false;
+                if (topic && q.topic !== topic) return false;
+                if (status && String(q.isActive) !== status) return false;
+                return true;
+            })
+            .forEach(q => {
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td>${q.title}</td>
+                    <td>${q.topic}</td>
+                    <td>${q.totalQuestions}</td>
+                    <td>
+                        <span class="status-badge ${q.isActive ? "active" : "disabled"}">
+                            ${q.isActive ? "Active" : "Disabled"}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-toggle" onclick="toggleQuiz('${q.id}')">
+                            ${q.isActive ? "Disable" : "Enable"}
+                        </button>
+
+                        <button class="btn btn-delete" onclick="deleteQuiz('${q.id}')">
+                            Delete
+                        </button>
+                    </td>
+                    <td>${new Date(q.createdAt).toLocaleString()}</td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+    }
+
+
+    async function toggleQuiz(id) {
+        await fetch(`/api/admin/quiz/${id}/toggle`, {
+            method: "PUT",
+            credentials: "include"
+        });
+        loadQuizzes();
+    }
+
+
+    async function deleteQuiz(id) {
+        if (!confirm("Delete this quiz permanently?")) return;
+
+        await fetch(`/api/admin/quiz/${id}`, {
+            method: "DELETE",
+            credentials: "include"
+        });
+
+        loadQuizzes();
+    }
+
+
+    searchInput.oninput = render;
+    topicFilter.onchange = render;
+    statusFilter.onchange = render;
+
+    loadQuizzes();
+</script>
+
+<script src="/admin-theme.js"></script>
+```
+
+</body>
+</html>

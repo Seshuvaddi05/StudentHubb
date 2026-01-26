@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz Questions | Admin</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+
+<h2 id="quizTitle">Quiz Questions</h2>
+
+<!-- ADD QUESTION -->
+<div class="card">
+  <h3>Add Question</h3>
+
+  <input id="questionText" placeholder="Question text" />
+
+  <input class="opt" placeholder="Option A" />
+  <input class="opt" placeholder="Option B" />
+  <input class="opt" placeholder="Option C" />
+  <input class="opt" placeholder="Option D" />
+
+  <select id="correctAnswer">
+    <option value="">Correct Answer</option>
+    <option>A</option>
+    <option>B</option>
+    <option>C</option>
+    <option>D</option>
+  </select>
+
+  <button onclick="addQuestion()">Add Question</button>
+</div>
+
+<hr />
+
+<!-- QUESTIONS LIST -->
+<div id="questions"></div>
+
+<script src="admin-quiz-questions.js"></script>
+</body>
+</html>

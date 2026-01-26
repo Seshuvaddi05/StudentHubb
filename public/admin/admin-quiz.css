@@ -1,0 +1,155 @@
+/* ==================================================
+   ADMIN QUIZ – MATCH STUDENTHUB ADMIN UI (FINAL)
+================================================== */
+
+.admin-page {
+  background: #f4f5fb;
+  min-height: calc(100vh - 72px);
+  padding: 2.5rem 1.25rem;
+}
+
+body.dark .admin-page {
+  background: radial-gradient(
+    1200px 600px at 50% -200px,
+    #0f172a,
+    #020617
+  );
+}
+
+/* Container */
+.admin-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Card */
+.admin-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+}
+
+body.dark .admin-card {
+  background: #020617;
+  border-color: #1f2937;
+  box-shadow: 0 30px 70px rgba(0,0,0,0.6);
+}
+
+/* Titles */
+.admin-card h2 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #0f172a;
+}
+
+body.dark .admin-card h2 {
+  color: #e5e7eb;
+}
+
+.admin-card .muted {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+body.dark .admin-card .muted {
+  color: #9ca3af;
+}
+
+/* Labels */
+.admin-card label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  margin-top: 14px;
+  color: #374151;
+}
+
+body.dark .admin-card label {
+  color: #cbd5f5;
+}
+
+/* Inputs & selects */
+.admin-card input,
+.admin-card select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+  background: #ffffff;
+}
+
+.admin-card input::placeholder {
+  color: #9ca3af;
+}
+
+.admin-card input:focus,
+.admin-card select:focus {
+  outline: none;
+  border-color: #111827;
+  box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.12);
+}
+
+body.dark .admin-card input,
+body.dark .admin-card select {
+  background: #020617;
+  border-color: #1f2937;
+  color: #e5e7eb;
+}
+
+body.dark .admin-card input::placeholder {
+  color: #6b7280;
+}
+
+/* Language box spacing */
+#languageBox {
+  margin-top: 4px;
+}
+
+/* Primary button */
+.btn-primary {
+  margin-top: 1.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 999px;
+  border: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  background: #fbbf24;
+  color: #111827;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+}
+
+/* Status text */
+.status-text {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Success / error colors */
+.status-text.success {
+  color: #16a34a;
+}
+
+.status-text.error {
+  color: #dc2626;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .admin-card {
+    padding: 1.5rem;
+  }
+}
