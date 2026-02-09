@@ -2,6 +2,13 @@
 // Shows list of all submissions and their statuses.
 
 document.addEventListener("DOMContentLoaded", () => {
+
+  // ⭐⭐ CRITICAL: enable global helpers (theme + nav)
+  if (window.initThemeToggle) initThemeToggle();
+  if (window.initMobileNav) initMobileNav();
+  if (window.initBackToTop) initBackToTop();
+
+
   const listEl = document.getElementById("submissions-list");
   const statusEl = document.getElementById("submissions-status");
   if (!listEl || !statusEl) return;
@@ -88,6 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       statusEl.textContent = `Showing ${submissions.length} of your submissions.`;
+
     } catch (err) {
       console.error("loadSubmissions error:", err);
       statusEl.textContent =

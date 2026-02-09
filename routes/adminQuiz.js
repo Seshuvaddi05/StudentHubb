@@ -1,54 +1,124 @@
 // =====================================================
-// StudentHub — Admin Quiz Routes (FINAL)
-// Added: DELETE quiz support
+// StudentHub — Admin Quiz Routes (PRODUCTION FINAL)
+// Supports: AI + Manual quizzes
+// Crash-safe + secure + scalable
 // =====================================================
 
 const express = require("express");
 const router = express.Router();
 
-// ===============================
-// CONTROLLER
-// ===============================
+const auth = require("../middleware/auth");
+const adminOnly = require("../middleware/adminOnly");
+
 const adminQuizController = require("../quiz/admin.quiz.controller");
 
 
 // =====================================================
+// 🔒 SAFE WRAPPER
+// =====================================================
+function safe(fn, name = "handler") {
+  return async (req, res, next) => {
+    try {
+      if (typeof fn !== "function") {
+        console.error(`❌ Missing controller: ${name}`);
+        return res.status(500).json({
+          error: `Server misconfiguration: ${name} not implemented`
+        });
+      }
+      await fn(req, res, next);
+    } catch (err) {
+      console.error(`❌ ${name} failed:`, err);
+      next(err);
+    }
+  };
+}
+
+
+// =====================================================
 // 🔹 GENERATE QUIZ (AI)
-// POST /api/admin/quiz/generate
 // =====================================================
 router.post(
   "/generate",
-  adminQuizController.generateAndSaveQuiz
+  auth,
+  adminOnly,
+  safe(adminQuizController.generateAndSaveQuiz, "generateAndSaveQuiz")
+);
+
+
+// =====================================================
+// 🔹 CREATE MANUAL QUIZ
+// =====================================================
+router.post(
+  "/create",
+  auth,
+  adminOnly,
+  safe(adminQuizController.createManualQuiz, "createManualQuiz")
+);
+
+
+// =====================================================
+// 🔹 ADD QUESTIONS
+// =====================================================
+router.post(
+  "/:id/questions",
+  auth,
+  adminOnly,
+  safe(adminQuizController.addQuestionsToQuiz, "addQuestionsToQuiz")
+);
+
+
+// =====================================================
+// ⭐ NEW → GET QUESTIONS OF QUIZ  (CRITICAL)
+// =====================================================
+router.get(
+  "/:id/questions",
+  auth,
+  adminOnly,
+  safe(adminQuizController.getQuestionsOfQuiz, "getQuestionsOfQuiz")
+);
+
+
+// =====================================================
+// ⭐ NEW → DELETE SINGLE QUESTION  (CRITICAL)
+// =====================================================
+router.delete(
+  "/question/:id",
+  auth,
+  adminOnly,
+  safe(adminQuizController.deleteQuestion, "deleteQuestion")
 );
 
 
 // =====================================================
 // 🔹 GET ALL QUIZZES
-// GET /api/admin/quiz/all
 // =====================================================
 router.get(
   "/all",
-  adminQuizController.getAllQuizzes
+  auth,
+  adminOnly,
+  safe(adminQuizController.getAllQuizzes, "getAllQuizzes")
 );
 
 
 // =====================================================
-// 🔹 TOGGLE ACTIVE / DISABLE
-// PUT /api/admin/quiz/:id/toggle
+// 🔹 TOGGLE ACTIVE
 // =====================================================
 router.put(
   "/:id/toggle",
-  adminQuizController.toggleQuizStatus
+  auth,
+  adminOnly,
+  safe(adminQuizController.toggleQuizStatus, "toggleQuizStatus")
 );
 
 
 // =====================================================
-// 🔴 DELETE QUIZ (NEW ⭐)
-// DELETE /api/admin/quiz/:id
+// 🔴 DELETE QUIZ
 // =====================================================
 router.delete(
   "/:id",
-  adminQuizController.deleteQuiz
+  auth,
+  adminOnly,
+  safe(adminQuizController.deleteQuiz, "deleteQuiz")
 );
 
 

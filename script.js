@@ -7,10 +7,11 @@ let ebooks = [];
 let questionPapers = [];
 
 // IDs of materials the user owns (purchased or library)
-let ownedMaterialIds = new Set();
+window.ownedMaterialIds = new Set();
 
 // IDs of materials saved to read-later list
-let readLaterIds = new Set();
+window.readLaterIds = new Set();
+
 
 // Search history for recommendations (localStorage)
 let searchHistory = [];
@@ -439,7 +440,7 @@ function renderRecent(items, containerId = "recent-list") {
   container.innerHTML = "";
 
   if (!items.length) {
-    container.innerHTML = `<p style="color:#6b7280;">No materials found.</p>`;
+    container.innerHTML = `<p style="font-size:0.95rem; color:#6b7280; margin-bottom:0.6rem;">No materials found.</p>`;
     return;
   }
 
@@ -670,20 +671,22 @@ function getMostDownloaded(limit = 6) {
 // =============================
 // THEME
 // =============================
-function applyTheme(theme) {
+// =============================
+// GLOBAL THEME (FINAL CLEAN)
+// =============================
+function applyTheme(isLight) {
   const body = document.body;
   const toggleBtn = document.getElementById("theme-toggle");
-  if (!body || !toggleBtn) return;
 
-  if (theme === "dark") {
-    body.classList.add("dark");
-    toggleBtn.textContent = "☀️";
-  } else {
-    body.classList.remove("dark");
-    toggleBtn.textContent = "🌙";
+  if (!body) return;
+
+  body.classList.toggle("light", isLight);
+
+  if (toggleBtn) {
+    toggleBtn.textContent = isLight ? "🌙" : "☀️";
   }
 
-  localStorage.setItem("studenthub_theme", theme);
+  localStorage.setItem("studenthub_theme", isLight ? "light" : "dark");
 }
 
 // =============================
@@ -691,7 +694,9 @@ function applyTheme(theme) {
 // =============================
 async function fetchCurrentUser() {
   try {
-    const res = await fetch("/api/me");
+    const res = await fetch("/api/auth/me", {
+      credentials: "include"
+    });
     if (!res.ok) return null;
     const data = await res.json();
     if (!data.ok || !data.user) return null;
@@ -1117,16 +1122,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Theme
-  const savedTheme = localStorage.getItem("studenthub_theme") || "light";
-  applyTheme(savedTheme);
+  // =============================
+  // THEME INIT
+  // =============================
+  const savedTheme = localStorage.getItem("studenthub_theme");
+  const isLight = savedTheme === "light";
+
+  applyTheme(isLight);
 
   const themeToggleBtn = document.getElementById("theme-toggle");
   if (themeToggleBtn) {
     themeToggleBtn.addEventListener("click", () => {
-      const next = document.body.classList.contains("dark") ? "light" : "dark";
-      applyTheme(next);
+      const nextIsLight = !document.body.classList.contains("light");
+      applyTheme(nextIsLight);
     });
   }
+
 
   // Auth navbar
   initAuthNavbar();
@@ -1150,6 +1161,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.addEventListener("keyup", (e) => {
     if (e.key === "Escape") closePdfPreview();
   });
+
+  // =============================
+  // Show skeleton loaders FIRST
+  // =============================
+  const ebookList = document.getElementById("ebooks-list");
+  const qpList = document.getElementById("qp-list");
+
+  if (ebookList) {
+    ebookList.innerHTML = `
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  `;
+  }
+
+  if (qpList) {
+    qpList.innerHTML = `
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  `;
+  }
 
   // 1) Load materials
   const ok = await loadMaterials();
@@ -1790,6 +1823,73 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Initialize suggestions & recommendations
   initSearchSuggestions();
   renderRecommendations();
+
+  /* =================================================
+   🌟 PRO UI POLISH (adds premium feel)
+================================================= */
+
+  /* ---------- Smooth section reveal ---------- */
+  const sections = document.querySelectorAll(".section");
+
+  const revealObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add("show");
+          revealObserver.unobserve(e.target);
+        }
+      });
+    },
+    { threshold: 0.12 }
+  );
+
+  sections.forEach((s) => revealObserver.observe(s));
+
+
+  /* ---------- Navbar shadow on scroll ---------- */
+  const navbar = document.querySelector(".navbar");
+
+  window.addEventListener("scroll", () => {
+    if (!navbar) return;
+
+    if (window.scrollY > 10) {
+      navbar.style.boxShadow = "0 6px 20px rgba(0,0,0,0.25)";
+    } else {
+      navbar.style.boxShadow = "0 2px 10px rgba(0,0,0,0.15)";
+    }
+  });
+
+
+  /* ---------- Animated stats counters ---------- */
+  function animateCounter(el, target) {
+    let start = 0;
+    const duration = 700;
+    const step = Math.ceil(target / (duration / 16));
+
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) {
+        el.textContent = target;
+        clearInterval(timer);
+      } else {
+        el.textContent = start;
+      }
+    }, 16);
+  }
+
+  ["total-count", "ebooks-count-stat", "qp-count-stat"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) animateCounter(el, parseInt(el.textContent || "0", 10));
+  });
+
+
+  /* ---------- Page fade-in ---------- */
+  document.body.style.opacity = "0";
+  setTimeout(() => {
+    document.body.style.transition = "opacity 0.35s ease";
+    document.body.style.opacity = "1";
+  }, 50);
+
 });
 
 
@@ -1846,3 +1946,4 @@ async function buyPdf(pdfId, price) {
   const rzp = new Razorpay(options);
   rzp.open();
 }
+

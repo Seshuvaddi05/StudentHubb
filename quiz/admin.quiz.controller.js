@@ -1,204 +1,306 @@
 // ==================================================
-// StudentHub — ADMIN QUIZ CONTROLLER (FINAL)
-// Added: DELETE quiz support
-// Production safe + stable + clean
+// StudentHub — ADMIN QUIZ CONTROLLER (FINAL HARDENED)
+// PRODUCTION SAFE + STABLE + COMPLETE
 // ==================================================
+
+const mongoose = require("mongoose");
 
 const Quiz = require("../models/Quiz");
 const Question = require("../models/Question");
-const QuizAttempt = require("../models/QuizAttempt"); // ⭐ NEW
+const QuizAttempt = require("../models/QuizAttempt");
 const generateQuiz = require("./quiz.engine");
 
 
 // ==================================================
-// HELPER → normalize text
+// HELPERS
 // ==================================================
 function clean(v) {
   return String(v || "").trim();
 }
 
+function toObjectId(id) {
+  return new mongoose.Types.ObjectId(id);
+}
 
 
 // ==================================================
-// ADMIN: Generate quiz using AI
-// POST /api/admin/quiz/generate
+// 🔹 AI QUIZ GENERATION
 // ==================================================
-exports.generateAndSaveQuiz = async (req, res) => {
+async function generateAndSaveQuiz(req, res) {
   try {
     const { title, topic, language } = req.body;
-
-    if (!req.user?.id)
-      return res.status(401).json({ error: "Unauthorized" });
 
     if (!title || !topic)
       return res.status(400).json({ error: "Title and topic required" });
 
-
-    // ============================================
-    // 1️⃣ Generate AI questions
-    // ============================================
     const aiQuestions = await generateQuiz({
       topic,
       language,
-      userId: req.user.id,
+      userId: req.user.id
     });
 
-    if (!Array.isArray(aiQuestions) || !aiQuestions.length)
+    if (!aiQuestions?.length)
       throw new Error("AI returned no questions");
 
-
-    // ============================================
-    // 2️⃣ Create quiz
-    // ============================================
     const quiz = await Quiz.create({
       title: clean(title),
       topic,
       language: language || null,
+      type: "ai",
       createdBy: req.user.id,
-      isActive: true,
+      isActive: true
     });
 
+    const questionDocs = aiQuestions.map(q => {
 
-    // ============================================
-    // 3️⃣ Save questions (store TEXT answer only)
-    // ============================================
-    const questionDocs = aiQuestions
-      .filter(q => q?.question && Array.isArray(q.options) && q.options.length)
-      .map(q => {
+      const options = (q.options || [])
+        .slice(0, 4)
+        .map(o => clean(o));
 
-        const options = q.options.map(o => clean(o));
+      while (options.length < 4) options.push("N/A");
 
-        let correctText = "";
+      let correctIndex = 0;
 
-        if (typeof q.correctIndex === "number" && options[q.correctIndex]) {
-          correctText = options[q.correctIndex];
-        }
-        else if (typeof q.answer === "string") {
-          correctText = clean(q.answer);
-        }
-        else if (typeof q.answer === "number" && options[q.answer]) {
-          correctText = options[q.answer];
-        }
-        else {
-          correctText = options[0];
-        }
+      if (typeof q.correctIndex === "number") correctIndex = q.correctIndex;
+      else if (typeof q.answer === "number") correctIndex = q.answer;
+      else if (typeof q.answer === "string")
+        correctIndex = options.indexOf(clean(q.answer));
 
-        return {
-          quizId: quiz._id,
-          questionText: clean(q.question),
-          options,
-          correctAnswer: correctText,
-          marks: 1,
-        };
-      });
+      if (correctIndex < 0 || correctIndex > 3) correctIndex = 0;
+
+      return {
+        quizId: quiz._id,
+        questionText: clean(q.question) || "Untitled question",
+        options,
+        correctAnswer: Number(correctIndex),
+        marks: 1
+      };
+    });
 
     await Question.insertMany(questionDocs);
 
-
-    return res.json({
+    res.json({
       ok: true,
-      message: "Quiz generated & saved successfully",
-      quizId: quiz._id,
-      totalQuestions: questionDocs.length,
+      quizId: String(quiz._id),
+      totalQuestions: questionDocs.length
     });
 
   } catch (err) {
-    console.error("[ADMIN QUIZ GENERATE ERROR]", err);
-    return res.status(500).json({ error: err.message });
+    console.error("[AI QUIZ ERROR]", err);
+    res.status(500).json({ error: err.message });
   }
-};
-
+}
 
 
 // ==================================================
-// ADMIN: Get all quizzes
+// 🔹 CREATE MANUAL QUIZ
 // ==================================================
-exports.getAllQuizzes = async (req, res) => {
+async function createManualQuiz(req, res) {
   try {
-    const quizzes = await Quiz.find({}).sort({ createdAt: -1 }).lean();
+    const { title, topic, language } = req.body;
+
+    if (!title || !topic)
+      return res.status(400).json({ error: "Title and topic required" });
+
+    const quiz = await Quiz.create({
+      title: clean(title),
+      topic,
+      language: language || null,
+      type: "manual",
+      createdBy: req.user.id,
+      isActive: true
+    });
+
+    res.json({ ok: true, quizId: String(quiz._id) });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to create quiz" });
+  }
+}
+
+
+// ==================================================
+// 🔹 ADD QUESTIONS TO QUIZ
+// ==================================================
+async function addQuestionsToQuiz(req, res) {
+  try {
+    const { id } = req.params;
+    const { questions } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id))
+      return res.status(400).json({ error: "Invalid quiz id" });
+
+    if (!Array.isArray(questions) || !questions.length)
+      return res.status(400).json({ error: "Questions required" });
+
+    const quizId = toObjectId(id);
+
+    const docs = questions.map(q => {
+
+      const options = (q.options || [])
+        .slice(0, 4)
+        .map(o => clean(o));
+
+      while (options.length < 4) options.push("N/A");
+
+      let idx = Number(q.correctAnswer);
+      if (Number.isNaN(idx) || idx < 0 || idx > 3) idx = 0;
+
+      return {
+        quizId,
+        questionText: clean(q.questionText) || "Untitled question",
+        options,
+        correctAnswer: Number(idx),
+        marks: 1
+      };
+    });
+
+    await Question.insertMany(docs);
+
+    res.json({ ok: true, count: docs.length });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to add questions" });
+  }
+}
+
+
+// ==================================================
+// 🔹 GET QUESTIONS OF QUIZ
+// ==================================================
+async function getQuestionsOfQuiz(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id))
+      return res.status(400).json({ error: "Invalid id" });
+
+    const questions = await Question
+      .find({ quizId: toObjectId(id) })
+      .sort({ createdAt: 1 })
+      .lean();
+
+    res.json({ questions });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load questions" });
+  }
+}
+
+
+// ==================================================
+// 🔴 DELETE QUESTION
+// ==================================================
+async function deleteQuestion(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id))
+      return res.status(400).json({ error: "Invalid question id" });
+
+    await Question.deleteOne({ _id: toObjectId(id) });
+
+    res.json({ ok: true });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete question" });
+  }
+}
+
+
+// ==================================================
+// 🔹 GET ALL QUIZZES (ADMIN LIST)
+// ==================================================
+async function getAllQuizzes(req, res) {
+  try {
+
+    const quizzes = await Quiz.find({})
+      .sort({ createdAt: -1 })
+      .lean();
 
     const counts = await Question.aggregate([
       { $group: { _id: "$quizId", count: { $sum: 1 } } }
     ]);
 
-    const countMap = {};
-    counts.forEach(c => countMap[c._id.toString()] = c.count);
+    const map = {};
+    counts.forEach(c => map[String(c._id)] = c.count);
 
     const result = quizzes.map(q => ({
-      id: q._id.toString(),
+      id: String(q._id),
       title: q.title,
       topic: q.topic,
-      totalQuestions: countMap[q._id.toString()] || 0,
+      type: q.type,
+      totalQuestions: map[String(q._id)] || 0,
       isActive: q.isActive,
-      createdAt: q.createdAt,
+      createdAt: q.createdAt
     }));
 
-    res.json({ ok: true, quizzes: result });
+    res.json({ quizzes: result });
 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to load quizzes" });
   }
-};
-
+}
 
 
 // ==================================================
-// ADMIN: Toggle quiz active status
+// 🔹 TOGGLE QUIZ STATUS
 // ==================================================
-exports.toggleQuizStatus = async (req, res) => {
+async function toggleQuizStatus(req, res) {
   try {
-    const { id } = req.params;
 
-    const quiz = await Quiz.findById(id);
-    if (!quiz) return res.status(404).json({ error: "Quiz not found" });
+    const quiz = await Quiz.findById(req.params.id);
+    if (!quiz) return res.status(404).json({ error: "Not found" });
 
     quiz.isActive = !quiz.isActive;
     await quiz.save();
 
-    res.json({
-      ok: true,
-      quizId: quiz._id,
-      isActive: quiz.isActive
-    });
+    res.json({ ok: true, isActive: quiz.isActive });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to update quiz status" });
+    res.status(500).json({ error: "Failed" });
   }
-};
-
+}
 
 
 // ==================================================
-// 🔴 ADMIN: DELETE QUIZ (NEW)
-// DELETE /api/admin/quiz/:id
+// 🔴 DELETE QUIZ
 // ==================================================
-exports.deleteQuiz = async (req, res) => {
+async function deleteQuiz(req, res) {
   try {
+
     const { id } = req.params;
+    const quizId = toObjectId(id);
 
-    const quiz = await Quiz.findById(id);
-    if (!quiz)
-      return res.status(404).json({ error: "Quiz not found" });
-
-
-    // ============================================
-    // ⭐ DELETE EVERYTHING RELATED (safe cleanup)
-    // ============================================
     await Promise.all([
-      Question.deleteMany({ quizId: id }),
-      QuizAttempt.deleteMany({ quizId: id }),
-      Quiz.deleteOne({ _id: id }),
+      Question.deleteMany({ quizId }),
+      QuizAttempt.deleteMany({ quizId }),
+      Quiz.deleteOne({ _id: quizId })
     ]);
 
-    res.json({
-      ok: true,
-      message: "Quiz deleted permanently"
-    });
+    res.json({ ok: true });
 
   } catch (err) {
-    console.error("[DELETE QUIZ ERROR]", err);
-    res.status(500).json({ error: "Failed to delete quiz" });
+    console.error(err);
+    res.status(500).json({ error: "Failed" });
   }
+}
+
+
+// ==================================================
+module.exports = {
+  generateAndSaveQuiz,
+  createManualQuiz,
+  addQuestionsToQuiz,
+  getQuestionsOfQuiz,
+  deleteQuestion,
+  getAllQuizzes,
+  toggleQuizStatus,
+  deleteQuiz
 };

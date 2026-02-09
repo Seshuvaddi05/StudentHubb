@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>StudentHub – My Submissions</title>
@@ -7,20 +8,24 @@
   <link rel="stylesheet" href="/styles/styles.css">
 
   <style>
+    /* ===============================
+       THEME AWARE (GLOBAL VARIABLES)
+       =============================== */
+
     .submissions-container {
-      max-width: 1000px;
-      margin: 2rem auto;
-      padding: 1.5rem;
-      border-radius: 0.9rem;
-      background: #ffffff;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+      max-width: 1600px;
+      /* ⭐ wider like other pages */
+      width: 100%;
+      margin: 0rem auto 2rem;
+      /* ⭐ consistent top spacing */
+      padding: 1.75rem;
+
+      border-radius: 14px;
+      background: var(--card);
+      border: 1px solid var(--card-2);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .06);
     }
 
-    body.dark .submissions-container {
-      background: #020617;
-      border: 1px solid #1f2937;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
-    }
 
     .submissions-heading {
       font-size: 1.4rem;
@@ -30,48 +35,37 @@
 
     .submissions-subtitle {
       font-size: 0.9rem;
-      color: #6b7280;
+      color: var(--muted);
       margin-bottom: 0.9rem;
     }
 
-    body.dark .submissions-subtitle {
-      color: #9ca3af;
-    }
-
+    /* Grid */
     .submissions-list {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 0.8rem;
     }
 
+    /* Cards */
     .submission-card {
-      background: #ffffff;
+      background: var(--card);
       border-radius: 0.8rem;
       padding: 0.9rem;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--card-2);
+      box-shadow: var(--shadow);
       font-size: 0.9rem;
-    }
-
-    body.dark .submission-card {
-      background: #020617;
-      border-color: #1f2937;
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.7);
     }
 
     .submission-title {
       font-weight: 600;
       margin-bottom: 0.25rem;
+      color: var(--text);
     }
 
     .submission-meta {
       font-size: 0.78rem;
-      color: #6b7280;
+      color: var(--muted);
       margin-bottom: 0.35rem;
-    }
-
-    body.dark .submission-meta {
-      color: #9ca3af;
     }
 
     /* Status Pills */
@@ -90,7 +84,7 @@
     }
 
     .status-approved {
-      background: #ecfdf5;
+      background: #dcfce7;
       color: #166534;
     }
 
@@ -102,22 +96,10 @@
     .submissions-status {
       margin-top: 0.75rem;
       font-size: 0.85rem;
-      color: #6b7280;
+      color: var(--muted);
     }
 
-    /* ---------------------------
-       Navbar badge & icon styles
-       --------------------------- */
-    body.dark .nav-badge {
-      background: #f59e0b;
-      color: #040f1c;
-    }
-
-    .nav-icon-btn:hover {
-      background: rgba(148, 163, 184, 0.2);
-    }
-
-    /* Mobile small adjustments */
+    /* Mobile */
     @media (max-width: 640px) {
       .submissions-container {
         padding: 1rem;
@@ -127,34 +109,21 @@
   </style>
 </head>
 
-<body>
-  <!-- ------------- Navbar ------------- -->
+<body data-protected>
+
+  <!-- Navbar -->
   <header class="navbar">
     <div class="logo">StudentHub</div>
 
-    <!-- Mobile hamburger -->
     <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
       <span></span>
       <span></span>
       <span></span>
     </button>
 
-    <!-- Nav links -->
-    <nav class="nav-links" id="nav-links">
-      <a href="/">Home</a>
-      <a href="/#ebooks">E-Books</a>
-      <a href="/#question-papers">Question Papers</a>
-      <a href="/#about">About</a>
-      <a href="/#contact">Contact</a>
-
-      <!-- auth handled by JS -->
-      <a href="/login.html" id="nav-auth-link" data-auth-link>Sign in</a>
-    </nav>
-
-    <!-- Right actions -->
     <div class="nav-actions">
       <div class="notif-wrapper">
-        <button id="notifBtn" title="Notifications">🔔</button>
+        <button id="notifBtn">🔔</button>
         <span id="notifCount"></span>
 
         <div id="notifDropdown" class="notif-dropdown hidden">
@@ -166,27 +135,69 @@
     </div>
   </header>
 
-  <!-- ------------- Main Section ------------- -->
-  <main class="section">
-    <div class="submissions-container">
-      <h1 class="submissions-heading">My Submissions</h1>
-      <p class="submissions-subtitle">
-        Track the review status of all PDFs you’ve submitted.
-      </p>
+  <!-- ================= APP LAYOUT ================= -->
+  <div class="app-layout">
 
-      <div id="submissions-list" class="submissions-list"></div>
-      <p id="submissions-status" class="submissions-status"></p>
-    </div>
-  </main>
+    <!-- ========= SIDEBAR ========= -->
+    <aside class="sidebar">
 
-  <!-- ------------- Footer ------------- -->
+      <h3 class="sb-title">Dashboard</h3>
+
+      <!-- Primary -->
+      <a href="/dashboard.html" class="sb-link">🏠 Dashboard</a>
+      <a href="/request.html" class="sb-link">📝 Request Material</a>
+
+      <hr />
+
+      <!-- Content -->
+      <a href="/#ebooks" class="sb-link">📚 E-Books</a>
+      <a href="/#question-papers" class="sb-link">📄 Papers</a>
+      <a href="/quiz.html" class="sb-link">🧠 Quiz Center</a>
+
+      <hr />
+
+      <!-- User tools -->
+      <a href="/library.html" class="sb-link">📂 My Library</a>
+      <a href="/read-later.html" class="sb-link">⏳ Read Later</a>
+      <a href="/submit-pdf.html" class="sb-link">📤 Submit PDF</a>
+      <a href="/my-submissions.html" class="sb-link active">📑 My Submissions</a>
+      <a href="/wallet.html" class="sb-link">💰 Wallet</a>
+      <hr />
+
+    </aside>
+
+
+
+    <!-- ========= MAIN CONTENT ========= -->
+    <main class="main-content">
+
+      <div class="submissions-container">
+
+        <h1 class="submissions-heading">My Submissions</h1>
+
+        <p class="submissions-subtitle">
+          Track the review status of all PDFs you’ve submitted.
+        </p>
+
+        <!-- List -->
+        <div id="submissions-list" class="submissions-list"></div>
+
+        <!-- Status -->
+        <p id="submissions-status" class="submissions-status"></p>
+
+      </div>
+
+    </main>
+  </div>
+
+
+  <!-- Footer -->
   <footer class="footer">
     <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
   </footer>
 
-  <button id="back-to-top" class="back-to-top" aria-label="Back to top">↑</button>
+  <button id="back-to-top" class="back-to-top">↑</button>
 
-  <!-- Scripts -->
   <script src="script.js" defer></script>
   <script src="notifications.js" defer></script>
   <script src="my-submissions.js" defer></script>

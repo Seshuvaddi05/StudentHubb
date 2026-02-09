@@ -1,128 +1,104 @@
 const mongoose = require("mongoose");
 
-const QuizAttemptSchema = new mongoose.Schema(
-  {
-    // ===============================
-    // USER
-    // ===============================
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      index: true
-    },
 
-    // ===============================
-    // ⭐ CRITICAL (FIX FOR LEADERBOARD)
-    // ===============================
-    quizId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Quiz",
-      required: true,
-      index: true
-    },
+// ==========================================
+// REVIEW SUB DOCUMENT
+// ==========================================
+const ReviewSchema = new mongoose.Schema({
+  questionText: String,
+  userAnswer: String,
+  correctAnswer: String
+}, { _id: false });
 
 
-    // ===============================
-    // QUIZ META
-    // ===============================
-    topic: {
-      type: String,
-      default: null
-    },
+// ==========================================
+// MAIN ATTEMPT SCHEMA
+// ==========================================
+const QuizAttemptSchema = new mongoose.Schema({
 
-    language: {
-      type: String,
-      default: null
-    },
-
-
-    // ===============================
-    // RESULT STATS
-    // ===============================
-    totalQuestions: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-
-    correct: {
-      type: Number,
-      default: 0,
-      min: 0
-    },
-
-    wrong: {
-      type: Number,
-      default: 0,
-      min: 0
-    },
-
-    score: {
-      type: Number,
-      default: 0,
-      min: 0,
-      index: true
-    },
-
-    // ⭐ store once (faster charts)
-    accuracy: {
-      type: Number,
-      default: 0
-    },
-
-
-    // ===============================
-    // DIFFICULTY BREAKDOWN
-    // ===============================
-    difficultyStats: {
-      easy: { type: Number, default: 0 },
-      medium: { type: Number, default: 0 },
-      hard: { type: Number, default: 0 }
-    },
-
-
-    // ===============================
-    // TIMING
-    // ===============================
-    startedAt: {
-      type: Date,
-      default: Date.now
-    },
-
-    submittedAt: {
-      type: Date,
-      default: Date.now
-    },
-
-    // ⭐ store directly for analytics
-    timeTaken: {
-      type: Number, // seconds
-      default: 0
-    }
+  // ================= USER =================
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+    index: true
   },
-  {
-    timestamps: true
+
+  // ================= QUIZ =================
+  quizId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Quiz",
+    required: true,
+    index: true
+  },
+
+
+  // ================= RESULT =================
+  totalQuestions: {
+    type: Number,
+    default: 0
+  },
+
+  correct: {
+    type: Number,
+    default: 0
+  },
+
+  wrong: {
+    type: Number,
+    default: 0
+  },
+
+  score: {
+    type: Number,
+    default: 0,
+    index: true
+  },
+
+  accuracy: {
+    type: Number,
+    default: 0
+  },
+
+  // ⭐⭐⭐ STORES FULL REVIEW IN DB (FINAL)
+  review: {
+    type: [ReviewSchema],
+    default: []
+  },
+
+
+  // ================= TIMING =================
+  startedAt: Date,
+
+  submittedAt: {
+    type: Date,
+    default: Date.now,
+    index: true
+  },
+
+  timeTaken: {
+    type: Number,
+    default: 0
   }
+
+}, {
+  timestamps: true
+});
+
+
+// ==========================================
+// INDEXES (FAST QUERIES)
+// ==========================================
+
+// leaderboard optimized
+QuizAttemptSchema.index(
+  { quizId: 1, score: -1, timeTaken: 1, submittedAt: 1 }
+);
+
+// history optimized
+QuizAttemptSchema.index(
+  { userId: 1, submittedAt: -1 }
 );
 
 
-// ===============================
-// ⚡ INDEXES (FAST QUERIES)
-// ===============================
-
-// user history
-QuizAttemptSchema.index({ userId: 1, createdAt: -1 });
-
-// leaderboard (VERY IMPORTANT)
-QuizAttemptSchema.index({ quizId: 1, score: -1 });
-
-// topic filtering
-QuizAttemptSchema.index({ topic: 1 });
-
-// latest attempts
-QuizAttemptSchema.index({ submittedAt: -1 });
-
-
-// ===============================
 module.exports = mongoose.model("QuizAttempt", QuizAttemptSchema);

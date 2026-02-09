@@ -10,143 +10,129 @@
   <link rel="stylesheet" href="/styles/styles.css">
 
   <style>
-    /* ---- Page cards & layout ---- */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.85rem;
-      margin-top: 0.6rem;
+    /* ===============================
+   READ LATER – PRO LAYOUT FIX
+================================= */
+    /* ---------- PAGE CONTAINER ---------- */
+
+
+    .page-container {
+      max-width: 1600px;
+      /* use more screen */
+      width: 95%;
+      margin: 24px auto;
+      padding: 0 10px;
     }
 
-    /* Card that visually matches Library / E-Books style */
-    .rl-card {
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-      border-radius: 0.9rem;
-      padding: 1.05rem 1.1rem;
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
-      font-size: 0.95rem;
+    /* title spacing */
+    .page-container h2 {
+      margin-bottom: 6px;
+    }
+
+    .page-container p {
+      margin-bottom: 16px;
+    }
+
+
+    /* smaller compact cards */
+    .library-card {
+      background: var(--card);
+      border: 1px solid var(--card-2);
+      border-radius: 12px;
+
+      padding: 12px 14px;
+      /* smaller padding */
+
       display: flex;
       flex-direction: column;
-      gap: 0.45rem;
+      gap: 6px;
+
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+      transition: .15s;
     }
 
-    body.dark .rl-card {
-      background: #020617;
-      border-color: #1f2937;
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.7);
+    .library-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
     }
 
-    .rl-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 0.6rem;
-    }
 
-    .rl-title {
+    /* tighter text */
+    .library-card-title {
+      font-size: 14px;
       font-weight: 600;
-      font-size: 1.02rem;
     }
 
-    .rl-labels {
-      display: flex;
-      gap: 0.45rem;
-      align-items: center;
+    .library-card-meta {
+      font-size: 12px;
+      color: var(--muted);
     }
 
-    .pill-owned,
-    .pill-type {
-      padding: 0.12rem 0.5rem;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      display: inline-flex;
-      align-items: center;
-    }
 
-    .pill-type {
-      background: #eef2ff;
-      color: #3730a3;
-    }
-
-    .pill-owned {
-      background: #ecfdf5;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
-
-    .rl-meta {
-      color: #6b7280;
-      font-size: 0.9rem;
-      margin-top: 2px;
-    }
-
-    body.dark .rl-meta {
-      color: #9ca3af;
-    }
-
-    .rl-footer {
+    /* compact footer */
+    .library-card-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 0.6rem;
-      margin-top: 0.6rem;
-      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 12px;
     }
 
-    .rl-actions {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .btn.small {
-      padding: 0.45rem 0.7rem;
-      border-radius: 0.6rem;
-      font-size: 0.9rem;
-    }
-
-    .rl-price {
-      font-weight: 600;
-      color: #0f172a;
-    }
-
-    body.dark .rl-price {
-      color: #e6eef7;
-    }
-
-    .empty-msg {
-      padding: 1rem;
-      text-align: center;
-      font-size: 1rem;
-      color: #6b7280;
-      border-radius: 0.6rem;
-    }
-
-    body.dark .empty-msg {
-      color: #9ca3af;
-    }
-
-    /* small responsive */
-    @media (min-width: 760px) {
-      .cards-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* filter small spacing when container narrow */
+    /* ---------- FILTER BAR ---------- */
     #read-later-filters {
-      gap: 0.6rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
     }
 
-    #read-later-list>* {
+
+    /* ---------- EMPTY BOX ---------- */
+    #read-later-empty {
+      background: var(--card);
+      border: 1px dashed var(--card-2);
+      padding: 30px;
+      text-align: center;
+      border-radius: 12px;
+      color: var(--muted);
+    }
+
+    /* make content fill remaining space beside sidebar */
+    .read-later-main {
       width: 100%;
+      max-width: none;
+      /* remove restriction */
+      padding: 0 24px;
+    }
+
+    .cards-grid {
+      display: grid;
+      gap: 14px;
+
+      /* smaller cards = more columns */
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    }
+
+    /* ===============================
+   OUTER CARD CONTAINER (NEW)
+================================ */
+
+    .page-container {
+      max-width: 1600px;
+      /* wide like library */
+      width: 100%;
+      margin: 2rem auto;
+      background: var(--card);
+      border: 1px solid var(--card-2);
+      border-radius: 16px;
+      padding: 1.8rem 2rem;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
     }
   </style>
 </head>
 
-<body>
+<body data-protected>
   <!-- Navbar (same shape as other pages) -->
   <header class="navbar">
     <div class="logo">StudentHub</div>
@@ -154,18 +140,6 @@
     <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
       <span></span><span></span><span></span>
     </button>
-
-    <nav class="nav-links" id="nav-links">
-      <a href="/">Home</a>
-      <a href="/#ebooks">E-Books</a>
-      <a href="/#question-papers">Question Papers</a>
-      <a href="/#about">About</a>
-      <a href="/#contact">Contact</a>
-      <!-- removed permanently from navbar: Submit PDF, My Submissions, Wallet -->
-      <a href="/dashboard.html" id="nav-dashboard-link" style="display:none;">My dashboard</a>
-      <a href="/login.html" id="nav-login-link" style="display:none;">Sign in</a>
-    </nav>
-
     <!-- Right-side navbar actions -->
     <div class="nav-actions">
 
@@ -183,62 +157,101 @@
     </div>
   </header>
 
-  <main class="section" style="max-width:1000px; margin:0 auto;">
-    <h2>Read Later</h2>
-    <p class="section-subtitle">Books & papers you saved for later reading.</p>
+  <!-- ===================================== -->
+  <!-- 🔥 SaaS APP LAYOUT -->
+  <!-- ===================================== -->
+  <div class="app-layout">
 
-    <p id="read-later-summary" class="section-subtitle" style="margin-top:0;font-size:0.9rem;">
-      Loading your saved items...
-    </p>
+    <!-- ===================================== -->
+    <!-- SIDEBAR (NEW ADDED) -->
+    <!-- ===================================== -->
+    <aside class="sidebar">
 
-    <p id="read-later-stats" class="section-subtitle" style="margin-top:0.15rem;font-size:0.85rem;color:#6b7280;"></p>
+      <h3 class="sb-title">Dashboard</h3>
 
-    <div id="read-later-filters"
-      style="margin:0.9rem 0 1rem; display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center;">
+      <a href="/dashboard.html" class="sb-link">🏠 Dashboard</a>
+      <a href="/request.html" class="sb-link">📝 Request Material</a>
 
-      <!-- 🔍 Search -->
-      <input type="text" id="rl-search" class="filter-input" placeholder="Search by title, exam, subject, year…"
-        style="flex:1 1 260px;" />
+      <hr />
 
-      <!-- Type -->
-      <select id="rl-type-filter" class="filter-select">
-        <option value="all">All types</option>
-        <option value="ebook">E-Books</option>
-        <option value="questionPaper">Question Papers</option>
-      </select>
+      <a href="/#ebooks" class="sb-link">📚 E-Books</a>
+      <a href="/#question-papers" class="sb-link">📄 Papers</a>
+      <a href="/quiz.html" class="sb-link">🧠 Quiz Center</a>
 
-      <!-- Price -->
-      <select id="rl-price-filter" class="filter-select">
-        <option value="all">All prices</option>
-        <option value="free">Free only</option>
-        <option value="paid">Paid only</option>
-      </select>
+      <hr />
 
-      <!-- Sort -->
-      <select id="rl-sort" class="filter-select">
-        <option value="recent">Newest</option>
-        <option value="title">Title A–Z</option>
-        <option value="reads">Most read</option>
-      </select>
+      <a href="/library.html" class="sb-link">📂 My Library</a>
+      <a href="/read-later.html" class="sb-link active">⏳ Read Later</a>
+      <a href="/submit-pdf.html" class="sb-link">📤 Submit PDF</a>
+      <a href="/my-submissions.html" class="sb-link">📄 My Submissions</a>
+      <a href="/wallet.html" class="sb-link">💰 Wallet</a>
 
-      <!-- Clear -->
-      <button id="read-later-clear" class="btn small secondary" style="margin-left:auto; display:none;">
-        Clear all
-      </button>
-    </div>
+      <hr />
+    </aside>
 
 
-    <div id="read-later-list" class="cards-grid" aria-live="polite"></div>
 
-    <div id="read-later-empty" class="rl-card"
-      style="display:none; margin-top:1rem; border:1px dashed #d1d5db; background:#f9fafb;">
-      <h3 style="font-size:1rem; margin-bottom:0.4rem;">Nothing saved yet.</h3>
-      <p style="font-size:0.95rem; color:#6b7280; margin-bottom:0.6rem;">
-        Use the <strong>“Read later”</strong> button on any ebook or question paper to save it here.
-      </p>
-      <a href="/#ebooks" class="btn primary small">Browse materials</a>
-    </div>
-  </main>
+    <main class="section read-later-main">
+      <div class="page-container">
+        <h2>Read Later</h2>
+        <p class="section-subtitle">Books & papers you saved for later reading.</p>
+
+        <p id="read-later-summary" class="section-subtitle" style="margin-top:0;font-size:0.9rem;">
+          Loading your saved items...
+        </p>
+
+        <p id="read-later-stats" class="section-subtitle" style="margin-top:0.15rem;font-size:0.85rem;color:#6b7280;">
+        </p>
+
+        <div id="read-later-filters"
+          style="margin:0.9rem 0 1rem; display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center;">
+
+          <!-- 🔍 Search -->
+          <input type="text" id="rl-search" class="filter-input" placeholder="Search by title, exam, subject, year…"
+            style="flex:1 1 260px;" />
+
+          <!-- Type -->
+          <select id="rl-type-filter" class="filter-select">
+            <option value="all">All types</option>
+            <option value="ebook">E-Books</option>
+            <option value="questionPaper">Question Papers</option>
+          </select>
+
+          <!-- Price -->
+          <select id="rl-price-filter" class="filter-select">
+            <option value="all">All prices</option>
+            <option value="free">Free only</option>
+            <option value="paid">Paid only</option>
+          </select>
+
+          <!-- Sort -->
+          <select id="rl-sort" class="filter-select">
+            <option value="recent">Newest</option>
+            <option value="title">Title A–Z</option>
+            <option value="reads">Most read</option>
+          </select>
+
+          <!-- Clear -->
+          <button id="read-later-clear" class="btn small secondary" style="margin-left:auto; display:none;">
+            Clear all
+          </button>
+        </div>
+
+
+        <div id="read-later-list" class="cards-grid" aria-live="polite"></div>
+
+        <div id="read-later-empty" class="rl-card"
+          style="display:none; margin-top:1rem; border:1px dashed #d1d5db; border:1px dashed var(--card-2); background: var(--card); color: var(--text);">
+          <h3 style="font-size:1rem; margin-bottom:0.4rem;">Nothing saved yet.</h3>
+          <p style="font-size:0.95rem; color:var(--muted); margin-bottom:0.6rem;">
+            Use the <strong>“Read later”</strong> button on any ebook or question paper to save it here.
+          </p>
+          <a href="/#ebooks" class="btn primary small">Browse materials</a>
+        </div>
+      </div>
+    </main>
+
+  </div>
 
   <footer class="footer">
     <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
@@ -247,323 +260,11 @@
   <button id="back-to-top" class="back-to-top">↑</button>
 
   <!-- Shared script helpers + page read-later logic (self-contained) -->
-  <script>
-    // ---- Shared helpers (theme, nav, auth-aware, back-to-top) ----
-    function applyTheme(theme) {
-      const body = document.body;
-      const btn = document.getElementById('theme-toggle');
-      if (!body) return;
-      if (theme === 'dark') {
-        body.classList.add('dark');
-        if (btn) btn.textContent = '☀️';
-      } else {
-        body.classList.remove('dark');
-        if (btn) btn.textContent = '🌙';
-      }
-      localStorage.setItem('studenthub_theme', theme);
-    }
-
-    function initThemeToggle() {
-      const saved = localStorage.getItem('studenthub_theme') || 'light';
-      applyTheme(saved);
-      const btn = document.getElementById('theme-toggle');
-      if (!btn) return;
-      btn.addEventListener('click', () => {
-        const next = document.body.classList.contains('dark') ? 'light' : 'dark';
-        applyTheme(next);
-      });
-    }
-
-    function initMobileNav() {
-      const navToggle = document.getElementById('nav-toggle');
-      const navLinks = document.getElementById('nav-links');
-      if (!navToggle || !navLinks) return;
-      navToggle.addEventListener('click', () => {
-        navLinks.classList.toggle('open');
-        navToggle.classList.toggle('open');
-      });
-      navLinks.querySelectorAll('a').forEach(a => {
-        a.addEventListener('click', () => {
-          navLinks.classList.remove('open');
-          navToggle.classList.remove('open');
-        });
-      });
-    }
-
-    async function initAuthNavbarSimple() {
-      const dashLink = document.getElementById('nav-dashboard-link');
-      const loginLink = document.getElementById('nav-login-link');
-      if (!dashLink && !loginLink) return;
-      try {
-        const res = await fetch('/api/me');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.ok && data.user) {
-            if (dashLink) dashLink.style.display = 'inline-block';
-            if (loginLink) loginLink.style.display = 'none';
-            // optionally set notification or badges if API provided
-            // We'll attempt to fetch notifications count later in page logic.
-            return;
-          }
-        }
-      } catch (e) {
-        // silent
-      }
-      if (dashLink) dashLink.style.display = 'none';
-      if (loginLink) loginLink.style.display = 'inline-block';
-    }
-
-    function initBackToTop() {
-      const btn = document.getElementById('back-to-top');
-      if (!btn) return;
-      window.addEventListener('scroll', () => {
-        if (window.scrollY > 300) btn.classList.add('show');
-        else btn.classList.remove('show');
-      });
-      btn.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-    }
-
-    // ---- Read-Later page logic ----
-    document.addEventListener('DOMContentLoaded', () => {
-      // shared inits
-      document.getElementById('year').textContent = new Date().getFullYear();
-      initThemeToggle();
-      initMobileNav();
-      initAuthNavbarSimple();
-      initBackToTop();
-
-      // page elements
-      const listEl = document.getElementById('read-later-list');
-      const emptyEl = document.getElementById('read-later-empty');
-      const summaryEl = document.getElementById('read-later-summary');
-      const statsEl = document.getElementById('read-later-stats');
-      const clearBtn = document.getElementById('read-later-clear');
-
-      const typeFilter = document.getElementById('rl-type-filter');
-      const priceFilter = document.getElementById('rl-price-filter');
-      const sortFilter = document.getElementById('rl-sort');
-      const searchInput = document.getElementById('rl-search');
 
 
-      let items = []; // items from API
+  <script src="/script.js" defer></script>
+  <script src="/read-later.js" defer></script>
 
-      // fetch and render
-      async function loadReadLater() {
-        summaryEl.textContent = 'Loading your saved items...';
-        statsEl.textContent = '';
-        listEl.innerHTML = '';
-        emptyEl.style.display = 'none';
-        clearBtn.style.display = 'none';
-
-        try {
-          const res = await fetch('/api/read-later');
-          if (!res.ok) throw new Error('Failed to load');
-          const data = await res.json();
-          if (!data.ok) {
-            summaryEl.textContent = 'Unable to load saved items.';
-            return;
-          }
-          items = Array.isArray(data.items) ? data.items : [];
-
-          if (!items.length) {
-            summaryEl.textContent = 'No items saved yet.';
-            emptyEl.style.display = 'block';
-            statsEl.textContent = '';
-            return;
-          }
-
-          // show summary & stats
-          summaryEl.textContent = `Showing ${items.length} saved item(s).`;
-          const free = items.filter(i => Number(i.price || 0) === 0).length;
-          const paid = items.length - free;
-          statsEl.textContent = `${free} free • ${paid} paid`;
-          clearBtn.style.display = 'inline-block';
-
-          renderList();
-        } catch (err) {
-          console.error('Read Later load error:', err);
-          summaryEl.textContent = 'Error loading saved items.';
-          emptyEl.style.display = 'block';
-        }
-      }
-
-      function slugify(text) {
-        return (text || '')
-          .toString()
-          .toLowerCase()
-          .trim()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '');
-      }
-
-      function renderList() {
-        const type = typeFilter.value;
-        const price = priceFilter.value;
-        const sortBy = sortFilter.value;
-
-        let list = items.slice();
-
-        const q = (searchInput?.value || '').toLowerCase().trim();
-        if (q) {
-          list = list.filter(i => {
-            const text =
-              `${i.title || ''} ${i.exam || ''} ${i.subject || ''} ${i.year || ''}`
-                .toLowerCase();
-            return text.includes(q);
-          });
-        }
-
-
-        if (type !== 'all') {
-          list = list.filter(i => i.itemType === type);
-        }
-
-        if (price === 'free') list = list.filter(i => Number(i.price || 0) === 0);
-        if (price === 'paid') list = list.filter(i => Number(i.price || 0) > 0);
-
-        if (sortBy === 'recent') {
-          list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        } else if (sortBy === 'title') {
-          list.sort((a, b) => ((a.title || '').localeCompare(b.title || '')));
-        } else if (sortBy === 'reads') {
-          list.sort((a, b) => ((b.downloads || 0) - (a.downloads || 0)));
-        }
-
-        listEl.innerHTML = '';
-
-        if (!list.length) {
-          listEl.innerHTML = '<div class="empty-msg">No materials match your filters.</div>';
-          return;
-        }
-
-        list.forEach(item => {
-          const priceLabel = Number(item.price || 0) > 0 ? `₹${item.price}` : 'Free';
-
-          const card = document.createElement('div');
-          card.className = 'rl-card';
-          card.innerHTML = `
-            <div class="rl-top">
-              <div>
-                <div class="rl-title">${escapeHtml(item.title || 'Untitled')}</div>
-                <div class="rl-meta">${escapeHtml(item.exam || '—')} • ${escapeHtml(item.subject || '—')} • ${escapeHtml(item.year || '—')}</div>
-              </div>
-
-              <div class="rl-labels">
-                <span class="rl-price">${priceLabel}</span>
-              </div>
-            </div>
-
-            <div class="rl-footer">
-              <div class="rl-meta" style="flex:1 1 60%;">Reads: ${Number(item.downloads || 0)}</div>
-              <div class="rl-actions">
-                <a href="/view/${slugify(item.title)}?id=${encodeURIComponent(item.itemId)}" class="btn small primary">Open reader</a>
-                <button class="btn small secondary remove-btn" data-id="${encodeURIComponent(item.itemId)}">Remove</button>
-              </div>
-            </div>
-          `;
-          listEl.appendChild(card);
-        });
-      }
-
-      // remove single
-      listEl.addEventListener('click', async (e) => {
-        const btn = e.target.closest('.remove-btn');
-        if (!btn) return;
-        const id = decodeURIComponent(btn.getAttribute('data-id'));
-        if (!id) return;
-
-        btn.disabled = true;
-        btn.textContent = 'Removing…';
-
-        try {
-          await fetch('/api/read-later/remove', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ materialId: id })
-          });
-        } catch (err) {
-          console.error('Remove error', err);
-          // ignore - still update UI
-        }
-
-        items = items.filter(i => i.itemId !== id);
-        renderList();
-        // update summary & stats quickly
-        summaryEl.textContent = items.length ? `Showing ${items.length} saved item(s).` : 'No items saved yet.';
-        const free = items.filter(i => Number(i.price || 0) === 0).length;
-        const paid = items.length - free;
-        statsEl.textContent = items.length ? `${free} free • ${paid} paid` : '';
-        if (!items.length) {
-          emptyEl.style.display = 'block';
-          clearBtn.style.display = 'none';
-        }
-      });
-
-      // clear all
-      clearBtn.addEventListener('click', async () => {
-        if (!confirm('Clear all items from Read Later?')) return;
-        clearBtn.disabled = true;
-        clearBtn.textContent = 'Clearing…';
-
-        // attempt to remove each server-side (we don't have bulk API)
-        const toRemove = items.map(i => i.itemId);
-        for (const id of toRemove) {
-          try {
-            await fetch('/api/read-later/remove', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ materialId: id })
-            });
-          } catch (err) {
-            console.warn('clear single fail', id, err);
-          }
-        }
-
-        items = [];
-        listEl.innerHTML = '';
-        summaryEl.textContent = 'No items saved yet.';
-        statsEl.textContent = '';
-        clearBtn.style.display = 'none';
-        clearBtn.disabled = false;
-        clearBtn.textContent = 'Clear all';
-        emptyEl.style.display = 'block';
-      });
-
-      // filters
-      typeFilter.addEventListener('change', renderList);
-      priceFilter.addEventListener('change', renderList);
-      sortFilter.addEventListener('change', renderList);
-
-      // load initially
-      loadReadLater();
-
-      // small helper to escape inserted text (prevent accidental HTML injection)
-      function escapeHtml(s) {
-        if (!s) return '';
-        return String(s)
-          .replace(/&/g, '&amp;')
-          .replace(/"/g, '&quot;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-      }
-
-      // optionally: try fetching notification count and display badge (if you have /api/notifications-count)
-      (async function fetchNotifCount() {
-        try {
-          const res = await fetch('/api/notifications/count');
-          if (!res.ok) return;
-          const data = await res.json();
-          if (data && typeof data.count === 'number' && data.count > 0) {
-            const badge = document.getElementById('notifications-count');
-            badge.textContent = data.count;
-            badge.style.display = 'inline-flex';
-          }
-        } catch (e) { /* ignore */ }
-      })();
-    });
-  </script>
 </body>
 
 </html>

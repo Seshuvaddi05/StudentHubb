@@ -14,17 +14,19 @@
     .auth-container {
       max-width: 480px;
       margin: 2.5rem auto;
-      background: #ffffff;
+      background: var(--card);
+      border: 1px solid var(--card-2);
+      color: var(--text);
       border-radius: 0.9rem;
       padding: 1.5rem 1.75rem;
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
     }
 
-    body.dark .auth-container {
+    /*body.dark .auth-container {
       background: #020617;
       border: 1px solid #1f2937;
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
-    }
+    }*/
 
     .auth-tabs {
       display: flex;
@@ -39,14 +41,16 @@
       border-radius: 999px;
       cursor: pointer;
       font-size: 0.9rem;
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
+      border: 1px solid var(--card-2);
+      background: var(--card);
+      color: var(--text);
     }
 
     .auth-tab.active {
-      background: #111827;
-      color: #f9fafb;
-      border-color: #111827;
+      background: var(--primary);
+      color: #111827;
+      border-color: var(--primary);
+
     }
 
     body.dark .auth-tab {
@@ -69,7 +73,7 @@
 
     .auth-subtitle {
       font-size: 0.9rem;
-      color: #6b7280;
+      color: var(--muted);
       margin-bottom: 0.9rem;
     }
 
@@ -126,7 +130,7 @@
       background: none;
       border: none;
       padding: 0;
-      color: #2563eb;
+      color: var(--accent);
       cursor: pointer;
       text-decoration: none;
       align-self: flex-end;
@@ -138,6 +142,12 @@
 
     body.dark .forgot-link {
       color: #93c5fd;
+    }
+
+    /* 🔥 FIX: make login visible even if .section animation exists */
+    .section {
+      opacity: 1 !important;
+      transform: none !important;
     }
   </style>
 </head>
@@ -262,16 +272,17 @@
       const toggleBtn = document.getElementById("theme-toggle");
       if (!body || !toggleBtn) return;
 
-      if (theme === "dark") {
-        body.classList.add("dark");
-        toggleBtn.textContent = "☀️";
-      } else {
-        body.classList.remove("dark");
+      if (theme === "light") {
+        body.classList.add("light");   // ✅ correct class
         toggleBtn.textContent = "🌙";
+      } else {
+        body.classList.remove("light"); // ✅ remove light = dark default
+        toggleBtn.textContent = "☀️";
       }
 
       localStorage.setItem("studenthub_theme", theme);
     }
+
 
     function showStatus(msg, isError = false) {
       const el = document.getElementById("auth-status");
@@ -294,7 +305,7 @@
       const themeToggleBtn = document.getElementById("theme-toggle");
       if (themeToggleBtn) {
         themeToggleBtn.addEventListener("click", () => {
-          const next = document.body.classList.contains("dark") ? "light" : "dark";
+          const next = document.body.classList.contains("light") ? "dark" : "light";
           applyTheme(next);
         });
       }

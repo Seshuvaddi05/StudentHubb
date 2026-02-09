@@ -6,102 +6,126 @@
   <title>Request Material | StudentHub</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Main styles -->
   <link rel="stylesheet" href="/styles/styles.css">
-
-  <!-- Theme color -->
   <meta name="theme-color" content="#111827" />
 </head>
 
-<body>
+<body data-protected>
 
   <!-- ===============================
-       SHARED STUDENT NAVBAR
+       TOP NAVBAR (GLOBAL)
   ================================ -->
   <header class="navbar">
     <div class="logo">StudentHub</div>
 
-    <!-- Mobile hamburger -->
-    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
-      <span></span>
-      <span></span>
-      <span></span>
+    <button class="nav-toggle" id="nav-toggle">
+      <span></span><span></span><span></span>
     </button>
 
-    <!-- Nav links -->
-    <nav class="nav-links" id="nav-links">
-      <a href="/">Home</a>
-      <a href="/#ebooks">E-Books</a>
-      <a href="/#question-papers">Question Papers</a>
-      <a href="/#about">About</a>
-      <a href="/#contact">Contact</a>
-      <a href="/dashboard.html">My Dashboard</a>
-      <a href="/login.html" id="nav-login-link" style="display:none;">Sign in</a>
-    </nav>
-
-    <!-- Right actions -->
-    <div class="nav-actions">
-      <button id="notifications-btn" class="nav-icon-btn" type="button" aria-label="Notifications">
-        🔔
-        <span id="notifications-count" class="nav-badge" style="display:none;">0</span>
-      </button>
-
-      <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
-    </div>
+    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
   </header>
 
+
+
   <!-- ===============================
-       REQUEST PAGE CONTENT
+       APP LAYOUT (PRO DASHBOARD)
   ================================ -->
-  <main class="request-page">
-    <div class="request-container">
+  <div class="app-layout">
 
-      <h1 class="request-title">Request a Book or Question Paper</h1>
-      <p class="request-subtitle">
-        Tell us which e-book or question paper you need. Our team will review your request.
-      </p>
+    <!-- ========= SIDEBAR ========= -->
+    <aside class="sidebar">
 
-      <form id="requestForm" class="request-form">
+      <h3 class="sb-title">Dashboard</h3>
 
-        <div class="form-row">
-          <label for="name">Name</label>
-          <input type="text" id="name" required placeholder="Enter your name" />
-        </div>
+      <!-- Primary -->
+      <a href="/dashboard.html" class="sb-link">🏠 Dashboard</a>
+      <!-- ACTIVE PAGE -->
+      <a href="/request.html" class="sb-link active">📝 Request Material</a>
+      
 
-        <div class="form-row">
-          <label for="email">Email</label>
-          <input type="email" id="email" required placeholder="Enter your email" />
-        </div>
+      <hr />
 
-        <div class="form-row">
-          <label for="type">Material Type</label>
-          <select id="type" required>
-            <option value="">Select type</option>
-            <option value="ebook">E-Book</option>
-            <option value="questionPaper">Question Paper</option>
-          </select>
-        </div>
+      <!-- Content -->
+      <a href="/#ebooks" class="sb-link">📚 E-Books</a>
+      <a href="/#question-papers" class="sb-link">📄 Papers</a>
+      <a href="/quiz.html" class="sb-link">🧠 Quiz Center</a>
 
-        <div class="form-row">
-          <label for="exam">Exam / Subject</label>
-          <input type="text" id="exam" placeholder="e.g. RRB NTPC, SSC CGL, Aptitude" />
-        </div>
+      <hr />
 
-        <div class="form-row">
-          <label for="details">Details</label>
-          <textarea id="details" rows="4" required
-            placeholder="Book name, year, edition, or any specific details..."></textarea>
-        </div>
 
-        <button class="btn primary full-width" type="submit">
-          Send Request
-        </button>
+      <!-- Earnings -->
+      <a href="/library.html" class="sb-link">📂 My Library</a>
+      <a href="/read-later.html" class="sb-link">⏳ Read Later</a>
+      <a href="/submit-pdf.html" class="sb-link">📤 Submit PDF</a>
+      <a href="/my-submissions.html" class="sb-link">📄 My Submissions</a>
+      <a href="/wallet.html" class="sb-link">💰 Wallet</a>
 
-        <p id="reqMsg" class="form-message"></p>
-      </form>
+      <hr />
 
-    </div>
-  </main>
+    </aside>
+
+
+
+    <!-- ========= MAIN ========= -->
+    <main class="main-content">
+
+      <div class="request-container">
+
+        <!-- Header -->
+        <h1 class="request-title">Request a Book or Question Paper</h1>
+        <p class="request-subtitle">
+          Can’t find what you need? Tell us and we’ll try to add it for you.
+        </p>
+
+
+
+        <!-- ================= FORM CARD ================= -->
+        <form id="requestForm" class="request-form">
+
+          <div class="form-row">
+            <label for="name">Name</label>
+            <input type="text" id="name" required placeholder="Enter your name" />
+          </div>
+
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input type="email" id="email" required placeholder="Enter your email" />
+          </div>
+
+          <div class="form-row">
+            <label for="type">Material Type</label>
+            <select id="type" required>
+              <option value="">Select type</option>
+              <option value="ebook">E-Book</option>
+              <option value="questionPaper">Question Paper</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label for="exam">Exam / Subject</label>
+            <input type="text" id="exam" placeholder="e.g. RRB NTPC, SSC CGL, Aptitude" />
+          </div>
+
+          <div class="form-row">
+            <label for="details">Details</label>
+            <textarea id="details" rows="4" required
+              placeholder="Book name, year, edition, or any specific details..."></textarea>
+          </div>
+
+          <button class="btn primary full-width" type="submit">
+            Send Request
+          </button>
+
+          <p id="reqMsg" class="form-message"></p>
+
+        </form>
+
+      </div>
+
+    </main>
+  </div>
+
+
 
   <!-- ===============================
        FOOTER
@@ -110,22 +134,18 @@
     <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
   </footer>
 
+
+
   <!-- ===============================
-     SCRIPTS
-=============================== -->
+       SCRIPTS
+  ================================ -->
+  <script src="/js/guard.js"></script>
+  <script src="/script.js"></script>
+  <script src="/request.js"></script>
 
-<!-- Main user script (THEME + NAV + AUTH) -->
-<script src="script.js"></script>
-
-<!-- Request form logic -->
-<script src="request.js"></script>
-
-<script>
-  // Footer year
-  document.getElementById("year").textContent = new Date().getFullYear();
-</script>
-
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
 
 </body>
-
 </html>

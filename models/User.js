@@ -2,13 +2,10 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
-/* ================================
-   NOTIFICATION SUB-SCHEMA
-   Used for:
-   - PDF approval/rejection
-   - Withdrawal status updates
-   - System messages
-===================================*/
+
+/* ======================================================
+   🔔 NOTIFICATION SUB-SCHEMA
+   ====================================================== */
 const NotificationSchema = new mongoose.Schema(
   {
     message: { type: String, required: true },
@@ -19,20 +16,39 @@ const NotificationSchema = new mongoose.Schema(
       default: "info",
     },
 
-    read: { type: Boolean, default: false },
+    read: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
-/* ================================
-   USER MAIN SCHEMA
-===================================*/
+
+/* ======================================================
+   👤 USER MAIN SCHEMA (PRODUCTION FINAL)
+   ====================================================== */
 const userSchema = new mongoose.Schema(
   {
-    /* ---------------------------
+    /* ==================================================
        BASIC USER INFO
-    ----------------------------*/
-    name: { type: String, required: true },
+    ================================================== */
+
+    // Display name
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    // ⭐ NEW → leaderboard friendly username
+    username: {
+      type: String,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
 
     email: {
       type: String,
@@ -42,78 +58,108 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
 
-    password: { type: String, required: true },
+    password: {
+      type: String,
+      required: true,
+    },
 
-    /* ---------------------------
-       WALLET & REWARD SYSTEM
-    ----------------------------*/
+    // ⭐ NEW → profile photo / avatar URL
+    avatar: {
+      type: String,
+      default: null,
+    },
 
-    // Total available coins
+
+    /* ==================================================
+       💰 WALLET & REWARD SYSTEM
+    ================================================== */
+
     walletCoins: {
       type: Number,
       default: 0,
       min: 0,
     },
 
-    // Coins locked during pending withdrawal
     lockedCoins: {
       type: Number,
       default: 0,
       min: 0,
     },
 
-    // Last withdrawal timestamp (for rate limiting)
     lastWithdrawalAt: {
       type: Date,
       default: null,
     },
 
-    // Wallet last updated (audit purpose)
     walletUpdatedAt: {
       type: Date,
       default: Date.now,
     },
 
-    /* ---------------------------
-       NOTIFICATIONS
-    ----------------------------*/
+
+    /* ==================================================
+       🚀 QUIZ STATS CACHE (VERY FAST DASHBOARD)
+       avoids heavy aggregation queries
+    ================================================== */
+
+    quizStats: {
+      totalAttempts: { type: Number, default: 0 },
+      totalScore: { type: Number, default: 0 },
+      bestScore: { type: Number, default: 0 },
+    },
+
+
+    /* ==================================================
+       🔔 NOTIFICATIONS
+    ================================================== */
     notifications: [NotificationSchema],
   },
   {
-    timestamps: true, // createdAt & updatedAt
+    timestamps: true,
   }
 );
 
-/* ================================
-   PASSWORD HASHING
-===================================*/
+
+/* ======================================================
+   ⚡ INDEXES (PERFORMANCE BOOST)
+   ====================================================== */
+
+userSchema.index({ createdAt: -1 });
+userSchema.index({ username: 1 });
+userSchema.index({ email: 1 });
+
+
+/* ======================================================
+   🔐 PASSWORD HASHING
+   ====================================================== */
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+
   next();
 });
 
-/* ================================
-   PASSWORD MATCHING
-===================================*/
+
+/* ======================================================
+   🔑 PASSWORD MATCH
+   ====================================================== */
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return bcrypt.compare(enteredPassword, this.password);
 };
 
-/* ================================
-   WALLET HELPER METHODS (PRO)
-===================================*/
 
-// Add coins safely
+/* ======================================================
+   💰 WALLET HELPERS
+   ====================================================== */
+
 userSchema.methods.addCoins = async function (coins) {
   this.walletCoins += coins;
   this.walletUpdatedAt = new Date();
   await this.save();
 };
 
-// Lock coins during withdrawal
 userSchema.methods.lockCoins = async function (coins) {
   if (coins > this.walletCoins) {
     throw new Error("Insufficient wallet balance");
@@ -127,22 +173,40 @@ userSchema.methods.lockCoins = async function (coins) {
   await this.save();
 };
 
-// Unlock coins (if withdrawal rejected)
 userSchema.methods.unlockCoins = async function (coins) {
   this.lockedCoins -= coins;
   this.walletCoins += coins;
   this.walletUpdatedAt = new Date();
+
   await this.save();
 };
 
-// Finalize withdrawal (coins permanently removed)
 userSchema.methods.finalizeWithdrawal = async function (coins) {
   this.lockedCoins -= coins;
   this.walletUpdatedAt = new Date();
+
   await this.save();
 };
 
-/* ================================
-   EXPORT MODEL
-===================================*/
+
+/* ======================================================
+   🧠 QUIZ STATS HELPERS (NEW)
+   ====================================================== */
+
+// call this after each quiz submission
+userSchema.methods.updateQuizStats = async function (score) {
+  this.quizStats.totalAttempts += 1;
+  this.quizStats.totalScore += score;
+
+  if (score > this.quizStats.bestScore) {
+    this.quizStats.bestScore = score;
+  }
+
+  await this.save();
+};
+
+
+/* ======================================================
+   EXPORT
+   ====================================================== */
 module.exports = mongoose.model("User", userSchema);

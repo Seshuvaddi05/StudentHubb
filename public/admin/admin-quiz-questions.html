@@ -2,40 +2,160 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Quiz Questions | Admin</title>
-  <link rel="stylesheet" href="../styles.css" />
+  <title>StudentHub Admin | Manage Questions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Global styles -->
+  <link rel="stylesheet" href="/styles/styles.css" />
+  <link rel="stylesheet" href="/admin/admin-quiz.css" />
+
+  <style>
+    /* ===============================
+       PAGE LAYOUT
+    =============================== */
+    .questions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 700px) {
+      .questions-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+    }
+
+    .question-item {
+      border: 1px solid #e5e7eb;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+
+    body.dark .question-item {
+      background: #0b1220;
+      border-color: #1f2937;
+    }
+
+    .question-item h4 {
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .question-item ul {
+      margin: 0;
+      padding-left: 16px;
+      font-size: 13px;
+    }
+
+    .btn-danger {
+      margin-top: 8px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .count-text {
+      font-size: 13px;
+      margin-bottom: 10px;
+      color: #6b7280;
+    }
+  </style>
 </head>
-<body>
 
-<h2 id="quizTitle">Quiz Questions</h2>
+<body data-protected>
 
-<!-- ADD QUESTION -->
-<div class="card">
-  <h3>Add Question</h3>
+<!-- ================= NAVBAR ================= -->
+<nav class="admin-navbar">
+  <div class="admin-navbar-inner">
 
-  <input id="questionText" placeholder="Question text" />
+    <div class="admin-brand">StudentHub Admin</div>
 
-  <input class="opt" placeholder="Option A" />
-  <input class="opt" placeholder="Option B" />
-  <input class="opt" placeholder="Option C" />
-  <input class="opt" placeholder="Option D" />
+    <div class="admin-nav">
+      <a href="/admin/admin-quiz.html">Generate Quiz</a>
+      <a href="/admin/admin-quizzes.html" class="active">All Quizzes</a>
+    </div>
 
-  <select id="correctAnswer">
-    <option value="">Correct Answer</option>
-    <option>A</option>
-    <option>B</option>
-    <option>C</option>
-    <option>D</option>
-  </select>
+    <div class="admin-actions">
+      <a href="/" class="admin-view-link">View site</a>
+      <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+    </div>
 
-  <button onclick="addQuestion()">Add Question</button>
-</div>
+  </div>
+</nav>
 
-<hr />
 
-<!-- QUESTIONS LIST -->
-<div id="questions"></div>
+<!-- ================= PAGE ================= -->
+<main class="admin-page">
+  <div class="admin-container">
 
-<script src="admin-quiz-questions.js"></script>
+    <div class="admin-card">
+
+      <h2 id="quizTitle">Manage Questions</h2>
+      <p class="muted">
+        Add, view or delete questions for this quiz
+      </p>
+
+
+      <!-- ================= ADD FORM ================= -->
+      <label>Question</label>
+      <textarea id="questionText" placeholder="Enter full question text..."></textarea>
+
+      <label>Options</label>
+      <div class="questions-grid">
+        <input class="opt" placeholder="Option A" />
+        <input class="opt" placeholder="Option B" />
+        <input class="opt" placeholder="Option C" />
+        <input class="opt" placeholder="Option D" />
+      </div>
+
+      <label>Correct Answer</label>
+      <select id="correctAnswer">
+        <option value="">Select correct option</option>
+        <option value="0">Option A</option>
+        <option value="1">Option B</option>
+        <option value="2">Option C</option>
+        <option value="3">Option D</option>
+      </select>
+
+      <button class="btn-primary" onclick="addQuestion()">
+        Add Question
+      </button>
+
+      <p id="status" class="status-text"></p>
+
+      <hr style="margin:20px 0;" />
+
+
+      <!-- ================= LIST ================= -->
+      <div class="count-text">
+        Total Questions: <b id="count">0</b>
+      </div>
+
+      <div id="questions"></div>
+
+    </div>
+  </div>
+</main>
+
+
+<!-- Scripts -->
+<script src="/admin-theme.js"></script>
+<script src="/admin/admin-quiz-questions.js"></script>
+
 </body>
 </html>

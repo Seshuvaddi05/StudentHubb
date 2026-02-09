@@ -38,6 +38,8 @@
   const navToggle = document.getElementById("nav-toggle");
   const navLinks = document.getElementById("nav-links");
   const themeToggleBtn = document.getElementById("theme-toggle");
+  const activityList = document.getElementById("activity-list");
+
 
 
   /* ---------------- HELPERS ---------------- */
@@ -302,6 +304,72 @@
     });
   }
 
+  /* ---------------- RECENT ACTIVITY ---------------- */
+
+  function timeAgo(dateStr) {
+    if (!dateStr) return "";
+    const diff = (Date.now() - new Date(dateStr)) / 1000;
+
+    if (diff < 60) return "just now";
+    if (diff < 3600) return Math.floor(diff / 60) + " min ago";
+    if (diff < 86400) return Math.floor(diff / 3600) + " hr ago";
+    return Math.floor(diff / 86400) + " days ago";
+  }
+
+  async function loadActivity() {
+    if (!activityList) return;
+
+    try {
+      const [library, wallet, submissions] = await Promise.all([
+        safeJsonFetch(`${BASE_URL}/api/my-library`),
+        safeJsonFetch(`${BASE_URL}/api/wallet`),
+        safeJsonFetch(`${BASE_URL}/api/user-submissions`)
+      ]);
+
+      const events = [];
+
+      (library.items || []).forEach(i =>
+        events.push({
+          text: `Purchased ${i.title}`,
+          time: i.createdAt
+        })
+      );
+
+      (wallet.withdrawals || []).forEach(w =>
+        events.push({
+          text: `Withdrawal ₹${w.amount} (${w.status})`,
+          time: w.createdAt
+        })
+      );
+
+      (submissions.submissions || []).forEach(s =>
+        events.push({
+          text: `Submitted PDF: ${s.title}`,
+          time: s.createdAt
+        })
+      );
+
+      events.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+      if (!events.length) {
+        activityList.innerHTML =
+          `<div class="dash-empty">No recent activity</div>`;
+        return;
+      }
+
+      activityList.innerHTML = events.slice(0, 6).map(e => `
+      <div class="activity-item">
+        <span>${e.text}</span>
+        <span class="activity-time">${timeAgo(e.time)}</span>
+      </div>
+    `).join("");
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+
   /* ---------------- LOGOUT ---------------- */
 
   function initLogout() {
@@ -335,7 +403,9 @@
     await loadReadLater();
     await loadWallet();
     await loadSubmissions();
+    await loadActivity();
   }
+
 
   document.addEventListener("DOMContentLoaded", init);
 })();

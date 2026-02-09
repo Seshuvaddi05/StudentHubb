@@ -18,13 +18,16 @@
     "crypto": "^1.0.1",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "express-session": "^1.19.0",
     "google-auth-library": "^10.5.0",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.0.0",
     "mongoose": "^9.0.1",
     "multer": "^2.0.2",
-    "nodemailer": "^7.0.11",
+    "nodemailer": "^7.0.13",
     "openai": "^6.15.0",
-    "razorpay": "^2.9.6"
+    "qrcode": "^1.5.4",
+    "razorpay": "^2.9.6",
+    "uuid": "^13.0.0"
   }
 }

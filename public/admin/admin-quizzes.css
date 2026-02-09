@@ -1,9 +1,85 @@
 /* =================================================
+   🔥 GLOBAL RESET
+================================================= */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+
+
+/* =================================================
+   🔥 NAVBAR FIX (touch very top)
+================================================= */
+
+.admin-navbar {
+  margin: 0;
+  padding: 0;
+}
+
+
+
+/* =================================================
+   🔥 CLEAN ACTIVE NAV LINK
+================================================= */
+
+.admin-nav a.active {
+  background: transparent !important;
+  color: #facc15;
+  position: relative;
+}
+
+.admin-nav a.active::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -6px;
+  height: 3px;
+  background: #facc15;
+  border-radius: 3px;
+}
+
+
+
+/* =================================================
+   PAGE LAYOUT
+================================================= */
+
+.admin-page {
+  padding: 24px;
+  margin: 0;
+}
+
+.admin-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+}
+
+/* 🌙 DARK */
+body.dark .admin-card {
+  background: #0f172a;
+  border-color: #1f2937;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+
+
+/* =================================================
    PAGE HEADER
 ================================================= */
 
 .page-header {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .page-header h1 {
@@ -17,28 +93,32 @@
   font-size: 14px;
 }
 
+body.dark .page-header .muted {
+  color: #94a3b8;
+}
+
 
 
 /* =================================================
-   🔍 SEARCH + FILTER TOOLBAR (NEW)
+   🔍 SEARCH + FILTER TOOLBAR
 ================================================= */
 
 .quiz-toolbar {
   display: flex;
   gap: 12px;
-  margin-bottom: 16px;
+  margin: 18px 0;
   flex-wrap: wrap;
 }
 
 .quiz-toolbar input,
 .quiz-toolbar select {
-  padding: 8px 12px;
+  padding: 9px 12px;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
   font-size: 14px;
   background: #fff;
   outline: none;
-  transition: 0.15s;
+  transition: 0.15s ease;
 }
 
 .quiz-toolbar input:focus,
@@ -47,10 +127,18 @@
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
 }
 
+/* 🌙 DARK */
+body.dark .quiz-toolbar input,
+body.dark .quiz-toolbar select {
+  background: #020617;
+  color: #e5e7eb;
+  border-color: #1f2937;
+}
+
 
 
 /* =================================================
-   TABLE WRAPPER (scroll only body)
+   TABLE WRAPPER
 ================================================= */
 
 .table-wrapper {
@@ -62,15 +150,19 @@
   border: 1px solid #e5e7eb;
 
   background: #ffffff;
-
-  /* subtle card feel */
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+/* 🌙 DARK */
+body.dark .table-wrapper {
+  background: #020617;
+  border-color: #1f2937;
 }
 
 
 
 /* =================================================
-   SCROLLBAR (clean modern)
+   SCROLLBAR
 ================================================= */
 
 .table-wrapper::-webkit-scrollbar {
@@ -85,6 +177,11 @@
 
 .table-wrapper::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
+}
+
+/* 🌙 DARK */
+body.dark .table-wrapper::-webkit-scrollbar-thumb {
+  background: #334155;
 }
 
 
@@ -113,10 +210,17 @@
   text-align: left;
 }
 
+/* 🌙 DARK */
+body.dark .quiz-table th,
+body.dark .quiz-table td {
+  border-color: #1f2937;
+  color: #e5e7eb;
+}
+
 
 
 /* =================================================
-   ✨ MODERN STICKY HEADER (NO DARK BAR)
+   ✨ MODERN STICKY HEADER
 ================================================= */
 
 .quiz-table thead th {
@@ -124,7 +228,7 @@
   top: 0;
   z-index: 10;
 
-  background: #f8fafc;  /* soft light */
+  background: #f8fafc;
   color: #0f172a;
 
   font-weight: 600;
@@ -132,14 +236,19 @@
 
   border-bottom: 1px solid #e2e8f0;
 
-  /* subtle floating effect */
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* 🌙 DARK */
+body.dark .quiz-table thead th {
+  background: #0f172a;
+  color: #e5e7eb;
 }
 
 
 
 /* =================================================
-   ROW STYLING (modern dashboard feel)
+   ROW STYLING
 ================================================= */
 
 .quiz-table tbody tr:nth-child(even) {
@@ -149,6 +258,15 @@
 .quiz-table tbody tr:hover {
   background: #eef2ff;
   transition: background 0.15s ease;
+}
+
+/* 🌙 DARK */
+body.dark .quiz-table tbody tr:nth-child(even) {
+  background: #0b1220;
+}
+
+body.dark .quiz-table tbody tr:hover {
+  background: #1e293b;
 }
 
 
@@ -208,15 +326,11 @@
   transition: all 0.15s ease;
 }
 
-/* hover animation */
 .action-btn:hover {
   transform: translateY(-1px);
   opacity: 0.9;
 }
 
-
-
-/* enable/disable */
 .btn-disable {
   background: #fee2e2;
   color: #991b1b;
@@ -227,13 +341,11 @@
   color: #166534;
 }
 
-/* manage */
 .btn-secondary {
   background: #e0e7ff;
   color: #3730a3;
 }
 
-/* delete */
 .btn-delete {
   background: #ef4444;
   color: white;
@@ -246,7 +358,7 @@
 
 
 /* =================================================
-   EMPTY STATE TEXT
+   EMPTY STATE
 ================================================= */
 
 .table-empty {
@@ -255,10 +367,14 @@
   color: #6b7280;
 }
 
+body.dark .table-empty {
+  color: #94a3b8;
+}
+
 
 
 /* =================================================
-   MOBILE RESPONSIVE
+   MOBILE
 ================================================= */
 
 @media (max-width: 768px) {

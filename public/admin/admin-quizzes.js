@@ -1,5 +1,5 @@
 /* =====================================================
-   ADMIN QUIZZES PAGE – FINAL PRODUCTION VERSION
+   ADMIN QUIZZES PAGE – FINAL PRODUCTION (HARDENED)
    Features:
    ✅ Load quizzes
    ✅ Empty state
@@ -8,6 +8,8 @@
    ✅ Search
    ✅ Topic filter
    ✅ Status filter
+   ✅ XSS safe
+   ✅ Double-click safe
 ===================================================== */
 
 const tableBody = document.getElementById("quizTableBody");
@@ -16,14 +18,42 @@ const searchInput = document.getElementById("searchInput");
 const topicFilter = document.getElementById("topicFilter");
 const statusFilter = document.getElementById("statusFilter");
 
-let quizzes = []; // master data
+let quizzes = [];
 
 
 
 /* =====================================================
-   LOAD QUIZZES FROM SERVER
+   SMALL HELPERS
+===================================================== */
+
+// prevent XSS (VERY important for admin pages)
+function escapeHTML(str = "") {
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function showMessage(text, color = "#6b7280") {
+  tableBody.innerHTML = `
+    <tr>
+      <td colspan="6" style="text-align:center; padding:24px; color:${color};">
+        ${text}
+      </td>
+    </tr>
+  `;
+}
+
+
+
+/* =====================================================
+   LOAD QUIZZES
 ===================================================== */
 async function loadQuizzes() {
+  showMessage("Loading quizzes...");
+
   try {
     const res = await fetch("/api/admin/quiz/all", {
       credentials: "include"
@@ -31,7 +61,7 @@ async function loadQuizzes() {
 
     const data = await res.json();
 
-    if (!res.ok) throw new Error(data.error || "Failed to fetch quizzes");
+    if (!res.ok) throw new Error(data.error || "Failed");
 
     quizzes = data.quizzes || [];
 
@@ -39,32 +69,25 @@ async function loadQuizzes() {
 
   } catch (err) {
     console.error("[ADMIN QUIZZES ERROR]", err);
-
-    tableBody.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align:center; padding:24px; color:#dc2626;">
-          Failed to load quizzes
-        </td>
-      </tr>
-    `;
+    showMessage("Failed to load quizzes", "#dc2626");
   }
 }
 
 
 
 /* =====================================================
-   RENDER (Search + Filter + Draw table)
+   RENDER (Search + Filter)
 ===================================================== */
 function renderQuizzes() {
   const search = (searchInput?.value || "").toLowerCase();
   const topic = topicFilter?.value || "";
   const status = statusFilter?.value || "";
 
-  tableBody.innerHTML = "";
-
   const filtered = quizzes.filter(q => {
 
-    if (search && !q.title.toLowerCase().includes(search)) return false;
+    const title = (q.title || "").toLowerCase();
+
+    if (search && !title.includes(search)) return false;
     if (topic && q.topic !== topic) return false;
     if (status && String(q.isActive) !== status) return false;
 
@@ -72,28 +95,25 @@ function renderQuizzes() {
   });
 
 
-  /* ========= EMPTY STATE ========= */
+  /* ========= EMPTY ========= */
   if (filtered.length === 0) {
-    tableBody.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align:center; padding:24px; color:#6b7280;">
-          No quizzes found
-        </td>
-      </tr>
-    `;
+    showMessage("No quizzes found");
     return;
   }
 
+  tableBody.innerHTML = "";
 
-  /* ========= RENDER ROWS ========= */
+
+  /* ========= ROWS ========= */
   filtered.forEach(q => {
-    const tr = document.createElement("tr");
 
     const quizId = q._id || q.id;
 
+    const tr = document.createElement("tr");
+
     tr.innerHTML = `
-      <td>${q.title}</td>
-      <td>${q.topic}</td>
+      <td>${escapeHTML(q.title || "")}</td>
+      <td>${escapeHTML(q.topic || "")}</td>
       <td>${q.totalQuestions ?? 0}</td>
 
       <td>
@@ -105,34 +125,33 @@ function renderQuizzes() {
       </td>
 
       <td style="display:flex; gap:8px; flex-wrap:wrap;">
-
-        <!-- Toggle -->
-        <button
-          class="action-btn ${
-            q.isActive ? "btn-disable" : "btn-enable"
-          }"
-          onclick="toggleQuiz('${quizId}')">
+        <button class="action-btn ${
+          q.isActive ? "btn-disable" : "btn-enable"
+        } toggle-btn">
           ${q.isActive ? "Disable" : "Enable"}
         </button>
 
-        <!-- Manage -->
         <a
           href="/admin/admin-quiz-questions.html?quizId=${quizId}"
           class="action-btn btn-secondary">
           Manage
         </a>
 
-        <!-- ⭐ Delete -->
-        <button
-          class="action-btn btn-delete"
-          onclick="deleteQuiz('${quizId}')">
+        <button class="action-btn btn-delete delete-btn">
           Delete
         </button>
-
       </td>
 
       <td>${new Date(q.createdAt).toLocaleString()}</td>
     `;
+
+
+    // safer event listeners (no inline JS)
+    tr.querySelector(".toggle-btn")
+      .addEventListener("click", () => toggleQuiz(quizId));
+
+    tr.querySelector(".delete-btn")
+      .addEventListener("click", () => deleteQuiz(quizId));
 
     tableBody.appendChild(tr);
   });
@@ -141,12 +160,17 @@ function renderQuizzes() {
 
 
 /* =====================================================
-   TOGGLE QUIZ STATUS
+   TOGGLE
 ===================================================== */
 async function toggleQuiz(id) {
+
   if (!confirm("Change quiz status?")) return;
 
   try {
+
+    const btn = event.target;
+    btn.disabled = true;
+
     const res = await fetch(`/api/admin/quiz/${id}/toggle`, {
       method: "PUT",
       credentials: "include"
@@ -165,9 +189,10 @@ async function toggleQuiz(id) {
 
 
 /* =====================================================
-   DELETE QUIZ
+   DELETE
 ===================================================== */
 async function deleteQuiz(id) {
+
   const ok = confirm(
     "⚠️ This will permanently delete:\n\n• Quiz\n• Questions\n• Attempts\n\nContinue?"
   );
@@ -175,6 +200,10 @@ async function deleteQuiz(id) {
   if (!ok) return;
 
   try {
+
+    const btn = event.target;
+    btn.disabled = true;
+
     const res = await fetch(`/api/admin/quiz/${id}`, {
       method: "DELETE",
       credentials: "include"
@@ -193,7 +222,7 @@ async function deleteQuiz(id) {
 
 
 /* =====================================================
-   EVENTS (Search + Filters)
+   EVENTS
 ===================================================== */
 searchInput?.addEventListener("input", renderQuizzes);
 topicFilter?.addEventListener("change", renderQuizzes);

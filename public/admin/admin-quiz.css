@@ -1,43 +1,60 @@
 /* ==================================================
-   ADMIN QUIZ – MATCH STUDENTHUB ADMIN UI (FINAL)
+   ADMIN QUIZ – MATCH STUDENTHUB ADMIN UI (FINAL PRO)
+   Improvements:
+   ✅ Dark mode smooth transitions
+   ✅ Disabled button state
+   ✅ Better mobile tap size
+   ✅ Minor UX polish
 ================================================== */
 
 .admin-page {
   background: #f4f5fb;
   min-height: calc(100vh - 72px);
   padding: 2.5rem 1.25rem;
+  transition: background 0.25s ease;
 }
 
 body.dark .admin-page {
-  background: radial-gradient(
-    1200px 600px at 50% -200px,
-    #0f172a,
-    #020617
-  );
+  background: radial-gradient(1200px 600px at 50% -200px,
+      #0f172a,
+      #020617);
 }
 
-/* Container */
+
+/* ==================================================
+   CONTAINER
+================================================== */
 .admin-container {
   max-width: 1100px;
   margin: 0 auto;
 }
 
-/* Card */
+
+/* ==================================================
+   CARD
+================================================== */
 .admin-card {
   background: #ffffff;
   border-radius: 16px;
   padding: 2rem;
   border: 1px solid #e5e7eb;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+
+  transition: background 0.25s ease,
+    border 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 body.dark .admin-card {
   background: #020617;
   border-color: #1f2937;
-  box-shadow: 0 30px 70px rgba(0,0,0,0.6);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
 }
 
-/* Titles */
+
+/* ==================================================
+   TITLES
+================================================== */
 .admin-card h2 {
   font-size: 1.45rem;
   font-weight: 700;
@@ -59,7 +76,10 @@ body.dark .admin-card .muted {
   color: #9ca3af;
 }
 
-/* Labels */
+
+/* ==================================================
+   LABELS
+================================================== */
 .admin-card label {
   display: block;
   font-size: 0.85rem;
@@ -73,15 +93,24 @@ body.dark .admin-card label {
   color: #cbd5f5;
 }
 
-/* Inputs & selects */
+
+/* ==================================================
+   INPUTS & SELECTS
+================================================== */
 .admin-card input,
 .admin-card select {
   width: 100%;
-  padding: 0.6rem 0.75rem;
+  padding: 0.65rem 0.85rem;
+  min-height: 44px;
+  /* better mobile tap */
   border-radius: 10px;
-  border: 1px solid #d1d5db;
+  background: var(--card);
+  border: 1px solid var(--card-2);
+  color: var(--text);
   font-size: 0.95rem;
-  background: #ffffff;
+  transition: border 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.25s ease;
 }
 
 .admin-card input::placeholder {
@@ -106,24 +135,38 @@ body.dark .admin-card input::placeholder {
   color: #6b7280;
 }
 
-/* Language box spacing */
+
+/* ==================================================
+   LANGUAGE BOX
+================================================== */
 #languageBox {
   margin-top: 4px;
 }
 
-/* Primary button */
+
+/* ==================================================
+   PRIMARY BUTTON
+================================================== */
 .btn-primary {
   margin-top: 1.5rem;
   width: 100%;
+  min-height: 44px;
   padding: 0.75rem;
+
   border-radius: 999px;
   border: none;
+
   font-weight: 700;
   font-size: 0.95rem;
+
   background: #fbbf24;
   color: #111827;
+
   cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.15s ease;
+
+  transition: transform 0.1s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .btn-primary:hover {
@@ -131,14 +174,25 @@ body.dark .admin-card input::placeholder {
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
 }
 
-/* Status text */
+/* ⭐ Disabled state (important) */
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+
+/* ==================================================
+   STATUS TEXT
+================================================== */
 .status-text {
   margin-top: 1rem;
   font-size: 0.9rem;
   font-weight: 600;
 }
 
-/* Success / error colors */
+/* Success / error */
 .status-text.success {
   color: #16a34a;
 }
@@ -147,7 +201,10 @@ body.dark .admin-card input::placeholder {
   color: #dc2626;
 }
 
-/* Mobile */
+
+/* ==================================================
+   MOBILE
+================================================== */
 @media (max-width: 640px) {
   .admin-card {
     padding: 1.5rem;

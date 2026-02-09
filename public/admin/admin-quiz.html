@@ -3,21 +3,118 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>StudentHub Admin | Generate Quiz</title>
+  <title>StudentHub Admin | Quiz Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- GLOBAL SITE STYLES (same as admin upload page) -->
+  <!-- GLOBAL STYLES -->
   <link rel="stylesheet" href="/styles/styles.css" />
-
-  <!-- ADMIN QUIZ PAGE STYLES -->
   <link rel="stylesheet" href="/admin/admin-quiz.css" />
+
+  <style>
+    /* =========================================
+   ADMIN – CREATE QUIZ (FINAL THEMED)
+   Uses global StudentHub theme variables
+========================================= */
+
+    .admin-container {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 0 1.25rem 2rem;
+    }
+
+    /* ===== CARD ===== */
+
+    .admin-card {
+      background: var(--card);
+      border: 1px solid var(--card-2);
+      border-radius: 16px;
+      padding: 1.8rem;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, .12);
+    }
+
+    /* ===== HEADINGS ===== */
+
+    .admin-card h2 {
+      margin-bottom: 1.2rem;
+      color: var(--text);
+    }
+
+    /* ===== LABELS ===== */
+
+    .admin-card label {
+      display: block;
+      margin-top: 1rem;
+      margin-bottom: .35rem;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* ===== INPUTS ===== */
+
+    .admin-card input,
+    .admin-card select,
+    .admin-card textarea {
+      width: 100%;
+      padding: .6rem .75rem;
+      border-radius: 10px;
+      border: 1px solid var(--card-2);
+      background: var(--card);
+      color: var(--text);
+      font-size: .9rem;
+    }
+
+    /* ===== QUESTION BOX ===== */
+
+    .question-box {
+      border: 1px solid var(--card-2);
+      border-radius: 12px;
+      padding: .9rem;
+      margin-top: .9rem;
+      background: var(--card);
+    }
+
+    /* ===== BUTTONS ===== */
+
+    .btn-primary {
+      background: var(--primary);
+      color: #111;
+      border: none;
+      padding: .6rem 1.1rem;
+      border-radius: 999px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-secondary {
+      background: var(--card-2);
+      color: var(--text);
+      border: 1px solid var(--card-2);
+      padding: .5rem 1rem;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      opacity: .9;
+    }
+
+    /* ===== STATUS ===== */
+
+    .status-text {
+      margin-top: 1rem;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+  </style>
+
 </head>
 
 <body>
 
   <div class="admin-shell">
 
-    <!-- ================= ADMIN NAVBAR (SHARED) ================= -->
+    <!-- ================= NAVBAR ================= -->
     <nav class="admin-navbar">
       <div class="admin-navbar-inner">
 
@@ -30,50 +127,51 @@
           <a href="/admin-approved.html">Approved</a>
           <a href="/admin-withdrawals.html">Withdrawals</a>
           <a href="/admin-requests.html">📩 Requests</a>
-          <a href="/admin/admin-quiz.html" class="active">Generate Quiz</a>
+          <a href="/admin/admin-quiz.html" class="active">Create Quiz</a>
           <a href="/admin/admin-quizzes.html">All Quizzes</a>
         </div>
 
         <div class="admin-actions">
           <a href="/" class="admin-view-link">View site</a>
-          <button id="theme-toggle" class="theme-toggle-btn" type="button">🌙</button>
+          <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
         </div>
 
       </div>
     </nav>
 
-    <!-- ================= PAGE CONTENT ================= -->
-    <main class="admin-page">
+
+    <!-- ================= PAGE ================= -->
+    <main class="admin-container">
       <div class="admin-container">
 
         <div class="admin-card">
-          <h2>Generate New Quiz</h2>
-          <p class="muted">
-            Create and store quizzes for students. Only admins can access this.
-          </p>
 
-          <!-- Quiz Title -->
-          <label for="title">Quiz Title</label>
-          <input
-            id="title"
-            type="text"
-            placeholder="e.g. Quantitative Aptitude – Set 1"
-          />
+          <h2>Create Quiz</h2>
 
-          <!-- Topic -->
-          <label for="topic">Topic</label>
+          <!-- ================= MODE TOGGLE ================= -->
+          <label>Quiz Type</label>
+          <select id="quizType">
+            <option value="manual">📝 Manual (Add questions yourself)</option>
+            <option value="ai">🤖 AI Generate</option>
+          </select>
+
+
+          <!-- ================= COMMON FIELDS ================= -->
+          <label>Quiz Title</label>
+          <input id="title" type="text" placeholder="Enter quiz title" />
+
+          <label>Topic</label>
           <select id="topic">
             <option value="">Select topic</option>
-            <option value="quantitative">Quantitative Aptitude</option>
-            <option value="reasoning">General Reasoning</option>
-            <option value="gk">General Knowledge</option>
+            <option value="quantitative">Quantitative</option>
+            <option value="reasoning">Reasoning</option>
+            <option value="gk">GK</option>
             <option value="current_affairs">Current Affairs</option>
             <option value="programming">Programming</option>
           </select>
 
-          <!-- Programming Language -->
           <div id="languageBox" style="display:none;">
-            <label for="language">Programming Language</label>
+            <label>Language</label>
             <select id="language">
               <option>Python</option>
               <option>Java</option>
@@ -82,23 +180,165 @@
             </select>
           </div>
 
-          <!-- Submit -->
-          <button id="generateBtn" class="btn-primary" onclick="generateQuiz()">
-            Generate & Save Quiz
+
+          <!-- ================= AI OPTIONS ================= -->
+          <div id="aiBox" style="display:none;">
+            <label>No. of Questions</label>
+            <input id="aiCount" type="number" value="10" />
+          </div>
+
+
+          <!-- ================= MANUAL QUESTIONS ================= -->
+          <div id="manualBox">
+
+            <h3 style="margin-top:30px;">Questions</h3>
+
+            <div id="questionsContainer"></div>
+
+            <button class="btn-secondary" onclick="addQuestion()">
+              + Add Question
+            </button>
+
+          </div>
+
+
+          <!-- ================= ACTION ================= -->
+          <button id="saveBtn" class="btn-primary" style="margin-top:30px;">
+            Save Quiz
           </button>
 
-          <!-- Status -->
           <p id="status" class="status-text"></p>
+
         </div>
 
       </div>
     </main>
-
   </div>
 
-  <!-- ================= SCRIPTS ================= -->
+
+  <!-- ================= SCRIPT ================= -->
+  <script>
+    const typeSelect = document.getElementById("quizType");
+    const aiBox = document.getElementById("aiBox");
+    const manualBox = document.getElementById("manualBox");
+    const status = document.getElementById("status");
+    const container = document.getElementById("questionsContainer");
+
+    typeSelect.onchange = () => {
+      aiBox.style.display = typeSelect.value === "ai" ? "block" : "none";
+      manualBox.style.display = typeSelect.value === "manual" ? "block" : "none";
+    };
+
+
+    // ================= ADD QUESTION UI =================
+    function addQuestion() {
+      const index = container.children.length;
+
+      const div = document.createElement("div");
+      div.className = "question-box";
+
+      div.innerHTML = `
+        <textarea placeholder="Question text"></textarea>
+        <input placeholder="Option 1">
+        <input placeholder="Option 2">
+        <input placeholder="Option 3">
+        <input placeholder="Option 4">
+        <input placeholder="Correct option index (0-3)" type="number">
+        <button onclick="this.parentElement.remove()">❌ Remove</button>
+        <hr>
+      `;
+
+      container.appendChild(div);
+    }
+
+
+    // ================= SAVE =================
+    document.getElementById("saveBtn").onclick = async () => {
+
+      const title = document.getElementById("title").value;
+      const topic = document.getElementById("topic").value;
+      const language = document.getElementById("language").value;
+      const type = typeSelect.value;
+
+      if (!title || !topic) {
+        status.innerText = "❌ Title & topic required";
+        return;
+      }
+
+      status.innerText = "Saving...";
+
+      try {
+
+        // ================= AI =================
+        if (type === "ai") {
+
+          const count = document.getElementById("aiCount").value;
+
+          const res = await fetch("/api/admin/quiz/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ title, topic, language, count })
+          });
+
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed");
+
+          status.innerText = "✅ AI Quiz generated successfully!";
+          return;
+        }
+
+
+        // ================= MANUAL =================
+        const createRes = await fetch("/api/admin/quiz/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ title, topic, language })
+        });
+
+        const quiz = await createRes.json();
+        const quizId = quiz.quizId || quiz.id;
+
+        const questions = [...container.children].map(q => {
+          const inputs = q.querySelectorAll("input, textarea");
+
+          return {
+            questionText: inputs[0].value,
+            options: [
+              inputs[1].value,
+              inputs[2].value,
+              inputs[3].value,
+              inputs[4].value,
+            ],
+            correctAnswer: Number(inputs[5].value)
+          };
+        });
+
+        await fetch(`/api/admin/quiz/${quizId}/questions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ questions })
+        });
+
+        status.innerText = "✅ Manual quiz saved successfully!";
+        container.innerHTML = "";
+
+      } catch (err) {
+        status.innerText = "❌ " + err.message;
+      }
+    };
+
+
+    // start with one question
+    addQuestion();
+  </script>
+
+
+  <script src="/admin-theme.js"></script>
   <script src="/admin/admin-quiz.js" defer></script>
-  <script src="/admin/admin-theme.js" defer></script>
 
 </body>
+
 </html>

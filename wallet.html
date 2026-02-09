@@ -9,101 +9,88 @@
   <link rel="stylesheet" href="/styles/styles.css">
 
   <style>
+    /* ===============================
+   WALLET – FULL THEME SUPPORT
+================================= */
+
+    /* page */
+    body {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* main card */
     .wallet-container {
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 1.5rem;
-      border-radius: 0.9rem;
-      background: #ffffff;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+      max-width: 1600px;
+      /* ⭐ wider like other pages */
+      width: 100%;
+      margin: 0rem auto 2rem;
+      padding: 1.8rem 2rem;
+      border-radius: 16px;
+      background: var(--card);
+      border: 1px solid var(--card-2);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
     }
 
-    body.dark .wallet-container {
-      background: #020617;
-      border: 1px solid #1f2937;
-    }
 
+    /* headings */
     .wallet-heading {
       font-size: 1.4rem;
       font-weight: 600;
     }
 
-    .wallet-subtitle {
-      font-size: 0.9rem;
-      color: #6b7280;
-      margin-bottom: 1rem;
+    .wallet-subtitle,
+    .wallet-rupees {
+      color: var(--muted);
     }
 
-    body.dark .wallet-subtitle {
-      color: #9ca3af;
-    }
-
+    /* balance */
     .wallet-balance {
       font-size: 1.8rem;
       font-weight: 700;
     }
 
-    .wallet-rupees {
-      font-size: 0.9rem;
-      color: #6b7280;
-      margin-bottom: 1rem;
-    }
-
-    body.dark .wallet-rupees {
-      color: #9ca3af;
-    }
-
-    /* ===== Analytics ===== */
+    /* ===== stats ===== */
     .wallet-stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 1rem;
       margin: 1rem 0 1.5rem;
     }
 
     .stat-card {
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
+      background: var(--card);
+      border: 1px solid var(--card-2);
       border-radius: 12px;
       padding: 0.8rem;
       text-align: center;
     }
 
-    body.dark .stat-card {
-      background: #020617;
-      border-color: #1f2937;
-    }
-
     .stat-label {
       font-size: 0.75rem;
-      color: #6b7280;
+      color: var(--muted);
     }
 
     .stat-value {
       font-size: 1.2rem;
       font-weight: 700;
-      margin-top: 0.2rem;
     }
 
-    /* ===== Withdraw Card ===== */
+    /* ===== withdraw card ===== */
     .withdraw-card {
       margin-top: 1rem;
       padding: 1rem;
       border-radius: 0.8rem;
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
+
+      background: var(--card);
+      border: 1px solid var(--card-2);
     }
 
-    body.dark .withdraw-card {
-      background: #020617;
-      border-color: #1f2937;
-    }
-
+    /* inputs */
     .form-label {
       margin-top: 0.6rem;
       font-size: 0.85rem;
       font-weight: 500;
-      display: block;
     }
 
     .form-input {
@@ -111,34 +98,13 @@
       max-width: 320px;
       padding: 0.45rem 0.6rem;
       border-radius: 0.55rem;
-      border: 1px solid #e5e7eb;
-      font-size: 0.9rem;
+
+      background: var(--card);
+      border: 1px solid var(--card-2);
+      color: var(--text);
     }
 
-    body.dark .form-input {
-      background: #020617;
-      color: #e5e7eb;
-      border-color: #1f2937;
-    }
-
-    .withdraw-status {
-      margin-top: 0.6rem;
-      font-size: 0.85rem;
-    }
-
-    .withdraw-status.success {
-      color: #047857;
-    }
-
-    .withdraw-status.error {
-      color: #b91c1c;
-    }
-
-    .withdraw-status.warning {
-      color: #d97706;
-    }
-
-    /* ===== Tables ===== */
+    /* tables */
     table {
       width: 100%;
       margin-top: 1rem;
@@ -149,14 +115,23 @@
     th,
     td {
       padding: 0.5rem;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid var(--card-2);
     }
 
-    body.dark th,
-    body.dark td {
-      border-color: #1f2937;
+    /* status colors */
+    .withdraw-status.success {
+      color: #16a34a;
     }
 
+    .withdraw-status.error {
+      color: #ef4444;
+    }
+
+    .withdraw-status.warning {
+      color: #f59e0b;
+    }
+
+    /* pills */
     .ledger-type {
       padding: 2px 8px;
       border-radius: 999px;
@@ -165,136 +140,194 @@
     }
 
     .ledger-type.credit {
-      background: #dcfce7;
-      color: #166534;
+      background: #16a34a20;
+      color: #16a34a;
     }
 
     .ledger-type.debit {
-      background: #fee2e2;
-      color: #991b1b;
+      background: #ef444420;
+      color: #ef4444;
     }
   </style>
 </head>
 
-<body>
+<body data-protected>
 
   <header class="navbar">
     <div class="logo">StudentHub</div>
-    <nav class="nav-links">
-      <a href="/">Home</a>
-      <a href="/dashboard.html">Dashboard</a>
-    </nav>
     <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
   </header>
 
-  <main class="section">
-    <div class="wallet-container">
+  <!-- ================= APP LAYOUT ================= -->
+  <div class="app-layout">
 
-      <h1 class="wallet-heading">My Wallet</h1>
-      <p class="wallet-subtitle">
-        Earn coins when your PDFs are approved. Minimum 100 coins required to withdraw.
-      </p>
+    <!-- ========= SIDEBAR ========= -->
+    <aside class="sidebar">
 
-      <div class="wallet-balance" id="walletBalance">0 coins</div>
-      <div class="wallet-rupees" id="walletRupees">₹0.00</div>
+      <h3 class="sb-title">Dashboard</h3>
 
-      <!-- WALLET ANALYTICS -->
-      <div class="wallet-stats">
-        <div class="stat-card">
-          <div class="stat-label">Earned</div>
-          <div class="stat-value" id="statEarned">0</div>
+      <!-- Primary -->
+      <a href="/dashboard.html" class="sb-link">🏠 Dashboard</a>
+      <a href="/request.html" class="sb-link">📝 Request Material</a>
+
+      <hr />
+
+      <!-- Content -->
+      <a href="/#ebooks" class="sb-link">📚 Browse E-Books</a>
+      <a href="/#question-papers" class="sb-link">📄 Browse Papers</a>
+      <a href="/quiz.html" class="sb-link">🧠 Quiz Center</a>
+
+      <hr />
+
+      <!-- Earnings -->
+      <a href="/library.html" class="sb-link">📂 My Library</a>
+      <a href="/read-later.html" class="sb-link">⏳ Read Later</a>
+      <a href="/submit-pdf.html" class="sb-link">📤 Submit PDF</a>
+      <a href="/my-submissions.html" class="sb-link">📄 My Submissions</a>
+      <a href="/wallet.html" class="sb-link active">💰 Wallet</a>
+
+      <hr />
+
+    </aside>
+
+
+
+    <!-- ========= MAIN ========= -->
+    <main class="main-content">
+
+      <div class="wallet-container">
+
+        <!-- ================= HEADER ================= -->
+        <h1 class="wallet-heading">My Wallet</h1>
+        <p class="wallet-subtitle">
+          Earn coins when your PDFs are approved. Minimum 100 coins required to withdraw.
+        </p>
+
+
+
+        <!-- ================= BALANCE ================= -->
+        <div class="wallet-balance" id="walletBalance">0 coins</div>
+        <div class="wallet-rupees" id="walletRupees">₹0.00</div>
+
+
+
+        <!-- ================= STATS ================= -->
+        <div class="wallet-stats">
+
+          <div class="stat-card">
+            <div class="stat-label">Earned</div>
+            <div class="stat-value" id="statEarned">0</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">Withdrawn</div>
+            <div class="stat-value" id="statWithdrawn">0</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">Paid</div>
+            <div class="stat-value" id="statPaid">0</div>
+          </div>
+
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Withdrawn</div>
-          <div class="stat-value" id="statWithdrawn">0</div>
+
+
+
+        <!-- ================= WITHDRAW FORM ================= -->
+        <div class="withdraw-card">
+
+          <h2 style="font-size:1rem;">Request Withdrawal</h2>
+
+          <!-- Balance -->
+          <label class="form-label">Current Balance</label>
+          <input id="withdraw-balance" class="form-input" readonly />
+
+          <!-- Amount -->
+          <label class="form-label">Withdraw Amount (₹)</label>
+          <input id="withdrawAmount" type="number" min="10" class="form-input" />
+
+          <!-- Method -->
+          <label class="form-label">Withdrawal Method</label>
+          <select id="withdrawMethod" class="form-input">
+            <option value="upi">UPI</option>
+            <option value="bank">Bank Transfer</option>
+          </select>
+
+          <!-- UPI -->
+          <div id="upiSection">
+            <label class="form-label">UPI ID</label>
+            <input id="upiId" class="form-input" placeholder="example@upi" />
+          </div>
+
+          <!-- BANK -->
+          <div id="bankSection" style="display:none;">
+            <label class="form-label">Account Holder Name</label>
+            <input id="bankName" class="form-input" />
+
+            <label class="form-label">Account Number</label>
+            <input id="bankAccount" class="form-input" />
+
+            <label class="form-label">IFSC Code</label>
+            <input id="bankIfsc" class="form-input" />
+          </div>
+
+          <!-- Note -->
+          <label class="form-label">Note (optional)</label>
+          <textarea id="withdraw-note" rows="2" class="form-input"></textarea>
+
+          <button id="withdrawBtn" class="btn primary" style="margin-top:0.8rem;">
+            Submit Withdrawal
+          </button>
+
+          <p id="walletMessage" class="withdraw-status"></p>
+
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Paid</div>
-          <div class="stat-value" id="statPaid">0</div>
-        </div>
+
+
+
+        <!-- ================= HISTORY ================= -->
+        <section style="margin-top:1.6rem;">
+          <h3 class="dash-section-title">Withdrawal History</h3>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Coins</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="withdrawalHistory"></tbody>
+          </table>
+        </section>
+
+
+
+        <!-- ================= LEDGER ================= -->
+        <section style="margin-top:2rem;">
+          <h3 class="dash-section-title">Wallet Activity</h3>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Coins</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+
+            <tbody id="walletLedger">
+              <tr>
+                <td colspan="3">Loading activity…</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
       </div>
 
-      <!-- Withdraw Form -->
-      <div class="withdraw-card">
-        <h2 style="font-size:1rem;">Request Withdrawal</h2>
-
-        <!-- Balance -->
-        <label class="form-label">Current Balance</label>
-        <input id="withdraw-balance" class="form-input" readonly />
-
-        <!-- Amount -->
-        <label class="form-label">Withdraw Amount (₹)</label>
-        <input id="withdrawAmount" type="number" min="10" class="form-input" />
-
-        <!-- Method -->
-        <label class="form-label">Withdrawal Method</label>
-        <select id="withdrawMethod" class="form-input">
-          <option value="upi">UPI</option>
-          <option value="bank">Bank Transfer</option>
-        </select>
-
-        <!-- UPI SECTION -->
-        <div id="upiSection">
-          <label class="form-label">UPI ID</label>
-          <input id="upiId" class="form-input" placeholder="example@upi" />
-        </div>
-
-        <!-- BANK SECTION -->
-        <div id="bankSection" style="display:none;">
-          <label class="form-label">Account Holder Name</label>
-          <input id="bankName" class="form-input" />
-
-          <label class="form-label">Account Number</label>
-          <input id="bankAccount" class="form-input" />
-
-          <label class="form-label">IFSC Code</label>
-          <input id="bankIfsc" class="form-input" />
-        </div>
-
-        <!-- Note -->
-        <label class="form-label">Note (optional)</label>
-        <textarea id="withdraw-note" rows="2" class="form-input"></textarea>
-
-        <button id="withdrawBtn" class="btn primary" style="margin-top:0.8rem;">
-          Submit Withdrawal
-        </button>
-
-        <p id="walletMessage" class="withdraw-status"></p>
-      </div>
-
-
-      <!-- Withdrawal History -->
-      <h3 style="margin-top:1.5rem;">Withdrawal History</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Coins</th>
-            <th>Date</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="withdrawalHistory"></tbody>
-      </table>
-
-      <!-- Wallet Ledger -->
-      <h3 style="margin-top:2rem;">Wallet Activity</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>Coins</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody id="walletLedger">
-          <tr>
-            <td colspan="3">Loading activity…</td>
-          </tr>
-        </tbody>
-      </table>
-
-    </div>
-  </main>
+    </main>
+  </div>
 
   <footer class="footer">
     <p>© <span id="year"></span> StudentHub</p>

@@ -4,7 +4,7 @@ const User = require("../models/User");
 
 const router = express.Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 
 // ======================================================

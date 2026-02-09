@@ -8,146 +8,133 @@
 
   <link rel="stylesheet" href="/styles/styles.css" />
 
-  <style>
-    /* =================================
-       THEME VARIABLES (GLOBAL STYLE)
-    ================================= */
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <style>
     :root {
       --nav-bg: linear-gradient(90deg, #0f172a, #111827);
       --page-bg: #0b1220;
       --card: #111827;
       --card-2: #1f2937;
-      --text: #ffffff;
+      --text: #fff;
       --yellow: #facc15;
     }
 
     body.light {
-      --nav-bg: #ffffff;
       --page-bg: #f6f8fb;
-      --card: #ffffff;
+      --card: #fff;
       --card-2: #eef2f7;
       --text: #0f172a;
     }
 
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: system-ui;
       background: var(--page-bg);
       color: var(--text);
-      transition: .25s;
     }
 
-    /* =================================
-       NAVBAR (MATCHES WEBSITE EXACTLY)
-    ================================= */
+    /* ================= NAVBAR ================= */
 
     .main-navbar {
       background: var(--nav-bg);
       padding: 14px 40px;
       position: sticky;
       top: 0;
-      z-index: 1000;
     }
 
     .nav-inner {
       max-width: 1300px;
       margin: auto;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
     }
 
     .logo {
-      font-size: 22px;
-      font-weight: 700;
       color: white;
       text-decoration: none;
-    }
-
-    body.light .logo {
-      color: #111;
+      font-weight: 700;
+      font-size: 22px;
     }
 
     .nav-links {
       display: flex;
-      gap: 30px;
+      gap: 25px;
     }
 
     .nav-links a {
       color: white;
       text-decoration: none;
-      font-weight: 500;
-      transition: .2s;
-    }
-
-    body.light .nav-links a {
-      color: #111;
-    }
-
-    .nav-links a:hover {
-      color: var(--yellow);
     }
 
     .nav-links .active {
       color: var(--yellow);
-      font-weight: 600;
-    }
-
-    .nav-actions {
-      display: flex;
-      gap: 18px;
     }
 
     .icon {
       cursor: pointer;
-      font-size: 18px;
-      color: var(--yellow);
+      color: var(--yellow)
     }
 
-    /* =================================
-       PAGE CONTENT
-    ================================= */
+    /* ================= LAYOUT ================= */
 
     .container {
-      max-width: 1200px;
-      margin: 60px auto;
+      max-width: 1300px;
+      margin: 40px auto;
       padding: 0 20px;
     }
 
-    /* HEADER ROW (TITLE + BUTTON SAME LINE) */
-    .page-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 30px;
+    /* ================= STATS ================= */
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
     }
 
-    .page-header h1 {
-      margin: 0;
-    }
-
-    .back-btn {
-      background: var(--yellow);
-      border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
+    .stat-card {
+      background: var(--card);
+      padding: 18px;
+      border-radius: 12px;
+      text-align: center;
       font-weight: 600;
-      cursor: pointer;
-      transition: .2s;
     }
 
-    .back-btn:hover {
-      transform: translateY(-1px);
+    .stat-card b {
+      display: block;
+      font-size: 22px;
+      margin-top: 6px;
+      color: var(--yellow);
     }
 
-    /* CARD */
+    /* ================= FILTER BAR ================= */
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .filters input,
+    .filters select,
+    .filters button {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    /* ================= CARD ================= */
+
     .card {
       background: var(--card);
       border-radius: 14px;
-      padding: 25px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+      padding: 20px;
     }
+
+    /* ================= TABLE ================= */
 
     table {
       width: 100%;
@@ -156,34 +143,71 @@
 
     th {
       background: var(--card-2);
-      padding: 14px;
-      text-align: left;
+      padding: 12px;
     }
 
     td {
-      padding: 14px;
-      border-top: 1px solid rgba(255, 255, 255, .06);
+      padding: 12px;
+      border-top: 1px solid rgba(255, 255, 255, .08);
     }
 
-    body.light td {
-      border-top: 1px solid #e2e8f0;
+    .badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
     }
 
-    .empty {
+    .good {
+      background: #16a34a
+    }
+
+    .mid {
+      background: #ca8a04
+    }
+
+    .bad {
+      background: #dc2626
+    }
+
+    .btn {
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-right: 5px;
+      border: none;
+    }
+
+    .retake {
+      background: #16a34a;
+      color: white
+    }
+
+    .review {
+      background: #2563eb;
+      color: white
+    }
+
+    .delete {
+      background: #dc2626;
+      color: white
+    }
+
+    .pagination {
+      margin-top: 15px;
       text-align: center;
-      padding: 40px;
-      opacity: .6;
+    }
+
+    canvas {
+      margin: 25px 0;
     }
   </style>
 </head>
 
-<body>
-
-  <!-- ================= NAVBAR ================= -->
+<body data-protected>
 
   <header class="main-navbar">
     <div class="nav-inner">
-
       <a href="/" class="logo">StudentHub</a>
 
       <nav class="nav-links">
@@ -191,28 +215,40 @@
         <a href="/quiz.html">Quiz</a>
         <a href="/quiz-history.html" class="active">History</a>
       </nav>
-
-      <div class="nav-actions">
-        <span class="icon">🔔</span>
-        <span id="modeToggle" class="icon">🌙</span>
-      </div>
-
     </div>
   </header>
 
-  <!-- ================= CONTENT ================= -->
 
   <div class="container">
 
-    <!-- NEW HEADER ROW -->
-    <div class="page-header">
-      <h1>📊 My Quiz Attempts</h1>
+    <h1>📊 My Quiz Dashboard</h1>
 
-      <button onclick="location.href='/quiz.html'" class="back-btn">
-        ← Back to Quiz
-      </button>
+    <!-- ================= STATS ================= -->
+    <div class="stats">
+      <div class="stat-card">Attempts<b id="sAttempts">0</b></div>
+      <div class="stat-card">Best<b id="sBest">0%</b></div>
+      <div class="stat-card">Average<b id="sAvg">0%</b></div>
+      <div class="stat-card">Time<b id="sTime">0m</b></div>
     </div>
 
+
+    <!-- ================= FILTERS ================= -->
+    <div class="filters">
+      <input id="searchBox" placeholder="Search quiz..." />
+      <select id="sortSelect">
+        <option value="date">Sort by Date</option>
+        <option value="accuracy">Sort by Accuracy</option>
+        <option value="score">Sort by Score</option>
+      </select>
+      <button onclick="exportCSV()">Export CSV</button>
+    </div>
+
+
+    <!-- ================= CHART ================= -->
+    <canvas id="progressChart" height="80"></canvas>
+
+
+    <!-- ================= TABLE ================= -->
     <div class="card">
       <table>
         <thead>
@@ -223,32 +259,51 @@
             <th>Total</th>
             <th>Accuracy</th>
             <th>Date</th>
+            <th>Actions</th>
           </tr>
         </thead>
-        <tbody id="historyTable">
-          <tr>
-            <td colspan="6" class="empty">Loading...</td>
-          </tr>
-        </tbody>
+        <tbody id="historyTable"></tbody>
       </table>
+
+      <div class="pagination">
+        <button onclick="prevPage()">Prev</button>
+        <span id="pageInfo"></span>
+        <button onclick="nextPage()">Next</button>
+      </div>
+
     </div>
   </div>
 
-  <!-- ================= SCRIPT ================= -->
+
 
   <script>
-    /* DARK / LIGHT TOGGLE */
-    const toggle = document.getElementById("modeToggle");
 
-    toggle.onclick = () => {
-      document.body.classList.toggle("light");
-      toggle.textContent =
-        document.body.classList.contains("light") ? "☀️" : "🌙";
-    };
+    /* =====================================================
+       🎓 StudentHub — QUIZ HISTORY ULTRA PRO MAX
+       -----------------------------------------------------
+       ✅ Stats cards
+       ✅ Streak counter
+       ✅ Continue last 3
+       ✅ Rank badges
+       ✅ Chart
+       ✅ Pagination
+       ✅ CSV export
+    ===================================================== */
 
-    /* LOAD HISTORY */
+    let attempts = [];
+    let filtered = [];
+    let page = 1;
+    const pageSize = 10;
+
+    let ranksMap = {};
+    let recentList = [];
+    let streak = 0;
+
+
+    /* =====================================================
+       LOAD HISTORY
+    ===================================================== */
     async function loadHistory() {
-      const tbody = document.getElementById("historyTable");
 
       const res = await fetch("/api/quiz/history", {
         credentials: "include"
@@ -256,32 +311,292 @@
 
       const data = await res.json();
 
-      if (!data.attempts.length) {
-        tbody.innerHTML =
-          `<tr><td colspan="6" class="empty">No quiz attempts yet 😊</td></tr>`;
-        return;
-      }
+      attempts = (data.attempts || []).map(a => ({
+        ...a,
+        score: a.score || 0,
+        total: a.total || 0,
+        accuracy: a.accuracy || 0,
+        timeTaken: a.timeTaken || 0,
+        quizId: a.quizId || { title: "Quiz", id: "" }
+      }));
 
-      tbody.innerHTML = "";
+      /* ⭐ NEW backend stats support */
+      ranksMap = data.stats?.ranks || {};
+      recentList = data.stats?.recent || [];
+      streak = data.stats?.streak || 0;
 
-      data.attempts.forEach((a, i) => {
-        const accuracy = ((a.score / a.total) * 100).toFixed(1);
+      filtered = [...attempts];
 
-        tbody.innerHTML += `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${a.quizId?.title || "-"}</td>
-            <td>${a.score}</td>
-            <td>${a.total}</td>
-            <td>${accuracy}%</td>
-            <td>${new Date(a.createdAt).toLocaleDateString()}</td>
-          </tr>
-        `;
-      });
+      renderContinue();
+      calculateStats();
+      drawChart();
+      renderTable();
     }
 
     loadHistory();
+
+
+
+    /* =====================================================
+       🔥 CONTINUE LAST 3
+    ===================================================== */
+    function renderContinue() {
+
+      if (!recentList.length) return;
+
+      const wrap = document.createElement("div");
+
+      wrap.style.cssText = `
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  `;
+
+      recentList.forEach(a => {
+        const btn = document.createElement("button");
+        btn.className = "btn review";
+        btn.textContent = `▶ ${a.quizId.title} (${a.accuracy}%)`;
+        btn.onclick = () =>
+          location.href = `/quiz-attempt.html?quizId=${a.quizId.id}`;
+
+        wrap.appendChild(btn);
+      });
+
+      document.querySelector(".container").prepend(wrap);
+    }
+
+
+
+    /* =====================================================
+       STATS PANEL (NOW WITH STREAK)
+    ===================================================== */
+    function calculateStats() {
+
+      if (!attempts.length) return;
+
+      const best = Math.max(...attempts.map(a => a.accuracy));
+
+      const avg = (
+        attempts.reduce((s, a) => s + a.accuracy, 0) / attempts.length
+      ).toFixed(1);
+
+      const totalSeconds =
+        attempts.reduce((s, a) => s + a.timeTaken, 0);
+
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+
+      sAttempts.innerHTML =
+        `${attempts.length}<br><small>🔥 ${streak} day streak</small>`;
+
+      sBest.textContent = best + "%";
+      sAvg.textContent = avg + "%";
+      sTime.textContent = `${m}m ${s}s`;
+    }
+
+
+
+    /* =====================================================
+       CHART
+    ===================================================== */
+    function drawChart() {
+
+      if (!attempts.length) return;
+
+      const labels = attempts.map(a =>
+        new Date(a.createdAt).toLocaleDateString()
+      );
+
+      const values = attempts.map(a => a.accuracy);
+
+      if (window.progressInstance)
+        window.progressInstance.destroy();
+
+      window.progressInstance = new Chart(progressChart, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: "Accuracy %",
+            data: values,
+            tension: .35
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+
+
+    /* =====================================================
+       SEARCH
+    ===================================================== */
+    searchBox.oninput = () => {
+
+      const q = searchBox.value.toLowerCase();
+
+      filtered = attempts.filter(a =>
+        a.quizId.title.toLowerCase().includes(q)
+      );
+
+      page = 1;
+      renderTable();
+    };
+
+
+
+    /* =====================================================
+       SORT
+    ===================================================== */
+    sortSelect.onchange = () => {
+
+      const v = sortSelect.value;
+
+      if (v === "accuracy")
+        filtered.sort((a, b) => b.accuracy - a.accuracy);
+
+      if (v === "score")
+        filtered.sort((a, b) => b.score - a.score);
+
+      if (v === "date")
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      renderTable();
+    };
+
+
+
+    /* =====================================================
+       TABLE RENDER (NOW WITH RANK)
+    ===================================================== */
+    function renderTable() {
+
+      const start = (page - 1) * pageSize;
+      const rows = filtered.slice(start, start + pageSize);
+
+      historyTable.innerHTML = "";
+
+      if (!rows.length) {
+        historyTable.innerHTML =
+          `<tr><td colspan="8" style="padding:30px;opacity:.6;text-align:center">
+       No attempts yet 😊
+       </td></tr>`;
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+
+      rows.forEach((a, i) => {
+
+        let cls = "bad";
+        if (a.accuracy >= 80) cls = "good";
+        else if (a.accuracy >= 50) cls = "mid";
+
+        const rank = ranksMap[a.quizId.id];
+
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+<td>${start + i + 1}</td>
+<td>${a.quizId.title}</td>
+<td>${a.score}</td>
+<td>${a.total}</td>
+<td><span class="badge ${cls}">${a.accuracy}%</span></td>
+<td>${rank ? `🏅 #${rank}` : "-"}</td>
+<td>${new Date(a.createdAt).toLocaleDateString()}</td>
+<td>
+<button class="btn retake" onclick="retake('${a.quizId.id}')">Retake</button>
+<button class="btn review" onclick="review('${a.id}')">Review</button>
+<button class="btn delete" onclick="removeAttempt('${a.id}')">Delete</button>
+</td>
+`;
+
+        frag.appendChild(tr);
+      });
+
+      historyTable.appendChild(frag);
+
+      pageInfo.textContent =
+        `Page ${page} of ${Math.ceil(filtered.length / pageSize)}`;
+    }
+
+
+
+    /* =====================================================
+       ACTIONS
+    ===================================================== */
+    function retake(id) {
+      location.href = `/quiz-attempt.html?quizId=${id}`;
+    }
+
+    function review(id) {
+      location.href = `/quiz-result.html?attemptId=${id}`;
+    }
+
+    async function removeAttempt(id) {
+
+      if (!confirm("Delete this attempt?")) return;
+
+      await fetch(`/api/quiz/attempt/${id}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+
+      loadHistory();
+    }
+
+
+
+    /* =====================================================
+       PAGINATION
+    ===================================================== */
+    function nextPage() {
+      if (page * pageSize < filtered.length) {
+        page++;
+        renderTable();
+      }
+    }
+
+    function prevPage() {
+      if (page > 1) {
+        page--;
+        renderTable();
+      }
+    }
+
+
+
+    /* =====================================================
+       CSV EXPORT
+    ===================================================== */
+    function exportCSV() {
+
+      let csv = "Quiz,Score,Total,Accuracy,Date\n";
+
+      filtered.forEach(a => {
+        csv += `${a.quizId.title},${a.score},${a.total},${a.accuracy},${new Date(a.createdAt).toLocaleDateString()}\n`;
+      });
+
+      const blob = new Blob([csv]);
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "history.csv";
+      link.click();
+    }
+
+    window.scrollTo(0, 0);
+
   </script>
 
+  <script src="/js/guard.js"></script>
+  <script src="/script.js"></script>
+
 </body>
+
 </html>

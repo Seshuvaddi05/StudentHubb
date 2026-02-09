@@ -7,43 +7,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="/styles/styles.css">
 
-  <!-- Dashboard-specific styles -->
   <style>
-    body {
-      background: #f1f5f9;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    body.dark {
-      background: #020617;
-      color: #e5e7eb;
-    }
-
+    /* Container */
     .dashboard-container {
       max-width: 1100px;
       margin: 2rem auto;
       padding: 0 1rem;
     }
 
+    /* Header */
     .dash-header {
       margin-bottom: 1.8rem;
     }
 
     .dash-title {
       font-size: 1.8rem;
-      font-weight: 600;
+      font-weight: 700;
+      color: var(--text);
     }
 
     .dash-subtitle {
       font-size: 0.95rem;
-      color: #64748b;
-      margin-top: 0.2rem;
+      color: var(--muted);
     }
 
-    body.dark .dash-subtitle {
-      color: #9ca3af;
-    }
 
+    /* Grid */
     .dash-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -51,45 +40,48 @@
       margin-bottom: 2rem;
     }
 
+    /* Cards */
     .dash-card {
-      background: #ffffff;
+      background: var(--card);
+      border: 1px solid var(--card-2);
       border-radius: 14px;
       padding: 1.2rem;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-      border: 1px solid #e5e7eb;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+
+      transition: transform .15s ease, box-shadow .15s ease;
     }
 
-    body.dark .dash-card {
-      background: #020617;
-      border-color: #1f2937;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    .dash-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
     }
 
+    /* Card text */
     .dash-card h3 {
       font-size: 1rem;
       font-weight: 600;
       margin-bottom: 0.6rem;
+      color: var(--text);
     }
 
     .dash-metric {
       font-size: 2rem;
-      font-weight: 700;
+      font-weight: 800;
+      color: var(--text);
       margin-bottom: 0.4rem;
     }
 
     .dash-note {
       font-size: 0.85rem;
-      color: #64748b;
+      color: var(--muted);
       line-height: 1.4;
     }
 
-    body.dark .dash-note {
-      color: #9ca3af;
-    }
-
+    /* Links */
     .dash-links {
       display: flex;
       flex-wrap: wrap;
@@ -97,34 +89,35 @@
       margin-top: 0.8rem;
     }
 
+    /* Chips */
     .chip {
-      padding: 0.35rem 0.7rem;
+      padding: 0.35rem 0.75rem;
       font-size: 0.8rem;
       border-radius: 999px;
-      background: #f1f5f9;
-      border: 1px solid #e5e7eb;
-      text-decoration: none;
-      color: #0f172a;
+
+      background: var(--card-2);
+      border: 1px solid var(--card-2);
+      color: var(--text);
+
       font-weight: 500;
-      transition: 0.15s ease;
+      text-decoration: none;
+      transition: .15s ease;
     }
 
     .chip:hover {
-      background: #e2e8f0;
+      background: var(--primary);
+      color: #111827;
     }
 
-    body.dark .chip {
-      background: #020617;
-      border-color: #1f2937;
-      color: #e5e7eb;
-    }
-
+    /* Sections */
     .dash-section-title {
       font-size: 1.1rem;
-      font-weight: 600;
+      font-weight: 700;
       margin-bottom: 0.6rem;
+      color: var(--text);
     }
 
+    /* Lists */
     .dash-list {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -132,50 +125,70 @@
     }
 
     .dash-list-item {
-      background: #ffffff;
+      background: var(--card);
+      border: 1px solid var(--card-2);
       padding: 0.8rem 1rem;
       border-radius: 12px;
-      border: 1px solid #e5e7eb;
       font-size: 0.9rem;
-    }
-
-    body.dark .dash-list-item {
-      background: #020617;
-      border-color: #1f2937;
+      color: var(--text);
     }
 
     .dash-empty {
-      font-size: 0.9rem;
-      color: #64748b;
+      color: var(--muted);
     }
 
-    body.dark .dash-empty {
-      color: #9ca3af;
-    }
-
+    /* Logout */
     .dash-logout-row {
       display: flex;
       justify-content: flex-end;
       margin-top: 2rem;
     }
 
-    .btn.small {
-      padding: 0.45rem 0.9rem;
-      border-radius: 10px;
-      border: 1px solid #e5e7eb;
-      background: #ffffff;
-      cursor: pointer;
+    /* =================================
+   DASHBOARD GLOBAL THEME FIXES
+================================= */
+
+    /* make page follow site theme */
+    body {
+      background: var(--bg);
+      color: var(--text);
     }
 
-    body.dark .btn.small {
-      background: #020617;
-      border-color: #1f2937;
-      color: #e5e7eb;
+    /* logout button match theme */
+    .btn.small {
+      background: var(--card);
+      border: 1px solid var(--card-2);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 0.45rem 0.9rem;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    .btn.small:hover {
+      background: var(--primary);
+      color: #111827;
+    }
+
+    /* stronger depth for cards (looks premium) */
+    .dash-card {
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    /* better list items contrast */
+    .dash-list-item {
+      background: var(--card);
+    }
+
+    /* back-to-top button visible in dark */
+    .back-to-top {
+      background: var(--primary);
+      color: #111827;
     }
   </style>
 </head>
 
-<body>
+<body data-protected>
 
   <!-- Navbar -->
   <header class="navbar">
@@ -188,18 +201,6 @@
       <span></span>
     </button>
 
-    <!-- Nav links -->
-    <nav class="nav-links" id="nav-links">
-      <a href="/">Home</a>
-      <a href="/#ebooks">E-Books</a>
-      <a href="/#question-papers">Question Papers</a>
-      <a href="/#about">About</a>
-      <!--<a href="/#contact">Contact</a>-->
-
-      <!-- auth handled by JS -->
-      <a href="/login.html" id="nav-login-link" style="display:none;">Sign in</a>
-      <a href="/dashboard.html" id="nav-dashboard-link" style="display:none;">My Dashboard</a>
-    </nav>
 
     <!-- Right actions -->
     <div class="nav-actions">
@@ -216,122 +217,183 @@
     </div>
   </header>
 
+  <!-- ================= APP LAYOUT ================= -->
+  <div class="app-layout">
 
-  <main class="section">
-    <div class="dashboard-container">
+    <!-- ========= SIDEBAR ========= -->
+    <aside class="sidebar">
 
-      <!-- Header -->
-      <div class="dash-header">
-        <h1 class="dash-title" id="dash-title">My Dashboard</h1>
-        <p class="dash-subtitle" id="dash-subtitle">Loading your account…</p>
+      <h3 class="sb-title">Dashboard</h3>
+
+      <!-- Primary shortcuts -->
+      <a href="/dashboard.html" class="sb-link">🏠 Dashboard</a>
+      <a href="/request.html" class="sb-link">📝 Request Material</a>
+
+      <hr />
+
+      <!-- Content -->
+      <a href="/#ebooks" class="sb-link">📚 E-Books</a>
+      <a href="/#question-papers" class="sb-link">📄 Papers</a>
+      <a href="/quiz.html" class="sb-link">🧠 Quiz Center</a>
+
+      <hr />
+
+      <!-- User tools -->
+      <a href="/library.html" class="sb-link">📂 My Library</a>
+      <a href="/read-later.html" class="sb-link">⏳ Read Later</a>
+      <a href="/submit-pdf.html" class="sb-link">📤 Submit PDF</a>
+      <a href="/my-submissions.html" class="sb-link">📄 My Submissions</a>
+      <a href="/wallet.html" class="sb-link">💰 Wallet</a>
+
+    </aside>
+
+
+
+    <!-- ========= MAIN CONTENT ========= -->
+    <main class="main-content">
+
+      <div class="dashboard-container">
+
+        <!-- Header -->
+        <div class="dash-header">
+          <h1 class="dash-title" id="dash-title">My Dashboard</h1>
+          <p class="dash-subtitle" id="dash-subtitle">Loading your account…</p>
+        </div>
+
+
+
+        <!-- Grid -->
+        <div class="dash-grid">
+
+          <!-- All Materials -->
+          <div class="dash-card">
+            <h3>All Materials</h3>
+            <div class="dash-metric" id="metric-total">–</div>
+            <div class="dash-note">
+              <span id="metric-ebooks">0</span> E-Books •
+              <span id="metric-qps">0</span> Question Papers
+            </div>
+            <div class="dash-links">
+              <a href="/#ebooks" class="chip">E-Books</a>
+              <a href="/#question-papers" class="chip">Question Papers</a>
+            </div>
+          </div>
+
+          <!-- Library -->
+          <div class="dash-card">
+            <h3>Library & Read Later</h3>
+            <div class="dash-note">
+              Library: <strong id="metric-library">0</strong><br />
+              Read Later: <strong id="metric-readlater">0</strong>
+            </div>
+            <div class="dash-links">
+              <a href="/library.html" class="chip">My Library</a>
+              <a href="/read-later.html" class="chip">Read Later</a>
+            </div>
+          </div>
+
+          <!-- Wallet -->
+          <div class="dash-card">
+            <h3>Wallet</h3>
+            <div class="dash-metric" id="metric-wallet">0</div>
+            <div class="dash-note">Minimum 100 required for withdrawal</div>
+            <div class="dash-links">
+              <a href="/wallet.html" class="chip">Open Wallet</a>
+            </div>
+          </div>
+
+          <!-- Creator Rewards -->
+          <div class="dash-card">
+            <h3>Creator Rewards</h3>
+            <div class="dash-note">
+              Submissions: <strong id="metric-submissions">0</strong><br />
+              <span id="metric-submissions-detail">0 pending • 0 approved • 0 rejected</span>
+            </div>
+            <div class="dash-note" style="margin-top:6px;">
+              Withdrawals: <strong id="metric-withdrawals">0</strong><br />
+              <span id="metric-withdrawals-detail">0 pending • 0 paid • 0 rejected</span>
+            </div>
+            <div class="dash-links">
+              <a href="/submit-pdf.html" class="chip">Submit PDF</a>
+              <a href="/my-submissions.html" class="chip">My Submissions</a>
+            </div>
+          </div>
+
+          <!-- Request Material -->
+          <div class="dash-card">
+            <h3>Request Materials</h3>
+            <p>Tell us which e-book or question paper you need.</p>
+            <div class="dash-links">
+              <a href="/request.html" class="chip">Request Material</a>
+            </div>
+          </div>
+
+          <!-- Account -->
+          <div class="dash-card">
+            <h3>Your Account</h3>
+            <div id="account-info">—</div>
+            <div class="dash-note" id="account-extra">Purchased items: 0</div>
+          </div>
+
+        </div>
+
+
+
+        <!-- Purchased -->
+        <section>
+          <h2 class="dash-section-title">Your Purchased & Unlocked PDFs</h2>
+          <div id="my-library-list" class="dash-list">
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+          </div>
+        </section>
+
+
+
+        <!-- Popular -->
+        <section style="margin-top:1.5rem;">
+          <h2 class="dash-section-title">Popular Materials</h2>
+          <div id="popular-list" class="dash-list">
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+          </div>
+        </section>
+
+
+
+        <!-- Notifications -->
+        <section style="margin-top:1.5rem;">
+          <h2 class="dash-section-title">Latest Notifications</h2>
+          <div id="notifications-list" class="dash-list">
+            <div class="dash-empty">No notifications</div>
+          </div>
+        </section>
+
+
+        <!-- ================= RECENT ACTIVITY ================= -->
+        <section style="margin-top:1.8rem;">
+          <h2 class="dash-section-title">Recent Activity</h2>
+          <div id="activity-list" class="dash-list">
+            <!-- skeleton while loading -->
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+          </div>
+        </section>
+
+
+        <!-- Logout -->
+        <div class="dash-logout-row">
+          <button class="btn small" id="btn-logout">Logout</button>
+        </div>
+
       </div>
 
-      <!-- Grid -->
-      <div class="dash-grid">
+    </main>
+  </div>
 
-        <!-- All Materials -->
-        <div class="dash-card">
-          <h3>All Materials</h3>
-          <div class="dash-metric" id="metric-total">–</div>
-          <div class="dash-note">
-            <span id="metric-ebooks">0</span> E-Books •
-            <span id="metric-qps">0</span> Question Papers
-          </div>
-          <div class="dash-links">
-            <a href="/#ebooks" class="chip">E-Books</a>
-            <a href="/#question-papers" class="chip">Question Papers</a>
-          </div>
-        </div>
-
-        <!-- Library -->
-        <div class="dash-card">
-          <h3>Library & Read Later</h3>
-          <div class="dash-note">
-            Library: <strong id="metric-library">0</strong><br />
-            Read Later: <strong id="metric-readlater">0</strong>
-          </div>
-          <div class="dash-links">
-            <a href="/library.html" class="chip">My Library</a>
-            <a href="/read-later.html" class="chip">Read Later</a>
-          </div>
-        </div>
-
-        <!-- Wallet -->
-        <div class="dash-card">
-          <h3>Wallet</h3>
-          <div class="dash-metric" id="metric-wallet">0</div>
-          <div class="dash-note">Minimum 100 required for withdrawal</div>
-          <div class="dash-links">
-            <a href="/wallet.html" class="chip">Open Wallet</a>
-          </div>
-        </div>
-
-        <!-- Creator Rewards -->
-        <div class="dash-card">
-          <h3>Creator Rewards</h3>
-          <div class="dash-note">
-            Submissions: <strong id="metric-submissions">0</strong><br />
-            <span id="metric-submissions-detail">0 pending • 0 approved • 0 rejected</span>
-          </div>
-          <div class="dash-note" style="margin-top:6px;">
-            Withdrawals: <strong id="metric-withdrawals">0</strong><br />
-            <span id="metric-withdrawals-detail">0 pending • 0 paid • 0 rejected</span>
-          </div>
-          <div class="dash-links">
-            <a href="/submit-pdf.html" class="chip">Submit PDF</a>
-            <a href="/my-submissions.html" class="chip">My Submissions</a>
-          </div>
-        </div>
-
-        <!--Request Material-->
-        <div class="dash-card">
-          <h3>Request Materials</h3>
-          <p>Tell us which e-book or question paper you need. Our team will review your request.</p>
-          <div class="dash-links">
-            <a href="/request.html" class="chip">Request Material</a>
-          </div>
-        </div>
-
-        <!-- Account -->
-        <div class="dash-card">
-          <h3>Your Account</h3>
-          <div id="account-info">—</div>
-          <div class="dash-note" id="account-extra">Purchased items: 0</div>
-        </div>
-
-      </div>
-
-      <!-- Purchased -->
-      <section>
-        <h2 class="dash-section-title">Your Purchased & Unlocked PDFs</h2>
-        <div id="my-library-list" class="dash-list">
-          <div class="dash-empty">Loading…</div>
-        </div>
-      </section>
-
-      <!-- Popular -->
-      <section style="margin-top:1.5rem;">
-        <h2 class="dash-section-title">Popular Materials</h2>
-        <div id="popular-list" class="dash-list">
-          <div class="dash-empty">Loading…</div>
-        </div>
-      </section>
-
-      <!-- Notifications -->
-      <section style="margin-top:1.5rem;">
-        <h2 class="dash-section-title">Latest Notifications</h2>
-        <div id="notifications-list" class="dash-list">
-          <div class="dash-empty">No notifications</div>
-        </div>
-      </section>
-
-      <!-- Logout -->
-      <div class="dash-logout-row">
-        <button class="btn small" id="btn-logout">Logout</button>
-      </div>
-
-    </div>
-  </main>
 
   <footer class="footer">
     <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
@@ -340,6 +402,8 @@
   <button id="back-to-top" class="back-to-top">↑</button>
 
   <!-- Dashboard JS -->
+  <script src="/js/guard.js"></script>
+  <script src="/script.js"></script> <!-- theme system -->
   <script src="/dashboard.js"></script>
 </body>
 

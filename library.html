@@ -12,38 +12,44 @@
   <link rel="stylesheet" href="/styles/styles.css">
 
   <style>
-    /* Page styles (existing) */
+    /* ===============================
+   LIBRARY THEME SAFE STYLES
+   (uses ONLY global variables)
+================================ */
+
+    /* Page */
+    body {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* Container */
     .library-container {
-      max-width: 1000px;
-      margin: 2rem auto;
-      background: #ffffff;
-      border-radius: 0.9rem;
+      max-width: 1600px;
+      /* ⭐ wider */
+      width: 100%;
+      margin: 0rem auto 2rem;
+      background: var(--card);
+      border-radius: 14px;
       padding: 1.5rem 1.75rem;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+      border: 1px solid var(--card-2);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
     }
 
-    body.dark .library-container {
-      background: #020617;
-      border: 1px solid #1f2937;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
-    }
-
+    /* Header */
     .library-heading {
       font-size: 1.4rem;
-      font-weight: 600;
-      margin-bottom: 0.3rem;
+      font-weight: 700;
+      color: var(--text);
     }
 
     .library-subtitle {
       font-size: 0.9rem;
-      color: #6b7280;
+      color: var(--muted);
       margin-bottom: 1rem;
     }
 
-    body.dark .library-subtitle {
-      color: #9ca3af;
-    }
-
+    /* Filters */
     .library-filters {
       display: flex;
       flex-wrap: wrap;
@@ -51,35 +57,41 @@
       margin-bottom: 0.75rem;
     }
 
-    .library-filters .filter-input {
-      flex: 1 1 220px;
+    .filter-input,
+    .filter-select {
+      background: var(--card-2);
+      border: 1px solid var(--card-2);
+      color: var(--text);
+      padding: 0.55rem 0.8rem;
+      border-radius: 10px;
     }
 
-    .library-filters .filter-select {
-      flex: 0 0 160px;
-    }
-
+    /* List */
     .library-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 0.8rem;
+      /* ⭐ PERFECT 4 column layout */
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.2rem;
     }
 
+
+    /* Card */
     .library-card {
-      border-radius: 0.8rem;
-      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      border: 1px solid var(--card-2);
       padding: 0.9rem 1rem;
-      background: #ffffff;
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+      background: var(--card);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
       font-size: 0.9rem;
+      transition: 0.15s ease;
     }
 
-    body.dark .library-card {
-      background: #020617;
-      border-color: #1f2937;
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.7);
+    .library-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
     }
 
+    /* Top */
     .library-card-top {
       display: flex;
       justify-content: space-between;
@@ -88,157 +100,56 @@
       gap: 0.4rem;
     }
 
+    /* Pills */
     .pill-owned {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.1rem 0.5rem;
+      padding: 0.15rem 0.55rem;
       border-radius: 999px;
       font-size: 0.72rem;
-      background: #ecfdf5;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
-
-    body.dark .pill-owned {
-      background: #022c22;
-      color: #bbf7d0;
-      border-color: #065f46;
+      background: #16a34a22;
+      color: #16a34a;
+      font-weight: 600;
     }
 
     .pill-type {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.1rem 0.5rem;
+      padding: 0.15rem 0.55rem;
       border-radius: 999px;
       font-size: 0.72rem;
-      background: #eef2ff;
-      color: #3730a3;
+      background: var(--card-2);
+      color: var(--text);
     }
 
-    body.dark .pill-type {
-      background: #111827;
-      color: #c7d2fe;
-    }
-
+    /* Text */
     .library-card-title {
       font-weight: 600;
-      margin-bottom: 0.2rem;
+      color: var(--text);
     }
 
-    .library-card-meta {
-      font-size: 0.78rem;
-      color: #6b7280;
-      margin-bottom: 0.35rem;
-    }
-
-    body.dark .library-card-meta {
-      color: #9ca3af;
-    }
-
-    .library-card-footer {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.4rem;
-      margin-top: 0.4rem;
-      font-size: 0.78rem;
-      color: #6b7280;
-    }
-
-    body.dark .library-card-footer {
-      color: #9ca3af;
-    }
-
+    .library-card-meta,
+    .library-card-footer,
     .library-status {
-      font-size: 0.85rem;
-      margin-top: 0.75rem;
-      color: #6b7280;
+      color: var(--muted);
+      font-size: 0.8rem;
     }
 
-    .library-status.error {
-      color: #b91c1c;
+    /* Navbar badge */
+    .nav-badge {
+      background: var(--primary);
+      color: #111827;
+      border-radius: 999px;
+      padding: 0 0.45rem;
+      font-size: 0.75rem;
     }
 
+    /* Responsive */
     @media (max-width: 640px) {
       .library-container {
-        margin-top: 1.25rem;
         padding: 1.25rem 1.1rem;
       }
-    }
-
-    /* ---------------------------
-       Navbar badge styles
-       Yellow rounded pill (for notifications count)
-       --------------------------- */
-
-    .navbar .nav-links {
-      position: relative;
-      gap: 0.75rem;
-      align-items: center;
-    }
-
-    .nav-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 1.6rem;
-      height: 1.6rem;
-      padding: 0 0.45rem;
-      border-radius: 999px;
-      background: #f59e0b;
-      color: #0f172a;
-      font-weight: 600;
-      font-size: 0.78rem;
-      margin-left: 0.2rem;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
-      vertical-align: middle;
-    }
-
-    @media (max-width: 520px) {
-      .nav-badge {
-        min-width: 1.4rem;
-        height: 1.4rem;
-        font-size: 0.72rem;
-        padding: 0 0.35rem;
-      }
-    }
-
-    body.dark .nav-badge {
-      background: #f59e0b;
-      color: #021423;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    }
-
-    .nav-links a {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-
-    /* simple icon button for notifications */
-    .nav-icon-btn {
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      padding: 0.25rem 0.5rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-    }
-
-    .nav-icon-btn:hover {
-      background: rgba(148, 163, 184, 0.2);
-    }
-
-    body.dark .nav-icon-btn:hover {
-      background: rgba(148, 163, 184, 0.25);
     }
   </style>
 </head>
 
-<body>
+<body data-protected>
   <!-- Shared user Navbar (final unified version) -->
   <header class="navbar">
     <div class="logo">StudentHub</div>
@@ -249,17 +160,6 @@
       <span></span>
       <span></span>
     </button>
-
-    <!-- Nav links -->
-    <nav class="nav-links" id="nav-links">
-      <a href="/">Home</a>
-      <a href="/#ebooks">E-Books</a>
-      <a href="/#question-papers">Question Papers</a>
-      <a href="/#about">About</a>
-      <a href="/#contact">Contact</a>
-      <a href="/dashboard.html">My Dashboard</a>
-      <a href="/login.html" id="nav-login-link" style="display:none;">Sign in</a>
-    </nav>
 
     <!-- Right-side actions (ALWAYS SAME ON ALL PAGES) -->
     <div class="nav-actions">
@@ -272,33 +172,86 @@
     </div>
   </header>
 
+  <!-- ================= APP LAYOUT ================= -->
+  <div class="app-layout">
 
-  <main class="section">
-    <div class="library-container">
-      <h1 class="library-heading">My Library</h1>
-      <p class="library-subtitle">
-        All the e-books and question papers you’ve unlocked or purchased with this account.
-      </p>
+    <!-- ========= SIDEBAR ========= -->
+    <aside class="sidebar">
 
-      <div class="library-filters">
-        <input type="text" id="library-search" class="filter-input"
-          placeholder="Search in your library by title, exam, subject..." />
-        <select id="library-type-filter" class="filter-select">
-          <option value="all">All types</option>
-          <option value="ebook">E-Books</option>
-          <option value="questionPaper">Question Papers</option>
-        </select>
+      <h3 class="sb-title">Dashboard</h3>
+
+      <!-- Primary -->
+      <a href="/dashboard.html" class="sb-link">🏠 Dashboard</a>
+      <a href="/request.html" class="sb-link">📝 Request Material</a>
+
+      <hr />
+
+      <!-- Content -->
+      <a href="/#ebooks" class="sb-link">📚 E-Books</a>
+      <a href="/#question-papers" class="sb-link">📄 Papers</a>
+      <a href="/quiz.html" class="sb-link">🧠 Quiz Center</a>
+
+      <hr />
+
+      <!-- User tools -->
+      <a href="/library.html" class="sb-link active">📂 My Library</a>
+      <a href="/read-later.html" class="sb-link">⏳ Read Later</a>
+      <a href="/submit-pdf.html" class="sb-link">📤 Submit PDF</a>
+      <a href="/my-submissions.html" class="sb-link">📑 My Submissions</a>
+      <a href="/wallet.html" class="sb-link">💰 Wallet</a>
+      <hr />
+
+    </aside>
+
+
+
+    <!-- ========= MAIN CONTENT ========= -->
+    <main class="main-content">
+
+      <div class="library-container">
+
+        <h1 class="library-heading">My Library</h1>
+
+        <p class="library-subtitle">
+          All the e-books and question papers you’ve unlocked or purchased with this account.
+        </p>
+
+
+
+        <!-- Filters -->
+        <div class="library-filters">
+          <input type="text" id="library-search" class="filter-input"
+            placeholder="Search in your library by title, exam, subject..." />
+
+          <select id="library-type-filter" class="filter-select">
+            <option value="all">All types</option>
+            <option value="ebook">E-Books</option>
+            <option value="questionPaper">Question Papers</option>
+          </select>
+        </div>
+
+
+
+        <!-- Summary -->
+        <p id="library-summary" class="library-subtitle" style="margin-bottom:0.5rem;">
+          Loading your library…
+        </p>
+
+
+
+        <!-- List -->
+        <div id="library-list" class="library-list"></div>
+
+
+
+        <!-- Status -->
+        <p id="library-status" class="library-status"></p>
+
       </div>
 
-      <p id="library-summary" class="library-subtitle" style="margin-bottom: 0.5rem;">
-        Loading your library…
-      </p>
+    </main>
+  </div>
 
-      <div id="library-list" class="library-list"></div>
-
-      <p id="library-status" class="library-status"></p>
-    </div>
-  </main>
 
   <footer class="footer">
     <p>© <span id="year"></span> StudentHub. All rights reserved.</p>

@@ -4,8 +4,9 @@
 /* global fetch, document, localStorage, window, confirm, console, alert */
 
 let readLaterItems = [];
-let ownedMaterialIds = new Set();
 let readLaterSearchQuery = "";
+// use global from script.js
+let ownedMaterialIds = window.ownedMaterialIds || new Set();
 
 
 // ---------- small helpers ----------
@@ -31,76 +32,8 @@ function qsa(sel) {
   return Array.from(document.querySelectorAll(sel));
 }
 
-// ---------- theme + mobile nav (shared small bits) ----------
-function applyTheme(theme) {
-  const body = document.body;
-  const toggleBtn = document.getElementById("theme-toggle");
-  if (!body) return;
-  if (theme === "dark") {
-    body.classList.add("dark");
-    if (toggleBtn) toggleBtn.textContent = "☀️";
-  } else {
-    body.classList.remove("dark");
-    if (toggleBtn) toggleBtn.textContent = "🌙";
-  }
-  localStorage.setItem("studenthub_theme", theme);
-}
 
-function initMobileNav() {
-  const navToggle = document.getElementById("nav-toggle");
-  const navLinks = document.getElementById("nav-links");
-  if (!navToggle || !navLinks) return;
-  navToggle.addEventListener("click", () => {
-    navLinks.classList.toggle("open");
-    navToggle.classList.toggle("open");
-  });
-  navLinks.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => {
-      navLinks.classList.remove("open");
-      navToggle.classList.remove("open");
-    });
-  });
-}
 
-// ---------- NAVBAR COUNT BADGE for Read Later ----------
-function setNavCountOnLink(link, count) {
-  if (!link) return;
-  let badge = link.querySelector(".nav-count-pill");
-  if (count > 0) {
-    if (!badge) {
-      badge = document.createElement("span");
-      badge.className = "nav-count-pill";
-      // style similar to nav-badge from your CSS (kept inline to be robust)
-      badge.style.marginLeft = "0.35rem";
-      badge.style.padding = "0.05rem 0.4rem";
-      badge.style.borderRadius = "999px";
-      badge.style.fontSize = "0.7rem";
-      badge.style.background = "#fbbf24";
-      badge.style.color = "#111827";
-      badge.style.fontWeight = "600";
-      badge.style.display = "inline-flex";
-      badge.style.alignItems = "center";
-      badge.style.justifyContent = "center";
-    }
-    badge.textContent = count > 99 ? "99+" : String(count);
-    // ensure badge appended (avoid duplicates)
-    if (!link.contains(badge)) link.appendChild(badge);
-  } else if (badge) {
-    badge.remove();
-  }
-}
-
-function updateNavCounts() {
-  const rlCount = readLaterItems.length;
-  qsa('a[href="/read-later.html"]').forEach((link) =>
-    setNavCountOnLink(link, rlCount)
-  );
-  // remove library badge on this page (avoid confusion)
-  qsa('a[href="/library.html"]').forEach((link) => {
-    const badge = link.querySelector(".nav-count-pill");
-    if (badge) badge.remove();
-  });
-}
 
 // ---------- Owned materials (my-library) ----------
 async function loadOwnedMaterials() {
@@ -112,7 +45,6 @@ async function loadOwnedMaterials() {
       .map((it) => it.itemId || it.id)
       .filter(Boolean);
     ownedMaterialIds = new Set(ids);
-    updateNavCounts();
   } catch (err) {
     console.warn("Unable to load owned materials for Read Later:", err);
   }
@@ -134,7 +66,7 @@ async function loadReadLaterItems() {
     // If API returns items array — great.
     if (data && Array.isArray(data.items) && data.items.length) {
       readLaterItems = data.items;
-      updateNavCounts();
+      
       return;
     }
 
@@ -161,17 +93,16 @@ async function loadReadLaterItems() {
         // fallback: create a minimal stub so it can be removed by user
         return { itemId: id, itemType: "ebook", title: "Untitled material", price: 0 };
       });
-      updateNavCounts();
       return;
     }
 
     // otherwise, no items
     readLaterItems = [];
-    updateNavCounts();
+    
   } catch (err) {
     console.error("Error loading read-later items:", err);
     readLaterItems = [];
-    updateNavCounts();
+    
   }
 }
 
@@ -197,7 +128,7 @@ async function handleRemoveFromReadLater(materialId) {
       (it) => (it.itemId || it.id || it.materialId) !== materialId
     );
     renderReadLater();
-    updateNavCounts();
+    
   } catch (err) {
     console.error("handleRemoveFromReadLater error:", err);
     alert("Error removing item from Read Later.");
@@ -222,7 +153,7 @@ async function handleAddToLibrary(materialId) {
       ownedMaterialIds.add(materialId);
       // update UI badges + re-render
       renderReadLater();
-      updateNavCounts();
+
       alert("Added to your library.");
     } else {
       alert(data.message || "Failed to add to library.");
@@ -366,7 +297,7 @@ function renderReadLater() {
     if (clearBtn) clearBtn.style.display = "none";
     if (filtersRow) filtersRow.style.display = "none";
     if (statsEl) statsEl.textContent = "";
-    updateNavCounts();
+    
     return;
   }
 
@@ -443,7 +374,7 @@ function renderReadLater() {
     else statsEl.textContent = `Free: ${freeCount} • Paid: ${paidCount} • Value of paid items: ₹${totalValue}`;
   }
 
-  updateNavCounts();
+  
 }
 
 // ---------- clear all ----------
@@ -468,7 +399,7 @@ async function handleClearAllReadLater() {
   }
   readLaterItems = [];
   renderReadLater();
-  updateNavCounts();
+  
 }
 
 // ---------- init ----------
@@ -478,16 +409,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (yearSpan) yearSpan.textContent = new Date().getFullYear();
 
   // theme + mobile nav + back-to-top
-  initMobileNav();
-  const savedTheme = localStorage.getItem("studenthub_theme") || "light";
-  applyTheme(savedTheme);
-  const themeToggleBtn = document.getElementById("theme-toggle");
-  if (themeToggleBtn) {
-    themeToggleBtn.addEventListener("click", () => {
-      const next = document.body.classList.contains("dark") ? "light" : "dark";
-      applyTheme(next);
-    });
-  }
   const backToTopBtn = document.getElementById("back-to-top");
   if (backToTopBtn) {
     window.addEventListener("scroll", () => {

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Certificate Verification | StudentHub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body{
+      margin:0;
+      font-family:system-ui;
+      background:linear-gradient(135deg,#0f172a,#111827);
+      color:white;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height:100vh;
+    }
+
+    .card{
+      background:#1f2937;
+      padding:40px;
+      border-radius:16px;
+      width:420px;
+      max-width:95%;
+      text-align:center;
+      box-shadow:0 10px 40px rgba(0,0,0,.5);
+    }
+
+    .title{
+      font-size:22px;
+      font-weight:700;
+      margin-bottom:20px;
+    }
+
+    .status{
+      margin-top:15px;
+      font-size:18px;
+      font-weight:600;
+    }
+
+    .valid{ color:#22c55e }
+    .invalid{ color:#ef4444 }
+
+    .info{
+      margin-top:20px;
+      font-size:14px;
+      opacity:.9;
+      text-align:left;
+      line-height:1.7;
+    }
+
+    .btn{
+      margin-top:25px;
+      padding:8px 14px;
+      border:none;
+      border-radius:8px;
+      background:#2563eb;
+      color:white;
+      cursor:pointer;
+    }
+  </style>
+</head>
+
+<body data-protected>
+
+  <div class="card">
+
+    <div class="title">🎓 StudentHub Certificate Verification</div>
+
+    <div id="status" class="status">Checking certificate...</div>
+
+    <div id="info" class="info"></div>
+
+    <button id="copyBtn" class="btn" style="display:none">
+      Copy Certificate ID
+    </button>
+
+  </div>
+
+
+
+<script>
+
+const id = new URLSearchParams(location.search).get("id")
+const statusEl = document.getElementById("status")
+const infoEl = document.getElementById("info")
+const copyBtn = document.getElementById("copyBtn")
+
+async function verify(){
+
+  if(!id){
+    showInvalid("Missing certificate ID")
+    return
+  }
+
+  try{
+    const res = await fetch(`/api/certificate/verify/${id}`)
+    const data = await res.json()
+
+    if(!data.valid){
+      showInvalid("Certificate not found")
+      return
+    }
+
+    showValid(data)
+
+  }catch(err){
+    showInvalid("Server error")
+  }
+}
+
+function showValid(data){
+
+  statusEl.innerHTML = "✅ Valid Certificate"
+  statusEl.className = "status valid"
+
+  const date = new Date(data.date).toLocaleDateString()
+
+  infoEl.innerHTML = `
+    <b>ID:</b> ${id}<br>
+    <b>Name:</b> ${data.name}<br>
+    <b>Score:</b> ${data.score}<br>
+    <b>Accuracy:</b> ${data.accuracy}%<br>
+    <b>Date:</b> ${date}
+  `
+
+  copyBtn.style.display = "inline-block"
+}
+
+function showInvalid(msg){
+  statusEl.innerHTML = "❌ Invalid Certificate"
+  statusEl.className = "status invalid"
+  infoEl.innerHTML = msg
+}
+
+copyBtn.onclick = () => {
+  navigator.clipboard.writeText(id)
+  copyBtn.textContent = "Copied!"
+}
+
+verify()
+
+</script>
+
+</body>
+</html>

@@ -6,9 +6,115 @@
     <title>Admin – User Requests | StudentHub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="/styles/styles.css">
+
+    <style>
+        /* =========================================
+   STUDENTHUB ADMIN – REQUESTS (FINAL)
+   Uses global theme system
+========================================= */
+
+        .admin-shell {
+            min-height: 100vh;
+            background: var(--bg);
+        }
+
+        /* ===== MAIN LAYOUT ===== */
+
+        .admin-container {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1.25rem 2rem;
+        }
+
+        /* ===== CARD ===== */
+
+        .admin-card {
+            background: var(--card);
+            border: 1px solid var(--card-2);
+            border-radius: 14px;
+            padding: 1.6rem 1.8rem;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, .12);
+        }
+
+        /* ===== TITLES ===== */
+
+        .admin-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: .25rem;
+        }
+
+        .admin-subtitle {
+            font-size: .9rem;
+            color: var(--muted);
+            margin-bottom: 1rem;
+        }
+
+        /* ===== TABLE WRAPPER ===== */
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        /* ===== TABLE ===== */
+
+        #reqTable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .86rem;
+        }
+
+        #reqTable thead {
+            background: var(--card-2);
+        }
+
+        #reqTable th,
+        #reqTable td {
+            padding: .65rem .7rem;
+            border-bottom: 1px solid var(--card-2);
+            color: var(--text);
+            text-align: left;
+        }
+
+        #reqTable th {
+            font-size: .75rem;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--muted);
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--muted);
+            padding: 1.2rem 0;
+        }
+
+        /* ===== ACTION BUTTONS (if used by JS) ===== */
+
+        .btn {
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: .78rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+    </style>
+
 </head>
 
-<body class="admin-page">
+<body>
 
     <nav class="admin-navbar">
         <div class="admin-navbar-inner">
@@ -16,14 +122,14 @@
             <div class="admin-brand">StudentHub Admin</div>
 
             <div class="admin-nav">
-                <a href="/admin.html" class="active">Upload</a>
+                <a href="/admin.html">Upload</a>
                 <a href="/admin-materials.html">Materials</a>
                 <a href="/admin-submissions.html">Submissions</a>
                 <a href="/admin-approved.html">Approved</a>
                 <a href="/admin-withdrawals.html">Withdrawals</a>
-                <a href="/admin-requests.html">📩 Requests</a>
+                <a href="/admin-requests.html" class="active">📩 Requests</a>
                 <a href="/admin/admin-quiz.html">Generate Quiz</a>
-                <a href="/admin/admin-quizzes.html" class="active">All Quizzes</a>
+                <a href="/admin/admin-quizzes.html">All Quizzes</a>
             </div>
 
             <div class="admin-actions">
@@ -35,41 +141,44 @@
     </nav>
 
     <!-- ================= PAGE CONTENT ================= -->
-    <main class="admin-container">
-        <div class="admin-card">
+    <div class="admin-shell">
+        <main class="admin-container">
 
-            <h2 class="admin-title">📩 User Requests</h2>
-            <p class="admin-subtitle">
-                Requests submitted by users for new e-books or question papers
-            </p>
+            <div class="admin-card">
 
-            <div class="table-wrapper">
-                <table id="reqTable">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Type</th>
-                            <th>Exam / Subject</th>
-                            <th>Details</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="7" class="loading">Loading requests…</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <h2 class="admin-title">📩 User Requests</h2>
+                <p class="admin-subtitle">
+                    Requests submitted by users for new e-books or question papers
+                </p>
+
+                <div class="table-wrapper">
+                    <table id="reqTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Type</th>
+                                <th>Exam / Subject</th>
+                                <th>Details</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="7" class="loading">Loading requests…</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
-
-        </div>
-    </main>
+        </main>
+    </div>
 
     <!-- ================= SCRIPT ================= -->
     <script src="admin-requests.js"></script>
     <script src="admin-theme.js"></script>
-</body>
 
+</body>
 </html>

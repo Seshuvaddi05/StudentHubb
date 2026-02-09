@@ -9,147 +9,153 @@
   <link rel="stylesheet" href="/styles/styles.css">
 
   <style>
+    /* =====================================
+   ADMIN MATERIALS PAGE (FINAL CLEAN)
+   Theme-safe • Global • Professional
+===================================== */
+
+    /* layout */
     .admin-shell {
       min-height: 100vh;
-      background: #f1f5f9;
+      background: var(--bg);
     }
 
-    body.dark .admin-shell {
-      background: #020617;
-    }
-
-    /* MAIN */
     .admin-main {
       max-width: 1100px;
       margin: 2rem auto;
       padding: 0 1.25rem 2rem;
     }
 
+    /* card */
     .admin-card {
-      background: #ffffff;
-      border-radius: 0.9rem;
-      padding: 1.5rem 1.75rem;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
-      border: 1px solid #e5e7eb;
+      background: var(--card);
+      border: 1px solid var(--card-2);
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, .12);
     }
 
-    body.dark .admin-card {
-      background: #020617;
-      border-color: #1f2937;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7);
-    }
-
+    /* headings */
     .admin-card h1 {
       font-size: 1.3rem;
       font-weight: 600;
       margin-bottom: 0.3rem;
+      color: var(--text);
     }
 
     .admin-card .subtitle {
       font-size: 0.9rem;
-      color: #6b7280;
+      color: var(--muted);
       margin-bottom: 1rem;
     }
 
-    body.dark .admin-card .subtitle {
-      color: #9ca3af;
-    }
+    /* ==============================
+   FILTERS
+============================== */
 
-    /* FILTERS */
     .materials-controls {
       display: flex;
       flex-wrap: wrap;
       gap: 0.6rem;
-      margin-bottom: 0.8rem;
+      margin-bottom: 0.9rem;
     }
 
     .materials-controls input,
     .materials-controls select {
-      padding: 0.5rem 0.7rem;
+      padding: 0.55rem 0.9rem;
       border-radius: 999px;
-      border: 1px solid #e5e7eb;
+      border: 1px solid var(--card-2);
+      background: var(--card);
+      color: var(--text);
       font-size: 0.9rem;
     }
 
-    body.dark .materials-controls input,
-    body.dark .materials-controls select {
-      background: #020617;
-      border-color: #1f2937;
-      color: #e5e7eb;
+    .materials-controls input:focus,
+    .materials-controls select:focus {
+      outline: none;
+      border-color: var(--primary);
     }
 
-    /* TABLE */
+    /* ==============================
+   TABLE
+============================== */
+
     table.admin-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.85rem;
+      font-size: 0.88rem;
+      background: var(--card);
     }
 
     table.admin-table thead {
-      background: #f9fafb;
+      background: var(--card-2);
     }
 
     table.admin-table th,
     table.admin-table td {
-      padding: 0.55rem 0.6rem;
-      border-bottom: 1px solid #e5e7eb;
+      padding: 0.65rem 0.7rem;
+      border-bottom: 1px solid var(--card-2);
       text-align: left;
+      color: var(--text);
     }
 
     table.admin-table th {
       font-weight: 600;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      color: #6b7280;
+      color: var(--muted);
     }
 
-    body.dark table.admin-table thead {
-      background: #020617;
+    /* hover row */
+    table.admin-table tbody tr:hover {
+      background: var(--card-2);
     }
 
-    body.dark table.admin-table th,
-    body.dark table.admin-table td {
-      border-color: #1f2937;
-    }
+    /* ==============================
+   BUTTONS
+============================== */
 
-    /* BUTTONS */
     .btn-danger {
-      background: #b91c1c;
-      color: #ffffff;
-      padding: 0.3rem 0.75rem;
+      background: var(--danger);
+      color: #fff;
+      padding: 0.35rem 0.8rem;
       border-radius: 999px;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       border: none;
       cursor: pointer;
+      font-weight: 600;
     }
 
     .btn-danger:hover {
-      background: #991b1b;
+      opacity: 0.9;
     }
 
     .btn-danger:disabled {
-      opacity: 0.7;
+      opacity: 0.6;
       cursor: default;
     }
 
-    /* STATUS TEXT */
+    /* ==============================
+   STATUS TEXT
+============================== */
+
     #materials-list-status {
       margin-top: 0.6rem;
       font-size: 0.85rem;
-      color: #6b7280;
+      color: var(--muted);
     }
 
-    body.dark #materials-list-status {
-      color: #9ca3af;
-    }
+    /* ==============================
+   MOBILE
+============================== */
 
     @media (max-width: 640px) {
       .admin-card {
-        padding: 1.25rem 1.1rem;
+        padding: 1.2rem;
       }
 
-      /* Hide ID and downloads on mobile */
+      /* hide id + downloads */
       table.admin-table th:nth-child(1),
       table.admin-table td:nth-child(1),
       table.admin-table th:nth-child(7),
@@ -158,6 +164,7 @@
       }
     }
   </style>
+
 </head>
 
 <body>
@@ -177,7 +184,7 @@
           <a href="/admin-withdrawals.html">Withdrawals</a>
           <a href="/admin-requests.html">📩 Requests</a>
           <a href="/admin/admin-quiz.html">Generate Quiz</a>
-          <a href="/admin/admin-quizzes.html" class="active">All Quizzes</a>
+          <a href="/admin/admin-quizzes.html">All Quizzes</a>
         </div>
 
         <div class="admin-actions">
@@ -232,7 +239,9 @@
   </div>
 
   <!-- Script that loads materials + handles delete -->
+  <script src="/admin-theme.js"></script>
   <script src="admin.js" defer></script>
+
 </body>
 
 </html>

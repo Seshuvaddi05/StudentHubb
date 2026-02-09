@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Practice Wrong Answers | StudentHub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="/styles/styles.css" />
+
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 22px;
+            border-radius: 12px;
+            border: 1px solid var(--card-2);
+            margin-bottom: 20px;
+        }
+
+        .option {
+            display: block;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px;
+            background: var(--card-2);
+            cursor: pointer;
+        }
+
+        .correct {
+            background: var(--success);
+            color: white;
+        }
+
+        .wrong {
+            background: var(--danger);
+            color: white;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--bg);
+        }
+    </style>
+</head>
+
+<body data-protected>
+
+    <div class="container">
+
+        <div class="topbar">
+            <h2>🎯 Practice Wrong Questions</h2>
+            <button class="btn btn-primary" onclick="goBack()">Back to Result</button>
+        </div>
+
+        <div id="box"></div>
+
+    </div>
+
+
+    <script>
+
+        const params = new URLSearchParams(location.search)
+        const attemptId = params.get("attemptId")
+
+        const box = document.getElementById("box")
+
+        let questions = []
+        let current = 0
+        let score = 0
+        let answered = {}
+
+
+        // ===============================
+        // LOAD WRONG QUESTIONS
+        // ===============================
+        async function loadPractice() {
+
+            if (!attemptId) {
+                box.innerHTML = "No attempt id"
+                return
+            }
+
+            const res = await fetch(`/api/quiz/attempt/${attemptId}`, {
+                credentials: "include"
+            })
+
+            const attempt = await res.json()
+
+            questions = (attempt.review || []).filter(
+                q => q.userAnswer !== q.correctAnswer
+            )
+
+            if (!questions.length) {
+                box.innerHTML = "<h3>🎉 No wrong answers — perfect score!</h3>"
+                return
+            }
+
+            renderQuestion()
+        }
+
+
+        // ===============================
+        // RENDER QUESTION (INTERACTIVE)
+        // ===============================
+        function renderQuestion() {
+
+            const q = questions[current]
+
+            box.innerHTML = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <b>Question ${current + 1} / ${questions.length}</b>
+        <b>Score: ${score}</b>
+      </div>
+
+      <div style="height:6px;background:var(--card-2);border-radius:6px;margin-bottom:15px;">
+        <div style="
+          height:100%;
+          width:${((current) / questions.length) * 100}%;
+          background:var(--primary);
+          border-radius:6px;"></div>
+      </div>
+
+      <h3>${q.questionText}</h3>
+
+      <div id="opts"></div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:20px">
+        <button class="btn" onclick="prev()">Prev</button>
+        <button class="btn btn-primary" onclick="next()">Next</button>
+      </div>
+    </div>
+  `
+
+            const opts = document.getElementById("opts")
+
+            const options = [q.userAnswer, q.correctAnswer]
+
+            options.forEach(text => {
+
+                const div = document.createElement("div")
+                div.className = "option"
+                div.textContent = text || "-"
+
+                div.onclick = () => select(div, text, q.correctAnswer)
+
+                opts.appendChild(div)
+            })
+        }
+
+
+        // ===============================
+        // SELECT ANSWER
+        // ===============================
+        function select(el, chosen, correct) {
+
+            if (answered[current]) return
+
+            answered[current] = true
+
+            const all = document.querySelectorAll(".option")
+
+            all.forEach(o => {
+                if (o.textContent === correct)
+                    o.classList.add("correct")
+            })
+
+            if (chosen !== correct) {
+                el.classList.add("wrong")
+            } else {
+                score++
+            }
+        }
+
+
+        // ===============================
+        // NAVIGATION
+        // ===============================
+        function next() {
+            if (current < questions.length - 1) {
+                current++
+                renderQuestion()
+            } else {
+                showFinal()
+            }
+        }
+
+        function prev() {
+            if (current > 0) {
+                current--
+                renderQuestion()
+            }
+        }
+
+
+        // ===============================
+        // FINAL SCREEN
+        // ===============================
+        function showFinal() {
+
+            box.innerHTML = `
+    <div class="card" style="text-align:center">
+      <h2>🎉 Practice Completed</h2>
+      <h3>Your Score: ${score} / ${questions.length}</h3>
+
+      <button class="btn btn-primary" onclick="retry()">Retry</button>
+      <button class="btn" onclick="goBack()">Back to Result</button>
+    </div>
+  `
+        }
+
+        function retry() {
+            current = 0
+            score = 0
+            answered = {}
+            renderQuestion()
+        }
+
+
+        // ===============================
+        function goBack() {
+            history.back()
+        }
+
+        loadPractice()
+
+    </script>
+
+    <script src="/js/guard.js"></script>
+    <script src="/script.js"></script>
+
+</body>
+
+</html>

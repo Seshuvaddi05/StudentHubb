@@ -6,18 +6,28 @@
   <title>Quiz Result | StudentHub</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+
+  <!-- GLOBAL THEME -->
   <link rel="stylesheet" href="/styles/styles.css" />
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
+    /* =========================================
+   GLOBAL (THEME SAFE)
+========================================= */
+
     body {
       margin: 0;
       font-family: system-ui;
-      background: linear-gradient(135deg, #0f172a, #111827);
-      color: white;
+      background: var(--bg);
+      color: var(--text);
     }
+
+    /* =========================================
+   LAYOUT
+========================================= */
 
     .container {
       max-width: 1100px;
@@ -25,31 +35,48 @@
       padding: 20px;
     }
 
-    .brand {
-      font-size: 26px;
-      font-weight: 800;
-      color: #facc15;
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 25px;
     }
 
+    .brand {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    /* =========================================
+   STATS GRID
+========================================= */
+
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 18px;
     }
 
     .card {
-      background: #111827;
+      background: var(--card);
+      border: 1px solid var(--card-2);
       padding: 18px;
       border-radius: 14px;
       text-align: center;
+      box-shadow: var(--shadow);
     }
 
     .value {
       font-size: 22px;
       font-weight: 700;
-      color: #facc15;
+      color: var(--primary);
+      margin-top: 6px;
     }
+
+    /* =========================================
+   BUTTONS (THEME SAFE)
+========================================= */
 
     .actions {
       margin-top: 30px;
@@ -64,85 +91,135 @@
       border-radius: 8px;
       cursor: pointer;
       font-weight: 600;
+      transition: .2s;
     }
 
-    .yellow {
-      background: #facc15;
-      color: #111
+    .btn:hover {
+      transform: translateY(-1px);
     }
 
-    .blue {
-      background: #3b82f6;
-      color: white
+    .btn-primary {
+      background: var(--primary);
+      color: var(--bg);
     }
 
-    .green {
-      background: #22c55e;
-      color: white
+    .btn-accent {
+      background: var(--accent);
+      color: var(--bg);
     }
 
-    .red {
-      background: #ef4444;
-      color: white
+    .btn-success {
+      background: var(--success);
+      color: var(--bg);
     }
 
-    .purple {
+    .btn-danger {
+      background: var(--danger);
+      color: var(--bg);
+    }
+
+    .btn-purple {
       background: #8b5cf6;
-      color: white
+      color: var(--bg);
     }
+
+
+    /* =========================================
+   REVIEW
+========================================= */
 
     .review-item {
-      background: #1f2937;
+      background: var(--card);
+      border: 1px solid var(--card-2);
       padding: 12px;
       border-radius: 8px;
       margin-bottom: 10px;
+      box-shadow: var(--shadow);
     }
 
     .correct {
-      color: #22c55e
+      color: var(--success);
     }
 
     .wrong {
-      color: #ef4444
+      color: var(--danger);
     }
+
+    /* =========================================
+   TABLE (FULLY THEME SAFE)
+========================================= */
 
     table {
       width: 100%;
       margin-top: 30px;
       border-collapse: collapse;
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
     }
 
     th,
     td {
       padding: 10px;
-      text-align: center
+      text-align: center;
     }
 
     th {
-      background: #1f2937
+      background: var(--card-2);
     }
 
     tr:nth-child(even) {
-      background: #111827
+      background: var(--card-2);
     }
 
     .highlight {
-      background: #facc15 !important;
-      color: #111;
+      background: var(--primary) !important;
+      color: var(--bg);
       font-weight: 700;
     }
 
+    /* =========================================
+   CHART (FIXED SIZE + CENTERED)
+========================================= */
+
+    .chart-wrapper {
+      width: 340px;
+      height: 340px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
     #chart {
-      margin-top: 40px;
-      height: 300px;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+
+    /* =========================================
+   MOBILE
+========================================= */
+
+    @media (max-width:768px) {
+      .actions {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 
-<body>
+
+<body data-protected>
+
   <div class="container">
 
-    <div class="brand">🎓 StudentHub — Quiz Result</div>
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="brand">🎓 StudentHub — Quiz Result</div>
+      <button id="theme-toggle" class="btn btn-accent">🌙</button>
+    </div>
+
+
 
     <!-- STATS -->
     <div class="grid">
@@ -160,23 +237,37 @@
       </div>
       <div class="card">Rank<div id="rank" class="value">-</div>
       </div>
+      <div class="card">Performance<div id="performance" class="value">-</div>
+      </div>
     </div>
+
 
     <!-- ACTIONS -->
     <div class="actions">
-      <button class="btn yellow" onclick="retake()">Retake</button>
-      <button class="btn purple" onclick="practiceWrong()">Wrong Practice</button>
-      <button class="btn blue" onclick="shareResult()">Share</button>
-      <button class="btn blue" onclick="downloadPDF()">PDF</button>
-      <button class="btn green" onclick="downloadCertificate()">Certificate</button>
-      <button class="btn red" onclick="back()">Back</button>
+      <button class="btn btn-primary" onclick="retake()">Retake</button>
+      <button class="btn btn-purple" onclick="practiceWrong()">Wrong Practice</button>
+      <button class="btn btn-accent" onclick="historyPage()">History</button>
+      <button class="btn btn-accent" onclick="shareResult()">Share</button>
+      <button class="btn btn-accent" onclick="downloadPDF()">PDF</button>
+      <button class="btn btn-success" onclick="downloadCertificate()">Certificate</button>
+      <button class="btn btn-danger" onclick="back()">Back</button>
+
     </div>
 
-    <canvas id="chart"></canvas>
 
+    <!-- CHART -->
+    <div class="chart-wrapper card">
+      <canvas id="chart"></canvas>
+    </div>
+
+
+
+    <!-- REVIEW -->
     <h2 style="margin-top:40px">📝 Answer Review</h2>
     <div id="reviewList"></div>
 
+
+    <!-- LEADERBOARD -->
     <h2 style="margin-top:40px">🏆 Leaderboard</h2>
     <table>
       <thead>
@@ -192,141 +283,482 @@
   </div>
 
 
+
   <script>
-    /* ================= LOAD RESULT ================= */
-    const raw = localStorage.getItem("quizResult");
-    if (!raw) location.href = "/quiz.html";
+    /* ======================================================
+       🎓 StudentHub — Quiz Result (PRO FINAL)
+       Smooth • Animated • Safe • Modern
+    ====================================================== */
 
-    const r = JSON.parse(raw);
+    let r = {}
 
-    /* ================= ELEMENTS ================= */
-    const totalEl = document.getElementById("total");
-    const correctEl = document.getElementById("correct");
-    const wrongEl = document.getElementById("wrong");
-    const scoreEl = document.getElementById("score");
-    const accuracyEl = document.getElementById("accuracy");
-    const timeEl = document.getElementById("time");
-    const rankEl = document.getElementById("rank");
-    const reviewList = document.getElementById("reviewList");
-    const leaderboardBody = document.getElementById("leaderboardBody");
+    const total = document.getElementById("total")
+    const correctEl = document.getElementById("correct")
+    const wrongEl = document.getElementById("wrong")
+    const scoreEl = document.getElementById("score")
+    const accuracyEl = document.getElementById("accuracy")
+    const timeEl = document.getElementById("time")
+    const reviewList = document.getElementById("reviewList")
+    const rankEl = document.getElementById("rank")
+    const perfEl = document.getElementById("performance")
+    const leaderboardBody = document.getElementById("leaderboardBody")
+    const chartEl = document.getElementById("chart")
 
-    /* ================= VALUES (FROM SERVER ONLY) ================= */
-    const {
-      totalQuestions = 0,
-      correct = 0,
-      wrong = 0,
-      score = 0,
-      accuracy = 0,
-      timeTaken = 0,
-      review = [],
-      quizId
-    } = r;
 
-    totalEl.textContent = totalQuestions;
-    correctEl.textContent = correct;
-    wrongEl.textContent = wrong;
-    scoreEl.textContent = score;
-    accuracyEl.textContent = accuracy + "%";
+    /* ======================================================
+       LOAD RESULT
+    ====================================================== */
+    async function loadResult() {
 
-    const m = Math.floor(timeTaken / 60);
-    const s = timeTaken % 60;
-    timeEl.textContent = `${m}m ${s}s`;
+      const params = new URLSearchParams(location.search)
+      const attemptId = params.get("attemptId")
 
-    /* ================= CHART ================= */
-    new Chart(document.getElementById("chart"), {
-      type: "bar",
-      data: {
-        labels: ["Correct", "Wrong"],
-        datasets: [{
-          label: "Questions",
-          data: [correct, wrong],
-          backgroundColor: ["#22c55e", "#ef4444"]
-        }]
-      },
-      options: {
-        plugins: {
-          legend: { display: false }
+      if (!attemptId) {
+        location.href = "/quiz-history.html"
+        return
+      }
+
+      const res = await fetch(`/api/quiz/attempt/${attemptId}`, {
+        credentials: "include"
+      })
+
+      if (!res.ok) {
+        alert("Attempt not found")
+        location.href = "/quiz-history.html"
+        return
+      }
+
+      const attempt = await res.json().catch(() => ({}))
+
+      // ⭐ SAFE NORMALIZATION
+      r = {
+        totalQuestions: attempt.totalQuestions || 0,
+        correct: attempt.correct || 0,
+        wrong: attempt.wrong || 0,
+        score: attempt.score || 0,
+        accuracy: attempt.accuracy || 0,
+        timeTaken: attempt.timeTaken || 0,
+        review: attempt.review || [],
+        quizId: attempt.quizId?._id || attempt.quizId,
+        rank: attempt.rank || "-"
+      }
+
+      renderResult()
+    }
+
+
+    /* ======================================================
+       SMOOTH COUNTER ANIMATION
+    ====================================================== */
+    function animate(el, target) {
+      clearInterval(el._int)
+
+      let cur = 0
+      const step = Math.max(1, Math.ceil(target / 25))
+
+      el._int = setInterval(() => {
+        cur += step
+        if (cur >= target) {
+          cur = target
+          clearInterval(el._int)
         }
+        el.textContent = cur
+      }, 12)
+    }
+
+
+
+    /* ======================================================
+       RENDER RESULT
+    ====================================================== */
+    function renderResult() {
+
+      const {
+        totalQuestions,
+        correct,
+        wrong,
+        score,
+        accuracy,
+        timeTaken,
+        review,
+        quizId
+      } = r
+
+      /* ---------- STATS ---------- */
+      animate(total, totalQuestions)
+      animate(correctEl, correct)
+      animate(wrongEl, wrong)
+      animate(scoreEl, score)
+
+      accuracyEl.textContent = accuracy + "%"
+
+      timeEl.textContent =
+        `${Math.floor(timeTaken / 60)}m ${timeTaken % 60}s`
+
+      rankEl.textContent = r.rank
+
+
+      /* ---------- PERFORMANCE LABEL ---------- */
+      if (perfEl) {
+        if (accuracy >= 90) perfEl.textContent = "🔥 Excellent"
+        else if (accuracy >= 70) perfEl.textContent = "👍 Good"
+        else if (accuracy >= 40) perfEl.textContent = "🙂 Average"
+        else perfEl.textContent = "💪 Practice More"
       }
-    });
 
-    /* ================= REVIEW (FIXED) ================= */
-    reviewList.innerHTML = "";
 
-    review.forEach((q, i) => {
-      const user = q.userAnswer ?? "-";
-      const correctAns = q.correctAnswer ?? "-";
-      const ok =
-        String(user).trim() === String(correctAns).trim();
+      drawChart(correct, wrong)
+      renderReview(review)
 
-      reviewList.innerHTML += `
-    <div class="review-item">
-      <b>Q${i + 1}. ${q.questionText}</b><br>
-      Your: <span class="${ok ? "correct" : "wrong"}">${user}</span><br>
-      Correct: <span class="correct">${correctAns}</span>
-    </div>
-  `;
-    });
+      if (quizId) loadLeaderboard(quizId)
+    }
 
-    /* ================= LEADERBOARD + RANK (FIXED) ================= */
-    async function loadLeaderboard() {
-      try {
-        const res = await fetch(`/api/quiz/leaderboard?quizId=${quizId}`, {
-          credentials: "include"
-        });
 
-        const data = await res.json();
 
-        leaderboardBody.innerHTML = "";
+    /* ======================================================
+       DOUGHNUT CHART (better UX than bar)
+    ====================================================== */
+    function drawChart(correct, wrong) {
 
-        (data.leaderboard || []).forEach(u => {
-          const row = document.createElement("tr");
+      const style = getComputedStyle(document.body)
 
-          // highlight ONLY if both score + first match
-          if (u.score === score && rankEl.textContent === "-") {
-            row.classList.add("highlight");
-            rankEl.textContent = u.rank;
+      if (window.resultChart) window.resultChart.destroy()
+
+      window.resultChart = new Chart(chartEl, {
+        type: "doughnut",
+        data: {
+          labels: ["Correct", "Wrong"],
+          datasets: [{
+            data: [correct, wrong],
+            backgroundColor: [
+              style.getPropertyValue('--success').trim(),
+              style.getPropertyValue('--danger').trim()
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          cutout: "65%",
+          plugins: {
+            legend: { position: "bottom" }
           }
+        }
+      })
+    }
 
-          row.innerHTML = `
-        <td>${u.rank}</td>
-        <td>${u.user || "Guest"}</td>
-        <td>${u.score}</td>
-      `;
 
-          leaderboardBody.appendChild(row);
-        });
+    function escapeHTML(str = "") {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+    }
 
-      } catch (e) {
-        console.log("Leaderboard error", e);
+
+    function downloadPDF() {
+      window.print()
+    }
+
+
+    /* ======================================================
+       REVIEW LIST
+    ====================================================== */
+    function renderReview(review) {
+
+      reviewList.innerHTML = ""
+
+      if (!review.length) {
+        reviewList.innerHTML =
+          "<p style='opacity:.6'>No review data available</p>"
+        return
       }
+
+      review.forEach((q, i) => {
+
+        const ok = q.userAnswer === q.correctAnswer
+
+        const div = document.createElement("div")
+        div.className = "review-item"
+
+        div.innerHTML = `
+<b>Q${i + 1}. ${escapeHTML(q.questionText)}</b><br>
+Your: <span class="${ok ? 'correct' : 'wrong'}">${escapeHTML(q.userAnswer || '-')}</span><br>
+Correct: <span class="correct">${escapeHTML(q.correctAnswer)}</span>`
+
+        reviewList.appendChild(div)
+      })
     }
 
-    if (quizId) loadLeaderboard();
 
-    /* ================= BUTTONS ================= */
-    function practiceWrong() {
-      const wrongOnly = review.filter(q => q.userAnswer !== q.correctAnswer);
-      localStorage.setItem("practiceWrong", JSON.stringify(wrongOnly));
-      location.href = "/quiz-practice.html";
+
+    /* ======================================================
+       LEADERBOARD
+    ====================================================== */
+    async function loadLeaderboard(quizId) {
+
+      const res = await fetch(`/api/quiz/leaderboard?quizId=${quizId}`, {
+        credentials: "include"
+      })
+
+      const data = await res.json()
+
+      leaderboardBody.innerHTML = ""
+
+        ; (data.leaderboard || []).forEach(u => {
+
+          const tr = document.createElement("tr")
+
+          tr.innerHTML =
+            `<td>${u.rank}</td><td>${u.user}</td><td>${u.score}</td>`
+
+          if (u.rank === r.rank)
+            tr.classList.add("highlight")
+
+          leaderboardBody.appendChild(tr)
+        })
     }
 
-    function shareResult() {
-      navigator.clipboard.writeText(location.href);
-      alert("Link copied!");
-    }
 
+
+    /* ======================================================
+       BUTTONS
+    ====================================================== */
     function back() {
-      localStorage.removeItem("quizResult");
-      location.href = "/quiz.html";
+      location.href = "/quiz.html"
     }
 
     function retake() {
-      history.back();
+      location.href = `/quiz-attempt.html?quizId=${r.quizId}`
     }
+
+    function practiceWrong() {
+      const wrongOnly =
+        r.review.filter(q => q.userAnswer !== q.correctAnswer)
+
+      localStorage.setItem("practiceWrong",
+        JSON.stringify(wrongOnly))
+
+      location.href =
+        `/quiz-practice.html?attemptId=${new URLSearchParams(location.search).get("attemptId")}`
+    }
+
+    function historyPage() {
+      location.href = "/quiz-history.html"
+    }
+
+    function shareResult() {
+      navigator.clipboard.writeText(location.href)
+      alert("Link copied!")
+    }
+
+
+
+    /* ======================================================
+    🏆 FINAL PRO CERTIFICATE GENERATOR (ULTIMATE)
+    Clean + Premium + QR + Seal + Email + Confetti
+ ====================================================== */
+    async function downloadCertificate() {
+
+      const { jsPDF } = window.jspdf
+      const doc = new jsPDF("landscape")
+
+      /* ===============================
+         FETCH USER INFO
+      =============================== */
+      let username = "Student"
+      let email = ""
+
+      try {
+        const res = await fetch("/api/me", { credentials: "include" })
+        const data = await res.json()
+        username = data?.user?.name || "Student"
+        email = data?.user?.email || ""
+      } catch { }
+
+      /* ===============================
+         CERTIFICATE DATA
+      =============================== */
+      const score = r.score
+      const accuracy = r.accuracy
+      const date = new Date().toLocaleDateString()
+
+      /* ===============================
+         UNIQUE CERTIFICATE ID
+      =============================== */
+      const certId =
+        "SH-" +
+        Date.now().toString(36).toUpperCase() +
+        "-" +
+        Math.floor(Math.random() * 9999)
+
+      const verifyUrl =
+        `${location.origin}/verify-certificate.html?id=${certId}`
+
+      /* ===============================
+         GENERATE QR FROM BACKEND
+      =============================== */
+      let qrBase64 = ""
+      try {
+        const qrRes = await fetch(
+          `/api/certificate/qr?url=${encodeURIComponent(verifyUrl)}`
+        )
+        qrBase64 = await qrRes.text()
+      } catch { }
+
+      /* ===============================
+         COLORS
+      =============================== */
+      const gold = [212, 175, 55]
+      const dark = [17, 24, 39]
+
+      /* ===============================
+         BACKGROUND
+      =============================== */
+      doc.setFillColor(248, 250, 252)
+      doc.rect(0, 0, 297, 210, "F")
+
+      /* ===============================
+         GOLD BORDER
+      =============================== */
+      doc.setDrawColor(...gold)
+      doc.setLineWidth(4)
+      doc.rect(10, 10, 277, 190)
+
+      /* ===============================
+         TITLE
+      =============================== */
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(34)
+      doc.setTextColor(...gold)
+      doc.text("CERTIFICATE OF ACHIEVEMENT", 148, 40, { align: "center" })
+
+      /* ===============================
+         SUBTITLE
+      =============================== */
+      doc.setFontSize(16)
+      doc.setTextColor(...dark)
+      doc.text("This certificate is proudly presented to", 148, 65, { align: "center" })
+
+      /* ===============================
+         NAME
+      =============================== */
+      doc.setFontSize(40)
+      doc.setTextColor(37, 99, 235)
+      doc.text(username.toUpperCase(), 148, 95, { align: "center" })
+
+      /* ===============================
+         MESSAGE
+      =============================== */
+      doc.setFontSize(16)
+      doc.setTextColor(...dark)
+      doc.text(
+        "for successfully completing the StudentHub Quiz",
+        148, 115, { align: "center" }
+      )
+
+      /* ===============================
+         SCORE + ACCURACY
+      =============================== */
+      doc.setFontSize(18)
+      doc.text(
+        `Score: ${score}   |   Accuracy: ${accuracy}%`,
+        148, 130, { align: "center" }
+      )
+
+      /* ===============================
+         CERTIFICATE ID
+      =============================== */
+      doc.setFontSize(12)
+      doc.text(`Certificate ID: ${certId}`, 148, 145, { align: "center" })
+
+      /* ===============================
+         DATE + SIGNATURE
+      =============================== */
+      doc.setFontSize(14)
+      doc.text(`Date: ${date}`, 30, 180)
+
+      doc.text("StudentHub Official", 230, 180)
+      doc.line(210, 175, 280, 175)
+
+      /* ===============================
+         GOLD SEAL BADGE
+      =============================== */
+      doc.setFillColor(...gold)
+      doc.circle(255, 70, 18, "F")
+
+      doc.setFontSize(9)
+      doc.setTextColor(255, 255, 255)
+      doc.text("VERIFIED", 255, 70, { align: "center" })
+
+      /* ===============================
+         QR CODE
+      =============================== */
+      if (qrBase64) {
+        doc.addImage(qrBase64, "PNG", 240, 130, 35, 35)
+      }
+
+      /* ===============================
+         SAVE PDF
+      =============================== */
+      const blob = doc.output("blob")
+      doc.save("studenthub-certificate.pdf")
+
+      /* ===============================
+         AUTO EMAIL CERTIFICATE
+      =============================== */
+      if (email) {
+        await fetch("/api/certificate/email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            email,
+            certId,
+            pdf: await blobToBase64(blob)
+          })
+        })
+      }
+
+      /* ===============================
+         🎉 CONFETTI CELEBRATION
+      =============================== */
+      launchConfetti()
+    }
+
+
+    /* ===============================
+       HELPERS
+    =============================== */
+    function blobToBase64(blob) {
+      return new Promise(res => {
+        const reader = new FileReader()
+        reader.onloadend = () => res(reader.result)
+        reader.readAsDataURL(blob)
+      })
+    }
+
+    function launchConfetti() {
+      if (typeof confetti === "function") {
+        confetti({
+          particleCount: 200,
+          spread: 90,
+          origin: { y: 0.6 }
+        })
+      }
+    }
+
+    /* ======================================================
+       START
+    ====================================================== */
+    loadResult()
+
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
 
+  <!-- THEME -->
+  <script src="/js/guard.js"></script>
+  <script src="/script.js"></script>
 </body>
 
 </html>

@@ -64,37 +64,19 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <body>
-  <!-- Navbar -->
+
+  <!-- ============================= -->
+  <!-- TOP NAVBAR -->
+  <!-- ============================= -->
   <header class="navbar">
     <div class="logo">StudentHub</div>
 
-    <!-- Mobile hamburger button -->
     <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
-      <span></span>
-      <span></span>
-      <span></span>
+      <span></span><span></span><span></span>
     </button>
-
-    <!-- Nav links -->
-    <nav class="nav-links" id="nav-links">
-      <a href="#ebooks">E-Books</a>
-      <a href="#question-papers">Question Papers</a>
-      <a href="#about">About</a>
-      <a href="/quiz.html">Quiz</a>
-      <!--<a href="#contact">Contact</a>-->
-      <a href="/request.html">Request</a>
-
-
-      <a href="/login.html" id="nav-auth-link" data-auth-link>
-        Sign in
-      </a>
-    </nav>
-
-    <!-- 🔔 NOTIFICATIONS (PASTE HERE) -->
     <div class="nav-actions">
-
       <div class="notif-wrapper">
-        <button id="notifBtn" title="Notifications">🔔</button>
+        <button id="notifBtn">🔔</button>
         <span id="notifCount" class="notif-count"></span>
 
         <div id="notifDropdown" class="notif-dropdown hidden">
@@ -103,244 +85,261 @@
       </div>
 
       <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
-
     </div>
   </header>
 
 
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1>Read Free & Premium E-Books & Previous Year Question Papers</h1>
-      <p>Simple, clean and fast access to exam materials in one place.</p>
-      <div class="hero-buttons">
-        <a href="#ebooks" class="btn primary">Browse E-Books</a>
-        <a href="#question-papers" class="btn secondary">View Question Papers</a>
-      </div>
-    </div>
-  </section>
+  <!-- ============================= -->
+  <!-- APP LAYOUT -->
+  <!-- ============================= -->
+  <div class="app-layout">
 
-  <!-- Stats strip -->
-  <section class="stats">
-    <div class="stats-inner">
-      <div class="stat-card">
-        <div class="stat-label">Total Materials</div>
-        <div class="stat-value" id="total-count">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">E-Books</div>
-        <div class="stat-value" id="ebooks-count-stat">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Question Papers</div>
-        <div class="stat-value" id="qp-count-stat">0</div>
-      </div>
-    </div>
-  </section>
+    <!-- ========= SIDEBAR ========= -->
+    <aside class="sidebar">
 
-  <!-- Recently Added Section -->
-  <section id="recent" class="section">
-    <h2>Recently Added</h2>
-    <p class="section-subtitle">
-      Latest e-books and question papers uploaded to StudentHub.
-    </p>
-    <div class="recent-grid" id="recent-list">
-      <!-- Filled by script.js -->
-    </div>
-  </section>
+      <h3 class="sb-title">Dashboard</h3>
 
-  <!-- Most Downloaded Section -->
-  <section id="popular" class="section">
-    <h2>Most Downloaded</h2>
-    <p class="section-subtitle">Top materials downloaded by students.</p>
-    <div class="recent-grid" id="popular-list">
-      <!-- Filled by script.js -->
-    </div>
-  </section>
+      <!-- PRIMARY SHORTCUTS -->
+      <a href="/dashboard.html" class="sb-link" data-protected>🏠 Dashboard</a>
+      <a href="/request.html" class="sb-link" data-protected>📝 Request Material</a>
 
-  <!-- Recommended Section (AI-like recommendations) -->
-  <section id="recommended" class="section">
-    <h2>Recommended for you</h2>
-    <p class="section-subtitle" id="reco-summary">
-      No recommendations yet.
-    </p>
-    <div class="recent-grid" id="reco-list">
-      <!-- Filled by script.js (buildRecommendations / renderRecommendations) -->
-    </div>
-  </section>
+      <hr />
 
-  <!-- Load status bar -->
-  <div id="load-status" class="load-status"></div>
+      <!-- CONTENT -->
+      <a href="#ebooks" class="sb-link">📚 E-Books</a>
+      <a href="#question-papers" class="sb-link">📄 Papers</a>
+      <a href="#recent" class="sb-link">🆕 Recent</a>
+      <a href="#popular" class="sb-link">🔥 Popular</a>
+      <a href="#recommended" class="sb-link">⭐ Recommended</a>
+      <a href="/quiz.html" class="sb-link" data-protected>🧠 Quiz Center</a>
 
-  <!-- E-Books Section -->
-  <section id="ebooks" class="section">
-    <h2>
-      E-Books
-      <span class="count-badge" id="ebooks-count"></span>
-    </h2>
-    <p class="section-subtitle">
-      Click to preview or open the PDF reader. Some high-value e-books may be paid.
-    </p>
+      <hr />
 
-    <!-- Search + Filter -->
-    <div class="filter-bar">
-      <input type="text" id="ebook-search" class="filter-input" placeholder="Search ebooks..." />
+      <!-- USER TOOLS -->
+      <a href="/library.html" class="sb-link" data-protected>📂 My Library</a>
+      <a href="/read-later.html" class="sb-link" data-protected>⏳ Read Later</a>
+      <a href="/submit-pdf.html" class="sb-link" data-protected>📤 Submit PDF</a>
+      <a href="/my-submissions.html" class="sb-link" data-protected>📄 My Submissions</a>
+      <a href="/wallet.html" class="sb-link" data-protected>💰 Wallet</a>
 
-      <select id="ebook-exam-filter" class="filter-select">
-        <option value="">All Exams</option>
-      </select>
+      <hr />
 
-      <select id="ebook-sort" class="filter-select">
-        <option value="recent">Newest</option>
-        <option value="title">Title A–Z</option>
-        <option value="downloads">Most Downloaded</option>
-      </select>
+      <!-- INFO -->
+      <a href="#about" class="sb-link">ℹ About</a>
+      <a href="#share" class="sb-link">🚀 Share</a>
 
-      <!-- New: price filter for ebooks -->
-      <select id="ebook-price-filter" class="filter-select">
-        <option value="all">All prices</option>
-        <option value="free">Free only</option>
-        <option value="paid">Paid only</option>
-      </select>
-    </div>
+    </aside>
 
-    <!-- Quick filters for ebooks -->
-    <div class="quick-filters">
-      <span class="quick-label">Quick filters:</span>
-      <button class="chip" data-target="ebook-search" data-text="RS Aggarwal">RS Aggarwal</button>
-      <button class="chip" data-target="ebook-search" data-text="Quantitative Aptitude">Aptitude</button>
-      <button class="chip" data-target="ebook-search" data-text="Reasoning">Reasoning</button>
-    </div>
-
-    <div class="cards-grid" id="ebooks-list">
-      <!-- Auto cards from script.js -->
-    </div>
-  </section>
-
-  <!-- Question Papers Section -->
-  <section id="question-papers" class="section">
-    <h2>
-      Previous Year Question Papers
-      <span class="count-badge" id="qp-count"></span>
-    </h2>
-    <p class="section-subtitle">
-      Organized and easy to read inside StudentHub. Many papers are completely free.
-    </p>
-
-    <!-- Search + Filters -->
-    <div class="filter-bar">
-      <input type="text" id="qp-search" class="filter-input" placeholder="Search question papers..." />
-
-      <select id="qp-exam-filter" class="filter-select">
-        <option value="">All Exams</option>
-      </select>
-
-      <select id="qp-year-filter" class="filter-select">
-        <option value="">All Years</option>
-      </select>
-
-      <select id="qp-sort" class="filter-select">
-        <option value="recent">Newest</option>
-        <option value="title">Title A–Z</option>
-        <option value="downloads">Most Downloaded</option>
-      </select>
-
-      <!-- New: price filter for question papers -->
-      <select id="qp-price-filter" class="filter-select">
-        <option value="all">All prices</option>
-        <option value="free">Free only</option>
-        <option value="paid">Paid only</option>
-      </select>
-    </div>
-
-    <!-- Quick filters for question papers -->
-    <div class="quick-filters">
-      <span class="quick-label">Quick filters:</span>
-      <button class="chip" data-target="qp-search" data-text="">All</button>
-      <button class="chip" data-target="qp-search" data-text="RRB">RRB</button>
-      <button class="chip" data-target="qp-search" data-text="SSC">SSC</button>
-      <button class="chip" data-target="qp-search" data-text="Bank">Bank</button>
-      <button class="chip" data-target="qp-search" data-text="Placement">Placement</button>
-    </div>
-
-    <div class="cards-grid" id="qp-list">
-      <!-- Auto cards from script.js -->
-    </div>
-  </section>
-
-  <!-- About Section -->
-  <section id="about" class="section">
-    <h2>About</h2>
-    <p>
-      StudentHub is a simple website that provides free and premium study materials like
-      e-books and previous year question papers to help students prepare better for their exams.
-      Free items open directly; paid PDFs can be unlocked inside the secure reader after payment.
-    </p>
-  </section>
-
-  <!-- Share StudentHub Section -->
-  <section id="share" class="section">
-    <h2>Share StudentHub</h2>
-    <p class="section-subtitle">
-      Help other students discover free & premium e-books and question papers.
-    </p>
-
-    <div class="share-buttons">
-      <!-- Copy link button -->
-      <button id="share-copy" type="button" class="share-btn">
-        <span class="share-icon">📋</span>
-        <span>Copy site link</span>
-      </button>
-
-      <a id="share-whatsapp" class="share-btn"
-        href="https://wa.me/?text=StudentHub%20-%20Free%20%26%20Premium%20E-Books%20and%20Question%20Papers"
-        target="_blank" rel="noopener">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="share-icon"
-          alt="WhatsApp logo" />
-        Share on WhatsApp
-      </a>
-
-      <a id="share-telegram" class="share-btn"
-        href="https://t.me/share/url?url=https%3A%2F%2Fstudenthubb.onrender.com&text=StudentHub%20-%20Free%20%26%20Premium%20E-Books%20and%20Question%20Papers"
-        target="_blank" rel="noopener">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="share-icon"
-          alt="Telegram logo" />
-        Share on Telegram
-      </a>
-
-      <a id="share-facebook" class="share-btn"
-        href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fstudenthubb.onrender.com" target="_blank"
-        rel="noopener">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Facebook_icon.svg" class="share-icon"
-          alt="Facebook logo" />
-        Share on Facebook
-      </a>
-    </div>
-
-    <p id="share-status" class="form-note" style="margin-top:0.4rem;"></p>
-  </section>
+    <!-- ========= MAIN ========= -->
+    <main class="main-content">
 
 
-  <!-- PDF Preview Modal -->
+      <!-- ================= HERO ================= -->
+      <section class="hero-pro">
+        <div class="hero-bg"></div>
+
+        <div class="hero-pro-inner">
+
+          <div class="hero-left">
+            <h1>
+              Study smarter.
+              <span class="gradient-text">Crack exams faster.</span>
+            </h1>
+
+            <p>
+              1000+ free & premium e-books and previous year papers,
+              beautifully organized for serious students.
+            </p>
+
+            <div class="hero-buttons">
+              <a href="#ebooks" class="btn primary">Browse E-Books</a>
+              <a href="#question-papers" class="btn ghost">Question Papers</a>
+            </div>
+          </div>
+
+          <div class="hero-stats-glass">
+            <div class="glass-card">
+              <span id="total-count">0</span>
+              <label>Total Materials</label>
+            </div>
+
+            <div class="glass-card">
+              <span id="ebooks-count-stat">0</span>
+              <label>E-Books</label>
+            </div>
+
+            <div class="glass-card">
+              <span id="qp-count-stat">0</span>
+              <label>Papers</label>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+
+
+      <!-- ================= STATUS BAR ================= -->
+      <div id="load-status" class="load-status"></div>
+
+
+
+      <!-- ================= RECENT ================= -->
+      <section id="recent" class="section">
+        <h2>Recently Added</h2>
+        <p class="section-subtitle">Latest materials uploaded.</p>
+        <div class="recent-grid" id="recent-list"></div>
+      </section>
+
+
+
+      <!-- ================= POPULAR ================= -->
+      <section id="popular" class="section">
+        <h2>Most Downloaded</h2>
+        <p class="section-subtitle">Top materials downloaded by students.</p>
+        <div class="recent-grid" id="popular-list"></div>
+      </section>
+
+
+
+      <!-- ================= RECOMMENDED ================= -->
+      <section id="recommended" class="section">
+        <h2>Recommended for you</h2>
+        <p id="reco-summary" class="section-subtitle"></p>
+        <div class="recent-grid" id="reco-list"></div>
+      </section>
+
+
+
+      <!-- ================= EBOOKS ================= -->
+      <section id="ebooks" class="section">
+        <h2>E-Books <span id="ebooks-count" class="count-badge"></span></h2>
+
+        <div class="filter-bar">
+          <input id="ebook-search" placeholder="Search ebooks..." />
+          <select id="ebook-exam-filter">
+            <option value="">All Exams</option>
+          </select>
+          <select id="ebook-sort">
+            <option value="recent">Newest</option>
+            <option value="title">Title A–Z</option>
+            <option value="downloads">Most Downloaded</option>
+          </select>
+          <select id="ebook-price-filter">
+            <option value="all">All</option>
+            <option value="free">Free</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+
+        <div id="ebooks-list" class="cards-grid"></div>
+      </section>
+
+
+
+      <!-- ================= PAPERS ================= -->
+      <section id="question-papers" class="section">
+        <h2>Question Papers <span id="qp-count" class="count-badge"></span></h2>
+
+        <div class="filter-bar">
+          <input id="qp-search" placeholder="Search papers..." />
+          <select id="qp-exam-filter">
+            <option value="">All Exams</option>
+          </select>
+          <select id="qp-year-filter">
+            <option value="">All Years</option>
+          </select>
+          <select id="qp-sort">
+            <option value="recent">Newest</option>
+            <option value="title">Title A–Z</option>
+            <option value="downloads">Most Downloaded</option>
+          </select>
+          <select id="qp-price-filter">
+            <option value="all">All</option>
+            <option value="free">Free</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+
+        <div id="qp-list" class="cards-grid"></div>
+      </section>
+
+
+
+      <!-- ================= ABOUT ================= -->
+      <section id="about" class="section">
+        <h2>About</h2>
+        <p>
+          StudentHub provides free & premium study materials like e-books and previous year
+          question papers to help students prepare faster and smarter for
+          their exams. Free items open directly; paid PDFs can be unlocked inside the secure reader after payment.
+        </p>
+      </section>
+
+
+
+      <!-- ================= SHARE ================= -->
+      <section id="share" class="section">
+        <h2>Share StudentHub</h2>
+
+        <div class="share-buttons">
+          <button id="share-copy" class="share-btn">📋 Copy link</button>
+          <a id="share-whatsapp" class="share-btn"
+            href="https://wa.me/?text=StudentHub%20-%20Free%20%26%20Premium%20E-Books%20and%20Question%20Papers"
+            target="_blank" rel="noopener"> <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+              class="share-icon" alt="WhatsApp logo" /> Share on WhatsApp </a>
+          <a id="share-telegram" class="share-btn"
+            href="https://t.me/share/url?url=https%3A%2F%2Fstudenthubb.onrender.com&text=StudentHub%20-%20Free%20%26%20Premium%20E-Books%20and%20Question%20Papers"
+            target="_blank" rel="noopener"> <img
+              src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="share-icon"
+              alt="Telegram logo" /> Share on Telegram </a>
+          <a id="share-facebook" class="share-btn"
+            href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fstudenthubb.onrender.com" target="_blank"
+            rel="noopener"> <img src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Facebook_icon.svg"
+              class="share-icon" alt="Facebook logo" /> Share on Facebook </a>
+        </div>
+
+        <!-- PDF Preview Modal -->
+        <div id="pdf-modal" class="pdf-modal">
+          <div class="pdf-modal-backdrop"></div>
+          <div class="pdf-modal-dialog">
+            <button id="pdf-modal-close" class="pdf-modal-close" aria-label="Close preview">×</button>
+            <h3 id="pdf-modal-title" class="pdf-modal-title">PDF Preview</h3> <iframe id="pdf-modal-frame"
+              class="pdf-modal-frame" src="" frameborder="0" oncontextmenu="return false"> </iframe>
+          </div>
+        </div>
+
+        <p id="share-status" class="form-note" style="margin-top:0.4rem;"></p>
+      </section>
+
+
+
+      <!-- ================= FOOTER ================= -->
+      <footer class="footer">
+        <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
+      </footer>
+
+    </main>
+  </div>
+
+
+
+  <!-- ================= MODAL ================= -->
   <div id="pdf-modal" class="pdf-modal">
     <div class="pdf-modal-backdrop"></div>
     <div class="pdf-modal-dialog">
-      <button id="pdf-modal-close" class="pdf-modal-close" aria-label="Close preview">×</button>
-      <h3 id="pdf-modal-title" class="pdf-modal-title">PDF Preview</h3>
-      <iframe id="pdf-modal-frame" class="pdf-modal-frame" src="" frameborder="0" oncontextmenu="return false">
-      </iframe>
-
+      <button id="pdf-modal-close" class="pdf-modal-close">×</button>
+      <iframe id="pdf-modal-frame"></iframe>
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <p>© <span id="year"></span> StudentHub. All rights reserved.</p>
-  </footer>
+
 
   <button id="back-to-top" class="back-to-top">↑</button>
 
-  <script src="script.js"></script>
+  <script src="/js/guard.js"></script>
+  <script src="/script.js"></script>
 </body>
+
 
 </html>

@@ -1,258 +1,740 @@
-<!-- public/quiz.html -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Quizzes | StudentHub</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- GLOBAL THEME STYLES -->
   <link rel="stylesheet" href="/styles/styles.css" />
 
   <style>
-    body{
-      background:linear-gradient(135deg,#0f172a,#111827);
-      color:white;
-      font-family:system-ui;
-      margin:0;
+    /* ===============================
+       QUIZ PAGE (THEME AWARE)
+    =============================== */
+
+    .container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 20px;
     }
 
-    .container{
-      max-width:1200px;
-      margin:40px auto;
-      padding:20px;
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
     }
 
-    h1{
-      font-size:28px;
-      margin-bottom:20px;
-      color:#facc15;
+    .title {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--primary);
     }
 
-    /* ================= HEADER TOOLS ================= */
+    .header-right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
 
-    .toolbar{
-      display:flex;
-      gap:12px;
-      margin-bottom:25px;
-      flex-wrap:wrap;
+    .home-btn {
+      background: var(--card);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 10px;
+      text-decoration: none;
+      border: 1px solid var(--card-2);
+      transition: 0.2s;
+    }
+
+    .home-btn:hover {
+      background: var(--card-2);
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
     }
 
     .toolbar input,
-    .toolbar select{
-      padding:8px 12px;
-      border-radius:8px;
-      border:none;
-      outline:none;
+    .toolbar select {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--card-2);
+      background: var(--card);
+      color: var(--text);
     }
 
-    /* ================= GRID ================= */
-
-    .quiz-grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-      gap:20px;
+    .quiz-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
     }
 
-    /* ================= CARD ================= */
-
-    .quiz-card{
-      padding:20px;
-      border-radius:16px;
-      background:#111827;
-      box-shadow:0 10px 30px rgba(0,0,0,.4);
-      transition:all .25s;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
+    .quiz-card {
+      padding: 20px;
+      border-radius: 16px;
+      background: var(--card);
+      border: 1px solid var(--card-2);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: .25s;
     }
 
-    .quiz-card:hover{
-      transform:translateY(-5px);
-      box-shadow:0 18px 40px rgba(0,0,0,.6);
+    .quiz-card:hover {
+      transform: translateY(-5px);
     }
 
-    .quiz-title{
-      font-size:18px;
-      font-weight:700;
-      margin-bottom:10px;
+    .quiz-title {
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 12px;
     }
 
-    .quiz-meta{
-      font-size:14px;
-      opacity:.85;
-      margin-bottom:12px;
-      line-height:1.5;
+    .badge {
+      background: var(--card-2);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-right: 6px;
+      display: inline-block;
     }
 
-    .badge{
-      background:#1f2937;
-      padding:4px 8px;
-      border-radius:6px;
-      font-size:12px;
-      margin-right:6px;
+    .badge.ai {
+      background: var(--accent);
+      color: white;
     }
 
-    .start-btn{
-      background:#facc15;
-      color:#111;
-      border:none;
-      padding:10px 14px;
-      border-radius:8px;
-      font-weight:700;
-      cursor:pointer;
-      margin-top:12px;
-      width:100%;
+    .badge.manual {
+      background: var(--success);
+      color: white;
     }
 
-    .start-btn:hover{
-      opacity:.9;
+    .badge.time {
+      background: #2563eb;
+      color: white;
     }
 
-    /* ================= STATES ================= */
+    .badge.neg {
+      background: #dc2626;
+      color: white;
+    }
+
+    .badge.limit {
+      background: #8b5cf6;
+      color: white;
+    }
+
+
+    .start-btn {
+      background: var(--primary);
+      color: #111;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 14px;
+    }
 
     .loading,
-    .empty{
-      opacity:.7;
-      text-align:center;
-      margin-top:40px;
+    .empty {
+      opacity: .7;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .history-btn {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--card-2);
+      background: var(--card);
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .history-btn:hover {
+      background: var(--primary);
+      color: var(--bg);
+      transform: translateY(-1px);
+    }
+
+    /* ===============================
+   STATUS BADGES
+================================ */
+
+    .status {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+
+    .status.new {
+      background: #2563eb;
+      color: white;
+    }
+
+    .status.done {
+      background: var(--success);
+      color: white;
+    }
+
+    .status.progress {
+      background: var(--accent);
+      color: white;
+    }
+
+    .quiz-stats {
+      font-size: 13px;
+      opacity: .8;
+      margin-top: 6px;
+    }
+
+    .resume-btn {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* ===============================
+   RESUME BANNER
+================================ */
+    .resume-banner {
+      background: var(--accent);
+      color: white;
+      padding: 12px 18px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+    }
+
+    /* ===============================
+   PROGRESS RING
+================================ */
+    .ring {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: conic-gradient(var(--primary) var(--p), var(--card-2) 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: auto;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ===============================
+   EXTRA PRO WIDGETS
+================================ */
+
+    /* streak */
+    .streak-badge {
+      background: linear-gradient(90deg, #f59e0b, #ef4444);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+
+    /* difficulty chips */
+    .diff-chip {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--card-2);
+      background: var(--card);
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .diff-chip.active {
+      background: var(--primary);
+      color: var(--bg);
+    }
+
+    /* continue last 3 */
+    .continue-wrap {
+      margin-bottom: 22px;
+    }
+
+    .continue-title {
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .continue-grid {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .continue-card {
+      padding: 10px 14px;
+      background: var(--card);
+      border: 1px solid var(--card-2);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    /* rank badge */
+    .rank-badge {
+      background: #facc15;
+      color: #111;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      margin-left: 6px;
     }
   </style>
 </head>
 
-<body>
+<body data-protected>
 
-<div class="container">
+  <!-- ================= APP LAYOUT ================= -->
+  <div class="app-layout">
 
-  <h1>🎓 StudentHub — Quizzes</h1>
+    <!-- ========= SIDEBAR ========= -->
+    <aside class="sidebar">
 
-  <!-- 🔍 Toolbar -->
-  <div class="toolbar">
-    <input id="search" placeholder="Search quiz..." />
-    <select id="topicFilter">
-      <option value="">All Topics</option>
-    </select>
-  </div>
+      <h3 class="sb-title">Dashboard</h3>
 
-  <div id="quizList" class="quiz-grid loading">
-    Loading quizzes...
-  </div>
+      <a href="/dashboard.html" class="sb-link">🏠 Dashboard</a>
+      <a href="/request.html" class="sb-link">📝 Request Material</a>
 
-</div>
+      <hr />
 
+      <a href="/#ebooks" class="sb-link">📚 E-Books</a>
+      <a href="/#question-papers" class="sb-link">📄 Papers</a>
+      <hr />
 
-<script>
-let allQuizzes = [];
+      <!-- ⭐ ACTIVE HERE -->
+      <a href="/quiz.html" class="sb-link active">🧠 Quiz Center</a>
+      <a href="/quiz-history.html" class="sb-link ">⌛ Quiz History</a>
 
+      <hr />
 
-/* =========================================
-   LOAD QUIZZES
-========================================= */
-async function loadQuizzes() {
-  const list = document.getElementById("quizList");
-  list.innerHTML = "Loading quizzes...";
+      <a href="/library.html" class="sb-link">📂 My Library</a>
+      <a href="/read-later.html" class="sb-link">⏳ Read Later</a>
+      <a href="/submit-pdf.html" class="sb-link">📤 Submit PDF</a>
+      <a href="/my-submissions.html" class="sb-link">📑 My Submissions</a>
+      <a href="/wallet.html" class="sb-link">💰 Wallet</a>
+      <hr />
 
-  try {
-    const res = await fetch("/api/quiz", {
-      credentials: "include"
-    });
-
-    if (!res.ok) throw new Error("Fetch failed");
-
-    const data = await res.json();
-
-    allQuizzes = data.quizzes || [];
-
-    buildTopicFilter();
-    render(allQuizzes);
-
-  } catch (err) {
-    console.error(err);
-    list.innerHTML = "<div class='empty'>❌ Failed to load quizzes</div>";
-  }
-}
+    </aside>
 
 
-/* =========================================
-   RENDER
-========================================= */
-function render(quizzes) {
-  const list = document.getElementById("quizList");
+    <!-- ========= MAIN CONTENT ========= -->
+    <main class="main-content">
 
-  list.innerHTML = "";
 
-  if (!quizzes.length) {
-    list.innerHTML = "<div class='empty'>No quizzes found</div>";
-    return;
-  }
+      <!--<div class="container">-->
+      <!-- =========================================
+         HEADER
+    ========================================== -->
+      <div class="header">
+        <div class="title">🎓 StudentHub — Quizzes</div>
 
-  quizzes.forEach(q => {
-    const card = document.createElement("div");
-    card.className = "quiz-card";
+        <div class="header-right">
+          <a href="/" class="home-btn">🏠 Home</a>
+        </div>
+      </div>
 
-    card.innerHTML = `
+      <div id="resumeBanner" class="resume-banner"></div>
+
+      <div id="continueWrap" class="continue-wrap" style="display:none">
+        <div class="continue-title">▶ Continue Learning</div>
+        <div id="continueGrid" class="continue-grid"></div>
+      </div>
+
+
+      <!-- =========================================
+         📊 USER DASHBOARD STATS (PRO PANEL)
+    ========================================== -->
+      <div id="userStats" style="
+      display:flex;
+      gap:24px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding:14px 18px;
+      margin-bottom:22px;
+      border-radius:12px;
+      background: var(--card);
+      border: 1px solid var(--card-2);
+      box-shadow: var(--shadow);
+      font-size:14px;
+      opacity:.95;
+    ">
+        <!-- JS auto-fills:
+           Attempts | Avg Accuracy | Best Score -->
+      </div>
+
+
+
+      <!-- =========================================
+         🔍 TOOLBAR (Search / Filter / Sort / History)
+    ========================================== -->
+      <div class="toolbar">
+
+        <!-- Search -->
+        <input id="search" placeholder="🔍 Search quiz..." />
+
+        <!-- Topic filter -->
+        <select id="topicFilter"></select>
+
+        <!-- Sort -->
+        <select id="sortSelect">
+          <option value="new">Newest</option>
+          <option value="questions">Most Questions</option>
+          <option value="time">Time Limit</option>
+        </select>
+
+        <!-- History shortcut -->
+        <button class="history-btn" onclick="goHistory()">
+          📜 History
+        </button>
+
+        <div id="difficultyBar" style="display:flex;gap:8px">
+          <div class="diff-chip active" data-diff="">All</div>
+          <div class="diff-chip" data-diff="easy">Easy</div>
+          <div class="diff-chip" data-diff="medium">Medium</div>
+          <div class="diff-chip" data-diff="hard">Hard</div>
+        </div>
+
+
+      </div>
+
+
+
+      <!-- =========================================
+         🧩 QUIZ GRID
+         Cards auto-rendered by JS
+    ========================================== -->
+      <div id="quizList" class="quiz-grid loading">
+        Loading quizzes...
+      </div>
+
+      <!--</div>-->
+
+
+      <!-- ===============================
+       QUIZ LOGIC
+  =============================== -->
+      <script>
+        /* =====================================================
+           🎓 StudentHub — ULTIMATE QUIZ DASHBOARD (FINAL FINAL)
+           ---------------------------------
+           ✅ Attempt badges
+           ✅ Resume last quiz
+           ✅ Progress rings
+           ✅ Backend streak counter
+           ✅ Continue last 3 (backend powered)
+           ✅ Difficulty filter
+           ✅ Leaderboard rank badge
+           ✅ Fast + scalable
+        ===================================================== */
+
+        let allQuizzes = [];
+        let historyRaw = [];
+        let historyMap = {};
+        let ranksMap = {};
+        let recentList = [];
+        let streak = 0;
+        let filteredDifficulty = "";
+
+        /* DOM */
+        const list = document.getElementById("quizList");
+        const resumeBanner = document.getElementById("resumeBanner");
+        const searchInput = document.getElementById("search");
+        const topicFilter = document.getElementById("topicFilter");
+        const sortSelect = document.getElementById("sortSelect");
+        const continueWrap = document.getElementById("continueWrap");
+        const continueGrid = document.getElementById("continueGrid");
+        const difficultyBar = document.getElementById("difficultyBar");
+
+
+        /* =====================================================
+           LOAD QUIZZES
+        ===================================================== */
+        async function loadQuizzes() {
+          const res = await fetch("/api/quiz", { credentials: "include" });
+          const data = await res.json();
+
+          allQuizzes = data.quizzes || [];
+          buildTopicFilter();
+        }
+
+
+        /* =====================================================
+           LOAD HISTORY (NEW BACKEND STATS)
+        ===================================================== */
+        async function loadHistory() {
+
+          const res = await fetch("/api/quiz/history", { credentials: "include" });
+          const data = await res.json();
+
+          historyRaw = data.attempts || [];
+
+          streak = data.stats?.streak || 0;
+          recentList = data.stats?.recent || [];
+          ranksMap = data.stats?.ranks || {};
+
+          historyRaw.forEach(a => {
+            historyMap[a.quizId.id] = a;
+          });
+
+          renderUserStats();
+          setupResume();
+          setupContinue();
+        }
+
+
+        /* =====================================================
+           USER STATS PANEL
+        ===================================================== */
+        function renderUserStats() {
+
+          const box = document.getElementById("userStats");
+
+          if (!historyRaw.length) {
+            box.innerHTML = "📊 No attempts yet — Start your first quiz!";
+            return;
+          }
+
+          const best = Math.max(...historyRaw.map(a => a.score));
+          const avg = (
+            historyRaw.reduce((s, a) => s + a.accuracy, 0) / historyRaw.length
+          ).toFixed(1);
+
+          box.innerHTML = `
+    <span class="streak-badge">🔥 ${streak} day streak</span>
+    <span>Attempts: ${historyRaw.length}</span>
+    <span>Avg Accuracy: ${avg}%</span>
+    <span>Best Score: ${best}</span>
+  `;
+        }
+
+
+        /* =====================================================
+           RESUME FEATURE
+        ===================================================== */
+        function setupResume() {
+          const active = localStorage.getItem("activeQuizId");
+          if (!active) return;
+
+          const quiz = allQuizzes.find(q => q.id === active);
+          if (!quiz) return;
+
+          resumeBanner.style.display = "block";
+          resumeBanner.innerHTML = `▶ Resume "${quiz.title}"`;
+
+          resumeBanner.onclick = () =>
+            location.href = `/quiz-attempt.html?quizId=${active}`;
+        }
+
+
+        /* =====================================================
+           CONTINUE LAST 3 (backend powered)
+        ===================================================== */
+        function setupContinue() {
+
+          if (!recentList.length) return;
+
+          continueWrap.style.display = "block";
+          continueGrid.innerHTML = "";
+
+          recentList.forEach(a => {
+
+            const div = document.createElement("div");
+            div.className = "continue-card";
+
+            div.innerHTML = `
+      <b>${a.quizId.title}</b><br>
+      ${a.accuracy}% accuracy
+    `;
+
+            div.onclick = () =>
+              location.href = `/quiz-attempt.html?quizId=${a.quizId.id}`;
+
+            continueGrid.appendChild(div);
+          });
+        }
+
+
+        /* =====================================================
+           PROGRESS RING
+        ===================================================== */
+        function ringHTML(percent = 0) {
+          return `<div class="ring" style="--p:${percent * 3.6}deg">${percent}%</div>`;
+        }
+
+
+        /* =====================================================
+           BADGE LOGIC
+        ===================================================== */
+        function getBadge(q, h) {
+
+          if (!h) return "🆕 New";
+
+          if (q.maxAttempts && q.maxAttempts <= 1)
+            return "🔒 Locked";
+
+          if (h.accuracy >= 90)
+            return "🏆 Top Score";
+
+          return "✅ Attempted";
+        }
+
+
+        /* =====================================================
+           RENDER CARDS
+        ===================================================== */
+        function render() {
+
+          list.innerHTML = "";
+
+          const term = searchInput.value.toLowerCase();
+          const topic = topicFilter.value;
+
+          let quizzes = allQuizzes.filter(q =>
+            (!filteredDifficulty || q.difficulty === filteredDifficulty) &&
+            (!topic || q.topic === topic) &&
+            q.title.toLowerCase().includes(term)
+          );
+
+          quizzes.forEach(q => {
+
+            const h = historyMap[q.id];
+            const accuracy = h ? h.accuracy : 0;
+            const rank = ranksMap[q.id];
+
+            const card = document.createElement("div");
+            card.className = "quiz-card";
+
+            card.innerHTML = `
       <div>
-        <div class="quiz-title">${q.title}</div>
 
-        <div class="quiz-meta">
+        <div class="card-top">
+          <span class="badge manual">${getBadge(q, h)}</span>
+          ${ringHTML(accuracy)}
+        </div>
+
+        <div class="quiz-title">
+          ${q.title}
+          ${rank ? `<span class="rank-badge">🏅 #${rank}</span>` : ""}
+        </div>
+
+        <div style="margin:10px 0">
           <span class="badge">${q.topic}</span>
-          <span class="badge">${q.totalQuestions} Questions</span>
+          ${q.difficulty ? `<span class="badge">${q.difficulty}</span>` : ""}
+          <span class="badge">${q.totalQuestions} Qs</span>
         </div>
       </div>
 
       <button class="start-btn" onclick="startQuiz('${q.id}')">
-        Start Quiz
+        ${h ? "🔁 Retake" : "🚀 Start"}
       </button>
     `;
 
-    list.appendChild(card);
-  });
-}
+            list.appendChild(card);
+          });
+        }
 
 
-/* =========================================
-   START QUIZ
-========================================= */
-function startQuiz(id){
-  window.location.href = `/quiz-attempt.html?quizId=${id}`;
-}
+        /* =====================================================
+           FILTERS
+        ===================================================== */
+        searchInput.oninput = render;
+        topicFilter.onchange = render;
+
+        difficultyBar?.querySelectorAll(".diff-chip").forEach(chip => {
+          chip.onclick = () => {
+            difficultyBar.querySelectorAll(".diff-chip")
+              .forEach(c => c.classList.remove("active"));
+
+            chip.classList.add("active");
+            filteredDifficulty = chip.dataset.diff;
+            render();
+          };
+        });
 
 
-/* =========================================
-   SEARCH + FILTER
-========================================= */
-document.getElementById("search").addEventListener("input", filter);
-document.getElementById("topicFilter").addEventListener("change", filter);
+        /* =====================================================
+           SORT
+        ===================================================== */
+        sortSelect.onchange = () => {
 
-function filter(){
-  const term = search.value.toLowerCase();
-  const topic = topicFilter.value;
+          if (sortSelect.value === "questions")
+            allQuizzes.sort((a, b) => b.totalQuestions - a.totalQuestions);
 
-  const filtered = allQuizzes.filter(q =>
-    q.title.toLowerCase().includes(term) &&
-    (!topic || q.topic === topic)
-  );
+          if (sortSelect.value === "time")
+            allQuizzes.sort((a, b) => (b.timeLimit || 0) - (a.timeLimit || 0));
 
-  render(filtered);
-}
+          render();
+        };
 
 
-/* =========================================
-   BUILD TOPIC FILTER
-========================================= */
-function buildTopicFilter(){
-  const topics = [...new Set(allQuizzes.map(q=>q.topic))];
-  const select = document.getElementById("topicFilter");
+        /* =====================================================
+           TOPIC FILTER
+        ===================================================== */
+        function buildTopicFilter() {
+          topicFilter.innerHTML = `<option value="">All Topics</option>`;
 
-  topics.forEach(t=>{
-    const opt=document.createElement("option");
-    opt.value=t;
-    opt.textContent=t;
-    select.appendChild(opt);
-  });
-}
+          [...new Set(allQuizzes.map(q => q.topic))]
+            .forEach(t => topicFilter.innerHTML += `<option>${t}</option>`);
+        }
 
 
-loadQuizzes();
-</script>
+        /* =====================================================
+           NAVIGATION
+        ===================================================== */
+        function startQuiz(id) {
+          localStorage.setItem("activeQuizId", id);
+          location.href = `/quiz-attempt.html?quizId=${id}`;
+        }
+
+        function goHistory() {
+          location.href = "/quiz-history.html";
+        }
+
+
+        /* =====================================================
+           INIT
+        ===================================================== */
+        (async () => {
+          await loadQuizzes();
+          await loadHistory();
+          render();
+        })();
+      </script>
+
+
+      <!-- Auto theme only -->
+      <script src="/js/guard.js"></script>
+      <script src="/script.js"></script>
+
+    </main>
+  </div>
 
 </body>
+
 </html>

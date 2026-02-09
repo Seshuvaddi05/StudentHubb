@@ -195,7 +195,7 @@
 </script>
 
 
-<body>
+<body data-protected>
 
   <header class="navbar">
     <div class="logo">StudentHub</div>
@@ -216,43 +216,99 @@
 
     <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
   </header>
+  <!-- ================= APP LAYOUT ================= -->
+  <div class="app-layout">
 
-  <main class="section">
-    <div class="reader-shell">
-      <!-- 🔐 USER WATERMARK OVERLAY -->
-      <div id="pdf-watermark" class="pdf-watermark"></div>
+    <!-- ========= SIDEBAR ========= -->
+    <aside class="sidebar">
+
+      <h3 class="sb-title">Dashboard</h3>
+
+      <!-- Primary -->
+      <a href="/dashboard.html" class="sb-link">🏠 Dashboard</a>
+      <a href="/library.html" class="sb-link">📂 My Library</a>
+      <a href="/read-later.html" class="sb-link">⏳ Read Later</a>
+
+      <hr />
+
+      <!-- Content -->
+      <a href="/#ebooks" class="sb-link">📚 E-Books</a>
+      <a href="/#question-papers" class="sb-link">📄 Papers</a>
+      <a href="/quiz.html" class="sb-link">🧠 Quiz Center</a>
+
+      <hr />
+
+      <!-- Tools -->
+      <a href="/submit-pdf.html" class="sb-link">📤 Submit PDF</a>
+      <a href="/wallet.html" class="sb-link">💰 Wallet</a>
+
+    </aside>
 
 
-      <div class="reader-header">
-        <div>
-          <div class="reader-meta" id="reader-breadcrumb">Loading material…</div>
-          <h1 class="reader-title" id="reader-title"></h1>
-          <p class="reader-meta" id="reader-meta-line"></p>
+
+    <!-- ========= MAIN CONTENT ========= -->
+    <main class="main-content">
+
+      <div class="reader-shell">
+
+        <!-- 🔐 WATERMARK -->
+        <div id="pdf-watermark" class="pdf-watermark"></div>
+
+
+        <!-- ================= HEADER ================= -->
+        <div class="reader-header">
+
+          <div>
+            <div class="reader-meta" id="reader-breadcrumb">
+              Loading material…
+            </div>
+
+            <h1 class="reader-title" id="reader-title"></h1>
+
+            <p class="reader-meta" id="reader-meta-line"></p>
+          </div>
+
+
+          <div class="reader-badges">
+            <span class="pill" id="reader-type-pill"></span>
+            <span class="price-chip" id="reader-price-chip"></span>
+            <span class="pill" id="reader-downloads-pill" style="display:none;"></span>
+          </div>
+
         </div>
 
-        <div class="reader-badges">
-          <span class="pill" id="reader-type-pill"></span>
-          <span class="price-chip" id="reader-price-chip"></span>
-          <span class="pill" id="reader-downloads-pill" style="display:none;"></span>
+
+
+        <!-- ================= PAYWALL ================= -->
+        <div id="reader-paywall" class="reader-paywall" style="display:none;">
+
+          <div class="paywall-title">
+            Unlock this premium PDF
+          </div>
+
+          <p style="font-size:0.8rem">
+            Demo mode – no real payment processed.
+          </p>
+
+          <button class="btn primary" id="paywall-unlock-btn">
+            Unlock PDF
+          </button>
+
+          <div id="paywall-status"></div>
+
         </div>
+
+
+
+        <!-- ================= PDF FRAME ================= -->
+        <iframe id="pdf-frame" class="reader-frame" loading="lazy" oncontextmenu="return false"></iframe>
+
       </div>
 
-      <div id="reader-paywall" class="reader-paywall" style="display:none;">
-        <div class="paywall-title">Unlock this premium PDF</div>
-        <p style="font-size:0.8rem">Demo mode – no real payment processed.</p>
-        <button class="btn primary" id="paywall-unlock-btn">Unlock PDF</button>
-        <div id="paywall-status"></div>
-      </div>
+    </main>
+  </div>
 
-      <!-- ✅ PDF will now load correctly -->
-      <iframe id="pdf-frame" class="reader-frame" oncontextmenu="return false" loading="lazy">
-      </iframe>
-
-
-
-    </div>
-  </main>
-
+  <script src="/js/guard.js"></script>
   <script src="/script.js"></script>
   <script src="/view.js"></script>
 </body>

@@ -22,6 +22,8 @@ const Payment = require("./models/Payment");
 const crypto = require("crypto");
 
 
+
+
 const app = express();
 
 // IMPORTANT: PORT for Render / local
@@ -91,7 +93,27 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+
+// =================================================
+// 🔥 SESSION (REQUIRED FOR QUIZ ORDER FIX)
+// =================================================
+const session = require("express-session");
+
+app.use(
+  session({
+    secret: "studenthub-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 2 // 2 hours
+    }
+  })
+);
+
 
 
 app.use(
@@ -105,10 +127,10 @@ app.use(
 const quizRoutes = require("./routes/quiz");
 app.use("/api/quiz", quizRoutes);
 
-
+app.use("/api/certificate", require("./routes/certificate"))
 // ✅ ADD THESE TWO LINES EXACTLY HERE
-const adminQuizQuestions = require("./routes/adminQuizQuestions");
-app.use("/api", adminQuizQuestions);
+//const adminQuizQuestions = require("./routes/adminQuizQuestions");
+//app.use("/api", adminQuizQuestions);
 
 // -----------------------------
 // Auth helpers
@@ -1375,7 +1397,13 @@ app.post("/api/library/add", auth, async (req, res) => {
 app.get("/api/read-later", auth, async (req, res) => {
   try {
     const docs = await readLaterCollection()
-      .find({ userId: req.user.id })
+      .find({
+        $or: [
+          { userId: req.user.id },
+          { userId: new ObjectId(req.user.id) }
+        ]
+      })
+
       .sort({ updatedAt: -1, createdAt: -1, _id: -1 })
       .toArray();
 
@@ -1445,7 +1473,7 @@ app.get("/api/read-later", auth, async (req, res) => {
           file: doc.file,
           downloads: doc.downloads || 0,
           price: typeof doc.price === "number" ? doc.price : 0,
-          createdAt: doc.createdAt || d.createdAt || new Date().toISOString(),
+          createdAt: (doc.createdAt || d.createdAt || new Date()).toISOString(),
         };
       })
       .filter(Boolean);
@@ -2642,50 +2670,43 @@ app.get("/", (req, res) => {
 app.get("/login.html", (req, res) => {
   res.sendFile(path.join(__dirname, "login.html"));
 });
-app.get("/dashboard.html", auth, (req, res) => {
-  res.sendFile(path.join(__dirname, "dashboard.html"));
-});
-app.get("/view/:slug", auth, (req, res) => {
-  res.sendFile(path.join(__dirname, "view.html"));
-});
-app.get("/library.html", auth, (req, res) => {
-  res.sendFile(path.join(__dirname, "library.html"));
-});
-app.get("/read-later.html", auth, (req, res) => {
-  res.sendFile(path.join(__dirname, "read-later.html"));
-});
-app.get("/submit-pdf.html", auth, (req, res) => {
-  res.sendFile(path.join(__dirname, "submit-pdf.html"));
-});
-app.get("/my-submissions.html", auth, (req, res) => {
-  res.sendFile(path.join(__dirname, "my-submissions.html"));
-});
-app.get("/wallet.html", auth, (req, res) => {
-  res.sendFile(path.join(__dirname, "wallet.html"));
-});
-
 // -----------------------------
-// ADMIN PAGES (PROTECTED)
+// USER PAGES (frontend guard handles auth)
 // -----------------------------
 
-// Admin dashboard
-app.get("/admin.html", adminOnly, (req, res) => {
-  res.sendFile(path.join(__dirname, "admin.html"));
-});
+// -----------------------------
+// USER PAGES (BACKEND PROTECTED)
+// -----------------------------
 
-app.get("/admin", auth, adminOnly, (req, res) => {
-  res.sendFile(path.join(__dirname, "admin.html"));
-});
+app.get("/dashboard.html", auth, (req, res) =>
+  res.sendFile(path.join(__dirname, "dashboard.html"))
+);
 
-// Admin materials
-app.get("/admin-materials.html", auth, adminOnly, (req, res) => {
-  res.sendFile(path.join(__dirname, "admin-materials.html"));
-});
+app.get("/view/:slug", auth, (req, res) =>
+  res.sendFile(path.join(__dirname, "view.html"))
+);
 
-// Admin submissions
-app.get("/admin-submissions.html", auth, adminOnly, (req, res) => {
-  res.sendFile(path.join(__dirname, "admin-submissions.html"));
-});
+app.get("/library.html", auth, (req, res) =>
+  res.sendFile(path.join(__dirname, "library.html"))
+);
+
+app.get("/read-later.html", auth, (req, res) =>
+  res.sendFile(path.join(__dirname, "read-later.html"))
+);
+
+app.get("/submit-pdf.html", auth, (req, res) =>
+  res.sendFile(path.join(__dirname, "submit-pdf.html"))
+);
+
+app.get("/my-submissions.html", auth, (req, res) =>
+  res.sendFile(path.join(__dirname, "my-submissions.html"))
+);
+
+app.get("/wallet.html", auth, (req, res) =>
+  res.sendFile(path.join(__dirname, "wallet.html"))
+);
+
+
 
 // Admin withdrawals
 app.get("/admin-withdrawals.html", auth, adminOnly, (req, res) => {
@@ -2731,6 +2752,11 @@ async function startServer() {
     // ================================
     // MongoDB Indexes (Performance)
     // ================================
+
+    await db.collection("quizzes").createIndex({ type: 1, isActive: 1 });
+    await db.collection("questions").createIndex({ quizId: 1 });
+    await db.collection("quizattempts").createIndex({ quizId: 1, score: -1 });
+
     try {
       await db.collection("withdrawals").createIndex({ status: 1, createdAt: -1 });
       await db.collection("withdrawals").createIndex({ userId: 1, createdAt: -1 });
@@ -2945,12 +2971,7 @@ async function startServer() {
       })
     );
 
-
-
     app.use(express.static(path.join(__dirname, "public")));
-
-
-
 
     // ===============================
     // CHECK MATERIAL ACCESS (READER)

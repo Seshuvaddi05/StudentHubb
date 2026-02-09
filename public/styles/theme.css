@@ -1,0 +1,108 @@
+/* =================================================
+   STUDENTHUB GLOBAL THEME SYSTEM (CLEAN + FINAL)
+   Only variables + base styles
+================================================= */
+
+/* ================= DARK (default) ================= */
+:root {
+  color-scheme: dark;
+
+  --bg: #0f172a;
+  --card: #172036;
+  --card-2: #243047;
+
+  --text: #ffffff;
+  --muted: #94a3b8;
+
+  --primary: #facc15;
+  --accent: #2563eb;
+  --danger: #ef4444;
+  --success: #22c55e;
+
+  --radius: 14px;
+}
+
+/* ================= LIGHT ================= */
+body.light {
+  color-scheme: light;
+
+  --bg: #f1f5f9;
+  --card: #ffffff;
+  --card-2: #e2e8f0;
+
+  --text: #0f172a;
+  --muted: #475569;
+
+  --primary: #eab308;
+  --accent: #2563eb;
+  --danger: #dc2626;
+  --success: #16a34a;
+}
+
+/* =================================================
+   GLOBAL BASE
+================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+
+  background: var(--bg);
+  color: var(--text);
+
+  transition:
+    background .25s ease,
+    color .25s ease;
+}
+
+/* =================================================
+   GLOBAL REUSABLE COMPONENTS
+================================================= */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-2);
+  border-radius: var(--radius);
+}
+
+.input,
+select,
+textarea {
+  background: var(--card);
+  border: 1px solid var(--card-2);
+  color: var(--text);
+}
+
+/* Buttons */
+.btn {
+  padding: .55rem .9rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: #111;
+}
+
+.btn.secondary {
+  background: var(--card);
+  border: 1px solid var(--card-2);
+  color: var(--text);
+}
+
+.btn.danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn.success {
+  background: var(--success);
+  color: #fff;
+}
