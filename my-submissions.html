@@ -6,6 +6,8 @@
   <title>StudentHub – My Submissions</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="/styles/styles.css">
+  <link rel="stylesheet" href="/styles/system.css">
+
 
   <style>
     /* ===============================
@@ -13,18 +15,19 @@
        =============================== */
 
     .submissions-container {
-      max-width: 1600px;
-      /* ⭐ wider like other pages */
       width: 100%;
-      margin: 0rem auto 2rem;
-      /* ⭐ consistent top spacing */
-      padding: 1.75rem;
+      max-width: 1000px;
+      /* clean readable width */
+      margin: 24px auto;
+      /* perfect center always */
+      padding: 20px;
 
       border-radius: 14px;
       background: var(--card);
       border: 1px solid var(--card-2);
       box-shadow: 0 8px 24px rgba(0, 0, 0, .06);
     }
+
 
 
     .submissions-heading {
@@ -99,11 +102,10 @@
       color: var(--muted);
     }
 
-    /* Mobile */
-    @media (max-width: 640px) {
+    @media (max-width: 900px) {
       .submissions-container {
-        padding: 1rem;
-        margin: 1.25rem;
+        margin: 16px auto;
+        padding: 16px;
       }
     }
   </style>

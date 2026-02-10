@@ -191,7 +191,8 @@ function createCard(item, highlightTerms = []) {
 
   // Buttons row
   const btnRow = document.createElement("div");
-  btnRow.style = "display:flex; flex-wrap:wrap; gap:0.5rem;";
+  btnRow.className = "card-actions";
+
 
   // Quick preview
   const previewBtn = document.createElement("button");
@@ -322,7 +323,8 @@ function createRecentCard(item) {
   article.appendChild(meta);
 
   const btnRow = document.createElement("div");
-  btnRow.style = "display:flex; flex-wrap:wrap; gap:0.5rem;";
+  btnRow.className = "card-actions";
+
 
   const previewBtn = document.createElement("button");
   previewBtn.type = "button";
@@ -1104,23 +1106,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (yearSpan) yearSpan.textContent = new Date().getFullYear();
 
   // Mobile nav
+  // =============================
+  // MOBILE SIDEBAR TOGGLE (FINAL)
+  // =============================
   const navToggle = document.getElementById("nav-toggle");
-  const navLinks = document.getElementById("nav-links");
+  const sidebar = document.querySelector(".sidebar");
 
-  if (navToggle && navLinks) {
+  if (navToggle && sidebar) {
     navToggle.addEventListener("click", () => {
-      navLinks.classList.toggle("open");
+      sidebar.classList.toggle("open");
       navToggle.classList.toggle("open");
     });
 
-    navLinks.querySelectorAll("a").forEach((link) => {
+    // auto close when clicking any sidebar link
+    sidebar.querySelectorAll("a").forEach((link) => {
       link.addEventListener("click", () => {
-        navLinks.classList.remove("open");
+        sidebar.classList.remove("open");
         navToggle.classList.remove("open");
       });
     });
   }
-
   // Theme
   // =============================
   // THEME INIT

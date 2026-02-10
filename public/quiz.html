@@ -308,7 +308,38 @@
   </style>
 </head>
 
+<header class="navbar">
+  <div class="logo">StudentHub</div>
+
+  <!-- 🔥 SAME HAMBURGER AS OTHER PAGES -->
+  <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <!-- Right side -->
+  <div class="nav-actions">
+
+    <!-- notifications (optional but consistent UI) -->
+    <div class="notif-wrapper">
+      <button id="notifBtn">🔔</button>
+      <span id="notifCount"></span>
+
+      <div id="notifDropdown" class="notif-dropdown hidden">
+        <ul id="notifList"></ul>
+      </div>
+    </div>
+
+    <!-- theme -->
+    <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+
+  </div>
+</header>
+
+
 <body data-protected>
+  
 
   <!-- ================= APP LAYOUT ================= -->
   <div class="app-layout">

@@ -93,8 +93,12 @@
 
     .main {
       flex: 1;
-      padding: 30px 50px;
+      padding: 30px;
+      box-sizing: border-box;
+      /* 🔥 VERY IMPORTANT */
+      max-width: 100%;
     }
+
 
     .topbar {
       display: flex;
@@ -238,44 +242,61 @@
       margin-top: 25px;
     }
 
-
     /* =========================================
-   📱 MOBILE ONLY – move question numbers below submit
-   ========================================= */
+   📱 FINAL MOBILE QUIZ FIX (PERFECT LAYOUT)
+========================================= */
 
     @media (max-width: 768px) {
 
-      /* stack layout vertically */
       .layout {
         flex-direction: column;
       }
 
-      /* make main appear first */
       .main {
-        order: 1;
-        padding: 20px;
+        padding: 14px;
       }
 
-      /* move sidebar AFTER main */
       .sidebar {
-        order: 2;
         width: 100%;
         border-right: none;
         border-top: 1px solid var(--card-2);
-        margin-top: 20px;
+        margin-top: 16px;
       }
 
-      /* nicer mobile spacing */
-      .q-grid {
-        grid-template-columns: repeat(5, 1fr);
+      .nav-buttons {
+        flex-direction: column;
+        gap: 10px;
       }
 
+      .nav-buttons .btn {
+        width: 100%;
+      }
+    }
+
+    /* =========================================
+   QUIZ PAGE SIDEBAR FIX (override global)
+========================================= */
+
+    .layout .sidebar {
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      bottom: auto !important;
+      width: 240px !important;
+    }
+
+    .layout .main {
+      margin-left: 0 !important;
     }
   </style>
 </head>
 
 
 <body data-protected>
+
+  <header class="navbar">
+    <div class="logo">StudentHub</div>
+  </header>
 
   <div class="layout">
 

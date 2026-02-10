@@ -92,16 +92,30 @@ html {
 ================================ */
 
 .navbar {
-  position: sticky;
+  position: fixed;
+  /* 🔥 always fixed */
   top: 0;
-  z-index: 100;
+  left: 0;
+  right: 0;
+
+  height: 64px;
+  z-index: 10000;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1.5rem;
+
+  padding: 0 20px;
+
   background: var(--card);
-  color: var(--text);
+  border-bottom: 1px solid var(--card-2);
 }
+
+body {
+  padding-top: 64px;
+  /* same as navbar height */
+}
+
 
 
 .logo {
@@ -360,39 +374,6 @@ html {
   }
 }
 
-
-
-
-/* Hero */
-.hero {
-  padding: 3rem 1.5rem;
-  color: white;
-  text-align: center;
-}
-
-.hero-content {
-  max-width: 700px;
-  margin: 0 auto;
-}
-
-.hero h1 {
-  font-size: 1.9rem;
-  margin-bottom: 0.75rem;
-}
-
-.hero p {
-  font-size: 1rem;
-  margin-bottom: 1.5rem;
-  color: var(--muted);
-}
-
-.hero-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
 /* Buttons */
 .btn {
   display: inline-block;
@@ -518,12 +499,6 @@ html {
 
 
 /* Sections */
-.section {
-  padding: 2.5rem 1.5rem;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
 .section h2 {
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
@@ -576,12 +551,6 @@ html {
   color: var(--text);
 }
 
-/* Cards Grid */
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 1rem;
-}
 
 .card {
   background: var(--card);
@@ -708,12 +677,6 @@ html {
 
 
 /* Recently added section */
-.recent-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
-}
-
 .recent-card-tag {
   display: inline-block;
   font-size: 0.75rem;
@@ -931,9 +894,6 @@ html {
     padding: 2.5rem 1rem;
   }
 
-  .section {
-    padding: 2rem 1rem;
-  }
 
   .navbar {
     flex-wrap: wrap;
@@ -2169,23 +2129,6 @@ th {
 }
 
 
-.cards-grid>* {
-  transition: 0.25s;
-  border-radius: 18px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-}
-
-.cards-grid>*:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.15);
-}
-
-.section {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: 0.6s;
-}
-
 .section.show {
   opacity: 1;
   transform: translateY(0);
@@ -2223,13 +2166,6 @@ th {
    🔥 HERO PRO
 ======================================== */
 
-.hero-pro {
-  position: relative;
-  padding: 4rem 2rem;
-  border-radius: 18px;
-  margin-bottom: 2.5rem;
-  overflow: hidden;
-}
 
 .hero-bg {
   position: absolute;
@@ -2239,14 +2175,6 @@ th {
     radial-gradient(circle at 80% 80%, rgba(236, 72, 153, .18), transparent 60%);
   filter: blur(60px);
   z-index: -1;
-}
-
-.hero-pro-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 2rem;
-  flex-wrap: wrap;
 }
 
 .gradient-text {
@@ -2282,28 +2210,10 @@ th {
   opacity: .6;
 }
 
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1.2rem;
-}
-
-.recent-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
-}
 
 /* ========================================
    Smooth reveal animation
 ======================================== */
-
-.section {
-  opacity: 0;
-  transform: translateY(25px);
-  transition: all .5s ease;
-}
-
 .section.show {
   opacity: 1;
   transform: none;
@@ -2314,21 +2224,11 @@ th {
    Responsive
 ======================================== */
 
-@media(max-width:900px) {
-
-  .sidebar {
-    display: none;
-  }
-
-  .main-content {
-    padding: 1.2rem;
-  }
-
-  .hero-pro-inner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.hero-pro-inner {
+  flex-direction: column;
+  align-items: flex-start;
 }
+
 
 
 /* ========================================
@@ -2344,13 +2244,6 @@ th {
 body.light .hero-pro {
   background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
   color: #111;
-}
-
-
-.section {
-  padding: 60px 40px;
-  position: relative;
-  z-index: 1;
 }
 
 body:not(.light) .section {
@@ -2449,16 +2342,6 @@ body:not(.light) .card {
 }
 
 
-/* mobile */
-@media (max-width: 900px) {
-  .sidebar {
-    display: none;
-  }
-
-  .main-content {
-    padding: 20px;
-  }
-}
 
 
 /* =================================================
@@ -2474,22 +2357,6 @@ body:not(.light) .card {
 
 
 /* ================= SIDEBAR ================= */
-
-.sidebar {
-  width: 240px;
-  flex-shrink: 0;
-
-  background: var(--card);
-  border-right: 1px solid var(--card-2);
-
-  padding: 18px 14px;
-
-  position: sticky;
-  top: 64px;
-  height: calc(100vh - 64px);
-
-  overflow-y: auto;
-}
 
 /* title */
 .sb-title {
@@ -2529,27 +2396,6 @@ body:not(.light) .card {
   color: #111827;
 }
 
-
-/* ================= MAIN CONTENT ================= */
-
-.main-content {
-  flex: 1;
-  padding: 32px 36px;
-  overflow-x: hidden;
-}
-
-
-/* ================= MOBILE ================= */
-
-@media (max-width: 900px) {
-  .sidebar {
-    display: none;
-  }
-
-  .main-content {
-    padding: 20px;
-  }
-}
 
 /* =========================
    DASHBOARD PRO HOVER
@@ -2614,7 +2460,6 @@ body:not(.light) .card {
   font-size: .8rem;
 }
 
-/*============================new changes in hero section ===================================================================*/
 
 /* =================================================
    🔥 HERO TEXT VISIBILITY FIX (FINAL — PRODUCTION SAFE)
@@ -2690,10 +2535,6 @@ body.light .hero-pro .btn.secondary {
 
 /* =================================================
    🔥 HERO FINAL FIX (SINGLE SOURCE OF TRUTH)
-   solves:
-   ✅ glass cards invisible (light)
-   ✅ secondary button invisible (dark)
-   ✅ no theme conflicts
 ================================================= */
 
 
@@ -2703,7 +2544,7 @@ body.light .hero-pro .btn.secondary {
   color: #111827;
   border: none;
   font-weight: 700;
-  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
 }
 
 .hero-pro .btn.secondary:hover {
@@ -2716,9 +2557,9 @@ body.light .hero-pro .btn.secondary {
 
 /* dark mode */
 body:not(.light) .glass-card {
-  background: rgba(255,255,255,0.10);
+  background: rgba(255, 255, 255, 0.10);
   color: #ffffff;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* light mode (SOLID — not transparent) */
@@ -2726,7 +2567,7 @@ body.light .glass-card {
   background: #ffffff;
   color: #111827;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .12);
 }
 
 
@@ -2734,4 +2575,1307 @@ body.light .glass-card {
 .hero-left h1,
 .hero-left p {
   color: #ffffff;
+}
+
+/* =========================================
+   MOBILE HERO FIX
+========================================= */
+
+@media (max-width: 900px) {
+
+  .hero-pro-inner {
+    padding: 24px 18px;
+  }
+
+  .hero-left h1 {
+    font-size: 32px;
+    line-height: 1.2;
+  }
+
+  .hero-left p {
+    font-size: 15px;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hero-buttons .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* stats cards stack */
+  .hero-stats-glass {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+
+/* =========================================
+   HERO FULL WIDTH MOBILE FIX
+========================================= */
+
+@media (max-width: 900px) {
+
+  .hero-pro {
+    border-radius: 0;
+    /* remove rounded box look */
+    margin: 0;
+    /* remove side spacing */
+  }
+
+  .hero-pro-inner {
+    padding: 28px 18px;
+    /* proper mobile padding */
+  }
+
+  .hero-left h1 {
+    font-size: 30px;
+    line-height: 1.25;
+  }
+
+  .hero-left p {
+    font-size: 15px;
+  }
+
+  /* buttons stack */
+  .hero-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hero-buttons .btn {
+    width: 100%;
+  }
+}
+
+/* =========================================
+   SECTIONS FULL WIDTH MOBILE
+========================================= */
+
+@media (max-width: 900px) {
+
+  .main-content {
+    padding: 16px;
+    /* smaller side spacing */
+  }
+
+  /* cards fill container */
+  .card {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+
+
+  .card-actions button {
+    width: 100%;
+  }
+}
+
+
+/* =================================================
+   FINAL HERO + GRID SYSTEM (ONLY ONE TRUTH)
+================================================= */
+
+/* ---------------- HERO ---------------- */
+
+.hero-pro {
+  width: 100%;
+  min-height: 90vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 80px 24px;
+  margin: 0;
+  border-radius: 0;
+}
+
+.hero-pro-inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 50px;
+  align-items: center;
+}
+
+/* buttons */
+.hero-buttons {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* ---------------- STATS ---------------- */
+
+.hero-stats-glass {
+  display: grid;
+  gap: 18px;
+}
+
+/* ---------------- CARDS GRID ---------------- */
+
+
+
+.card {
+  width: 100%;
+}
+
+/* =================================================
+   MOBILE PERFECT LAYOUT
+================================================= */
+
+@media (max-width: 900px) {
+
+  .hero-pro-inner {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-buttons .btn {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .cards-grid,
+  .recent-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-stats-glass {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+
+/* =================================================
+   🔥 FINAL LAYOUT FIX (ONLY MAIN SCROLLS)
+   Dashboard style like YouTube/Admin
+================================================= */
+/* layout */
+.app-layout {
+  display: flex;
+  height: calc(100vh - 64px);
+}
+
+
+/* ================= MAIN ================= */
+.main-content {
+  margin-left: 240px;
+  /* space for sidebar */
+
+  height: calc(100vh - 64px);
+
+  overflow-y: auto;
+  /* 🔥 ONLY THIS SCROLLS */
+
+  padding: 32px 36px;
+}
+
+
+/* =================================================
+   🔥 CARD ACTION BUTTONS (PRO STYLE)
+================================================= */
+.card .btn {
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+
+/* preview */
+.btn.preview {
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+}
+
+/* open reader */
+.btn.reader {
+  background: var(--primary);
+  color: #111;
+  font-weight: 700;
+}
+
+/* library */
+.btn.library {
+  background: #dcfce7;
+  color: #065f46;
+}
+
+/* read later */
+.btn.later {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+
+/* =========================================
+   FINAL SIDEBAR SYSTEM (CLEAN & STABLE)
+========================================= */
+
+/* layout */
+.app-layout {
+  display: flex;
+  height: calc(100vh - 64px);
+}
+
+
+/* ================= DESKTOP SIDEBAR ================= */
+.sidebar {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  bottom: 0;
+
+  width: 240px;
+
+  overflow-y: auto;
+  background: var(--card);
+  border-right: 1px solid var(--card-2);
+  padding: 18px 14px;
+}
+
+
+/* ================= MOBILE ================= */
+@media (max-width: 900px) {
+
+  .sidebar {
+    left: -260px;
+    transition: left 0.3s ease;
+    z-index: 9999;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  /* 🔥 important: prevent shifting */
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+/*==========================================================================================================================================*/
+
+/* =================================================
+   📱 MOBILE FINAL POLISH (HERO + CARDS FIX)
+   Clean full-width layout like modern apps
+================================================= */
+
+@media (max-width: 900px) {
+
+  /* =============================
+     HERO FULL SCREEN FIX
+  ============================== */
+
+  .hero-pro {
+    width: 100vw;
+    min-height: 100vh;
+
+    padding: 90px 20px 40px;
+    /* top spacing for navbar */
+
+    border-radius: 0;
+    margin: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+
+  .hero-left {
+    width: 100%;
+  }
+
+  .hero-left h1 {
+    font-size: 28px;
+  }
+
+  .hero-left p {
+    font-size: 14px;
+  }
+
+  /* buttons centered */
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-buttons .btn {
+    width: 100%;
+    max-width: 320px;
+  }
+}
+
+/* =============================
+     STATS CARDS BIGGER
+  ============================== */
+
+.glass-card {
+  padding: 26px;
+  border-radius: 18px;
+}
+
+.glass-card span {
+  font-size: 28px;
+}
+
+
+/* =============================
+     PDF / MATERIAL CARDS BIGGER
+  ============================== */
+
+.card h3 {
+  font-size: 18px;
+}
+
+.meta-chip {
+  font-size: 12px;
+}
+
+
+
+
+/* =================================================
+   FINAL STUDENTHUB LAYOUT SYSTEM (ONLY TRUTH)
+================================================= */
+
+
+/* -------- APP LAYOUT -------- */
+.app-layout {
+  display: flex;
+  height: calc(100vh - 64px);
+}
+
+/* -------- SIDEBAR (DESKTOP) -------- */
+.sidebar {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  bottom: 0;
+
+  width: 240px;
+
+  overflow-y: auto;
+  background: var(--card);
+  border-right: 1px solid var(--card-2);
+  padding: 18px 14px;
+}
+
+/* -------- MAIN CONTENT (ONLY SCROLLS) -------- */
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  padding: 32px 36px;
+}
+
+/* =================================================
+   HERO FULL WIDTH
+================================================= */
+
+.hero-pro {
+  width: 100%;
+  min-height: 100vh;
+  padding: 80px 24px;
+  margin: 0;
+  border-radius: 0;
+}
+
+.hero-pro-inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* =================================================
+   MOBILE (CLEAN + STABLE)
+================================================= */
+
+@media (max-width: 900px) {
+
+  .sidebar {
+    left: -260px;
+    transition: left .3s;
+    z-index: 9999;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  .cards-grid,
+  .recent-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 22px;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+  }
+
+  .hero-buttons .btn {
+    width: 100%;
+  }
+}
+
+
+/* =================================================
+   📱 MOBILE POLISH — CLEAN SPACING + MODERN FILTER UI
+   FINAL PRODUCTION STYLE
+================================================= */
+
+@media (max-width: 900px) {
+
+  /* ================================
+     GLOBAL PAGE SIDE PADDING
+     (THIS fixes text touching edges)
+  ================================= */
+  .main-content {
+    padding: 18px !important;
+  }
+
+  /* center content width */
+  .section>*,
+  .cards-grid,
+  .recent-grid,
+  .filter-bar {
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+
+  /* ================================
+     CARDS EXTRA AIR (better look)
+  ================================= */
+  .card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+
+  /* ================================
+     SEARCH + FILTER BAR — MODERN STYLE
+  ================================= */
+
+  .filter-bar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .filter-bar input,
+  .filter-bar select {
+    width: 100%;
+    height: 46px;
+
+    padding: 0 14px;
+
+    border-radius: 12px;
+    border: 1px solid var(--card-2);
+
+    background: var(--card);
+    color: var(--text);
+
+    font-size: 14px;
+
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    transition: 0.2s;
+  }
+
+  .filter-bar input:focus,
+  .filter-bar select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.25);
+    outline: none;
+  }
+
+  /* dropdown arrow look nicer */
+  .filter-bar select {
+    appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+      linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position:
+      calc(100% - 18px) 18px,
+      calc(100% - 12px) 18px;
+    background-size: 6px 6px;
+    background-repeat: no-repeat;
+  }
+
+
+  /* ================================
+     HEADINGS SPACING
+  ================================= */
+  h2 {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .section-subtitle {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+}
+
+
+/* =================================================
+   🔥 FINAL MOBILE LAYOUT SYSTEM (CLEAN & SAFE)
+   fixes edge sticking + ugly filters + spacing
+================================================= */
+
+@media (max-width: 900px) {
+
+  /* allow normal scrolling */
+  body {
+    height: auto !important;
+    overflow: auto !important;
+  }
+
+  /* =================================
+     SIDE GAP FOR EVERYTHING
+  ================================= */
+  .section,
+  .cards-grid,
+  .recent-grid,
+  .filter-bar {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  /* =================================
+     HERO SPACING
+  ================================= */
+  .hero-pro {
+    padding: 90px 18px 40px !important;
+  }
+
+  /* =================================
+     CARDS BIGGER + AIR
+  ================================= */
+  .card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  /* =================================
+     FILTERS PRO STYLE
+  ================================= */
+  .filter-bar {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+
+  .filter-bar input,
+  .filter-bar select {
+    height: 46px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid var(--card-2);
+    background: var(--card);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .08);
+    font-size: 14px;
+  }
+
+  .filter-bar input:focus,
+  .filter-bar select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(250, 204, 21, .25);
+    outline: none;
+  }
+
+}
+
+
+/* =================================================
+   📱 ONLY PDF / MATERIAL CARDS BIGGER (MOBILE ONLY)
+   Does NOT affect admin / other cards
+================================================= */
+
+@media (max-width: 900px) {
+
+  /* only cards inside content grids */
+  .cards-grid .card,
+  .recent-grid .card {
+    padding: 26px !important;
+    /* bigger inside space */
+    border-radius: 20px;
+    font-size: 15px;
+  }
+
+  /* title bigger */
+  .cards-grid .card h3,
+  .recent-grid .card h3 {
+    font-size: 18px;
+  }
+
+  /* more space between chips/text */
+  .cards-grid .meta-chip,
+  .recent-grid .meta-chip {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
+  /* buttons bigger */
+  .cards-grid .card-actions .btn,
+  .recent-grid .card-actions .btn {
+    height: 44px;
+    font-size: 14px;
+  }
+
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 900px) {
+
+  /* FULL WIDTH CONTAINER */
+  .cards-grid,
+  .recent-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+
+    width: 100%;
+    max-width: 100%;
+    padding: 0 18px;
+    /* 🔥 side gap */
+  }
+
+  /* BIGGER CARDS */
+  .cards-grid .card,
+  .recent-grid .card {
+    width: 100%;
+    padding: 28px;
+    /* 🔥 big comfortable size */
+    border-radius: 20px;
+    font-size: 16px;
+  }
+
+  /* BIG TITLE */
+  .cards-grid .card h3,
+  .recent-grid .card h3 {
+    font-size: 20px;
+  }
+
+}
+
+/* =========================================
+   ✅ FINAL RESPONSIVE GRID SYSTEM (PERMANENT)
+   Cards always full width on mobile
+========================================= */
+
+
+
+/* mobile */
+@media (max-width: 900px) {
+
+  .main-content {
+    padding: 14px !important;
+  }
+
+  .cards-grid,
+  .recent-grid {
+    grid-template-columns: 1fr;
+    /* full width */
+    gap: 18px;
+  }
+
+  .card {
+    width: 100%;
+    padding: 18px;
+    border-radius: 18px;
+  }
+}
+
+
+/* =================================================
+   🔥 FINAL CARD WIDTH FIX (PERMANENT)
+   Full width cards like modern apps
+================================================= */
+
+
+/* mobile */
+@media (max-width: 900px) {
+
+  .cards-grid,
+  .recent-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =================================================
+   🔥 FINAL RESPONSIVE CARD GRID (PERMANENT)
+   Laptop: 3–4 per row
+   Mobile: 1 full width
+================================================= */
+
+
+
+/* ===== MOBILE ===== */
+@media (max-width: 900px) {
+
+  .cards-grid,
+  .recent-grid {
+    grid-template-columns: 1fr;
+    /* single column */
+  }
+
+  .card {
+    width: 100%;
+    padding: 22px;
+    /* bigger touch friendly */
+  }
+}
+
+/* =================================================
+   FINAL STUDENTHUB LAYOUT (ONLY SOURCE OF TRUTH)
+================================================= */
+
+/* ===== MAIN + SIDEBAR ===== */
+
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  padding: 32px;
+  overflow-x: hidden;
+}
+
+/* ===== SECTION ===== */
+
+.section {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* ===== CARDS GRID (DESKTOP 3–4 per row) ===== */
+
+
+/* cards always fill */
+.cards-grid .card,
+.recent-grid .card {
+  width: 100%;
+  padding: 18px;
+  border-radius: 16px;
+}
+
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 900px) {
+
+  .main-content {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  .cards-grid,
+  .recent-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cards-grid .card,
+  .recent-grid .card {
+    padding: 22px;
+  }
+}
+
+
+/* =========================================
+   FINAL RESPONSIVE GRID (ONLY SOURCE OF TRUTH)
+========================================= */
+
+/* Desktop → 3–4 cards */
+.cards-grid,
+.recent-grid {
+  width: 100%;
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+
+  gap: 24px;
+}
+
+/* Mobile → 1 full width */
+@media (max-width: 900px) {
+
+  .cards-grid,
+  .recent-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================
+   FINAL RESPONSIVE GRID (ONLY SOURCE OF TRUTH)
+========================================= */
+
+.cards-grid,
+.recent-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+.cards-grid .card,
+.recent-grid .card {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+
+  .cards-grid,
+  .recent-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =================================
+   FINAL MOBILE FULL WIDTH FIX
+   (permanent — do not duplicate)
+================================= */
+
+@media (max-width: 900px) {
+
+  .main-content {
+    margin-left: 0;
+    padding: 14px;
+  }
+
+  .cards-grid,
+  .recent-grid {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .cards-grid .card,
+  .recent-grid .card {
+    width: 100%;
+  }
+
+}
+
+/* ======================================
+   🔥 MOBILE FULL-WIDTH CARDS (FINAL FIX)
+   ignores container padding safely
+====================================== */
+@media (max-width: 900px) {
+
+  .cards-grid,
+  .recent-grid {
+    padding: 0 !important;
+    /* remove side shrink */
+  }
+
+  .cards-grid .card,
+  .recent-grid .card {
+    width: calc(100vw - 24px);
+    /* small side gap */
+    margin-left: calc(50% - 50vw + 12px);
+    border-radius: 16px;
+    padding: 22px;
+  }
+}
+
+/* =================================================
+   🔥 FINAL FILTER BAR – PRODUCTION STYLE (DESKTOP + MOBILE)
+================================================= */
+
+/* ---------- WRAPPER ---------- */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0 22px;
+}
+
+/* ---------- SEARCH (big) ---------- */
+.filter-bar input {
+  flex: 1;
+  min-width: 260px;
+
+  height: 42px;
+  padding: 0 14px;
+
+  border-radius: 10px;
+  border: 1px solid var(--card-2);
+
+  background: var(--card);
+  color: var(--text);
+
+  font-size: 14px;
+}
+
+/* ---------- SMALL FILTER DROPDOWNS ---------- */
+.filter-bar select {
+  height: 38px;
+  padding: 0 12px;
+
+  border-radius: 9px;
+  border: 1px solid var(--card-2);
+
+  background: var(--card);
+  color: var(--text);
+
+  font-size: 13px;
+
+  min-width: 120px;
+
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+/* hover */
+.filter-bar select:hover,
+.filter-bar input:hover {
+  border-color: var(--primary);
+}
+
+/* focus glow */
+.filter-bar input:focus,
+.filter-bar select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, .25);
+}
+
+/* =================================================
+   📱 MOBILE – COMPACT GRID STYLE
+================================================= */
+
+@media (max-width: 900px) {
+
+  .filter-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* search full row */
+  .filter-bar input {
+    grid-column: span 2;
+    height: 44px;
+  }
+
+  /* smaller selects */
+  .filter-bar select {
+    width: 100%;
+    height: 40px;
+    font-size: 13px;
+  }
+}
+
+/* =========================================
+   🔥 SMALLER CARD BUTTONS (FINAL)
+   Only affects buttons inside cards
+========================================= */
+.card-actions .btn {
+  padding: 6px 10px;
+  /* smaller */
+  font-size: 12px;
+  /* compact text */
+  height: 32px;
+  /* slim height */
+  border-radius: 8px;
+  line-height: 1;
+}
+
+/* extra small for secondary actions */
+.card-actions .btn.secondary,
+.card-actions .btn.later {
+  padding: 5px 9px;
+  font-size: 11.5px;
+}
+
+/* =========================================
+   🔥 FORCE SMALL BUTTONS INSIDE CARDS (FINAL)
+   Works even without .card-actions wrapper
+========================================= */
+
+
+/* optional: even smaller secondary ones */
+.card .btn.secondary,
+.card .btn.later {
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+}
+
+
+/* =========================================
+   🔥 CARD BUTTONS – SINGLE ROW PRO STYLE
+========================================= */
+/* make all buttons equal */
+.card-actions .btn {
+  flex: 1;
+  /* equal width */
+  height: 32px;
+  /* smaller height */
+  font-size: 12px;
+  padding: 0 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+  /* prevent wrap */
+}
+
+/* nice modern colors */
+.btn.primary {
+  background: #facc15;
+  color: #111;
+}
+
+.btn.success {
+  background: #dcfce7;
+  color: #065f46;
+}
+
+.btn.secondary {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+/* =========================================
+   ✅ FINAL — CARD BUTTONS SINGLE ROW
+   clean • equal • responsive
+========================================= */
+.card-actions .btn {
+  flex: 1;
+  height: 34px;
+  font-size: 12px;
+  padding: 0 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+/* colors */
+.btn.primary {
+  background: #facc15;
+  color: #111;
+}
+
+.btn.success {
+  background: #dcfce7;
+  color: #065f46;
+}
+
+.btn.secondary {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+/* ===================================
+   EBOOK CARD BUTTONS (FINAL PRO STYLE)
+=================================== */
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* all buttons equal width */
+.card-actions .btn {
+  flex: 1;
+  height: 34px;
+  font-size: 12px;
+  padding: 0 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+
+/* =========================
+   CARD ACTION BUTTONS (PRO STYLE)
+   ========================= */
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: nowrap;      /* single row only */
+}
+
+/* base button */
+.card-actions .btn {
+  flex: 1;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 12px;
+  border-radius: 999px;   /* pill shape */
+  border: none;
+  font-weight: 600;
+  transition: all 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* preview */
+.card-actions .secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* main action */
+.card-actions .primary {
+  background: #facc15;
+  color: #111827;
+}
+
+/* library */
+.card-actions .secondary[disabled] {
+  background: #dcfce7;
+  color: #065f46;
+}
+
+/* read later */
+.card-actions .secondary:last-child {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+/* hover effect */
+.card-actions .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+
+/* =========================================
+   ✅ FINAL SAFE CARD BUTTONS (NO OVERFLOW)
+   always inside • clean • responsive
+========================================= */
+
+/* buttons */
+.card-actions .btn {
+  flex: 1 1 calc(25% - 6px); /* 4 buttons per row */
+  min-width: 0;             /* 🔥 prevents overflow */
+  
+  height: 32px;
+  padding: 0 8px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  border-radius: 999px;
+  border: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  white-space: nowrap;
+}
+
+/* colors */
+.card-actions .primary {
+  background: #facc15;
+  color: #111;
+}
+
+.card-actions .secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.card-actions .secondary[disabled] {
+  background: #dcfce7;
+  color: #065f46;
+}
+
+/* mobile → 2 per row */
+@media (max-width: 900px) {
+  .card-actions .btn {
+    flex: 1 1 calc(50% - 6px);
+  }
+}
+
+/* =========================================
+   ✅ FINAL MOBILE SAFE BUTTON LAYOUT
+   Never overflow • perfect fit • clean
+========================================= */
+
+/* base */
+.card-actions .btn {
+  flex: 1 1 calc(50% - 6px); /* 2 per row */
+  min-width: 0;
+
+  height: 34px;
+  padding: 0 10px;
+
+  font-size: 12px;
+  border-radius: 999px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  white-space: nowrap;
+}
+
+/* desktop → 4 in one row */
+@media (min-width: 901px) {
+  .card-actions .btn {
+    flex: 1 1 calc(25% - 6px);
+  }
+}
+
+/* =========================================
+   🔥 SINGLE SOURCE OF TRUTH — CARD BUTTONS
+   clean • inside • responsive • no overflow
+========================================= */
+/* base (mobile first → 2 per row) */
+.card-actions .btn {
+  flex: 1 1 calc(50% - 6px);
+  min-width: 0;
+
+  height: 34px;
+  padding: 0 10px;
+
+  font-size: 12px;
+  border-radius: 999px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  white-space: nowrap;
+}
+
+/* desktop → 4 in one row */
+@media (min-width: 901px) {
+  .card-actions .btn {
+    flex: 1 1 calc(25% - 6px);
+  }
 }

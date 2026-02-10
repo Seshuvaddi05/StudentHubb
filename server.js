@@ -3032,8 +3032,10 @@ async function startServer() {
 
 
 
-    app.listen(PORT, () => {
-      console.log(`StudentHub server running at http://127.0.0.1:${PORT}`);
+    /*app.listen(PORT, () => {
+      console.log(`StudentHub server running at http://127.0.0.1:${PORT}`);*/
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`StudentHub server running on port ${PORT}`);
       console.log("ADMIN_SECRET:", ADMIN_SECRET);
     });
 

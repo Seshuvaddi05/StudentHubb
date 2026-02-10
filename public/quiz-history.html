@@ -79,11 +79,19 @@
 
     /* ================= LAYOUT ================= */
 
-    .container {
-      max-width: 1300px;
-      margin: 40px auto;
-      padding: 0 20px;
+    .main-content {
+      flex: 1;
+      padding: 28px 32px;
     }
+
+    .container {
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+
+
 
     /* ================= STATS ================= */
 
@@ -129,9 +137,12 @@
     /* ================= CARD ================= */
 
     .card {
+      width: 100%;
       background: var(--card);
       border-radius: 14px;
-      padding: 20px;
+      padding: 24px;
+      overflow-x: auto;
+      /* prevents table overflow */
     }
 
     /* ================= TABLE ================= */
@@ -139,17 +150,22 @@
     table {
       width: 100%;
       border-collapse: collapse;
+      table-layout: auto;
+      /* ← change from fixed */
     }
 
-    th {
-      background: var(--card-2);
-      padding: 12px;
-    }
-
+    th,
     td {
-      padding: 12px;
-      border-top: 1px solid rgba(255, 255, 255, .08);
+      padding: 12px 14px;
+      text-align: left;
+      white-space: nowrap;
     }
+
+    thead th {
+      background: var(--card-2);
+      font-weight: 600;
+    }
+
 
     .badge {
       padding: 4px 8px;
@@ -204,303 +220,345 @@
   </style>
 </head>
 
+
 <body data-protected>
+  <header class="navbar">
+    <div class="logo">StudentHub</div>
 
-  <header class="main-navbar">
-    <div class="nav-inner">
-      <a href="/" class="logo">StudentHub</a>
+    <!-- 🔥 SAME HAMBURGER AS OTHER PAGES -->
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
 
-      <nav class="nav-links">
-        <a href="/">Home</a>
-        <a href="/quiz.html">Quiz</a>
-        <a href="/quiz-history.html" class="active">History</a>
-      </nav>
+    <!-- Right side -->
+    <div class="nav-actions">
+
+      <!-- notifications (optional but consistent UI) -->
+      <div class="notif-wrapper">
+        <button id="notifBtn">🔔</button>
+        <span id="notifCount"></span>
+
+        <div id="notifDropdown" class="notif-dropdown hidden">
+          <ul id="notifList"></ul>
+        </div>
+      </div>
+
+      <!-- theme -->
+      <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+
     </div>
   </header>
 
+  <div class="app-layout">
 
-  <div class="container">
+    <!-- ========= SIDEBAR ========= -->
+    <aside class="sidebar">
 
-    <h1>📊 My Quiz Dashboard</h1>
+      <h3 class="sb-title">Dashboard</h3>
 
-    <!-- ================= STATS ================= -->
-    <div class="stats">
-      <div class="stat-card">Attempts<b id="sAttempts">0</b></div>
-      <div class="stat-card">Best<b id="sBest">0%</b></div>
-      <div class="stat-card">Average<b id="sAvg">0%</b></div>
-      <div class="stat-card">Time<b id="sTime">0m</b></div>
-    </div>
+      <a href="/dashboard.html" class="sb-link">🏠 Dashboard</a>
+      <a href="/request.html" class="sb-link">📝 Request Material</a>
+
+      <hr />
+
+      <a href="/#ebooks" class="sb-link">📚 E-Books</a>
+      <a href="/#question-papers" class="sb-link">📄 Papers</a>
+      <hr />
+
+      <!-- ⭐ ACTIVE HERE -->
+      <a href="/quiz.html" class="sb-link active">🧠 Quiz Center</a>
+      <a href="/quiz-history.html" class="sb-link ">⌛ Quiz History</a>
+
+      <hr />
+
+      <a href="/library.html" class="sb-link">📂 My Library</a>
+      <a href="/read-later.html" class="sb-link">⏳ Read Later</a>
+      <a href="/submit-pdf.html" class="sb-link">📤 Submit PDF</a>
+      <a href="/my-submissions.html" class="sb-link">📑 My Submissions</a>
+      <a href="/wallet.html" class="sb-link">💰 Wallet</a>
+      <hr />
+
+    </aside>
 
 
-    <!-- ================= FILTERS ================= -->
-    <div class="filters">
-      <input id="searchBox" placeholder="Search quiz..." />
-      <select id="sortSelect">
-        <option value="date">Sort by Date</option>
-        <option value="accuracy">Sort by Accuracy</option>
-        <option value="score">Sort by Score</option>
-      </select>
-      <button onclick="exportCSV()">Export CSV</button>
-    </div>
+
+    <main class="main-content">
+      <div class="container">
 
 
-    <!-- ================= CHART ================= -->
-    <canvas id="progressChart" height="80"></canvas>
+        <h1>📊 My Quiz Dashboard</h1>
+
+        <!-- ================= STATS ================= -->
+        <div class="stats">
+          <div class="stat-card">Attempts<b id="sAttempts">0</b></div>
+          <div class="stat-card">Best<b id="sBest">0%</b></div>
+          <div class="stat-card">Average<b id="sAvg">0%</b></div>
+          <div class="stat-card">Time<b id="sTime">0m</b></div>
+        </div>
 
 
-    <!-- ================= TABLE ================= -->
-    <div class="card">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Quiz</th>
-            <th>Score</th>
-            <th>Total</th>
-            <th>Accuracy</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="historyTable"></tbody>
-      </table>
+        <!-- ================= FILTERS ================= -->
+        <div class="filters">
+          <input id="searchBox" placeholder="Search quiz..." />
+          <select id="sortSelect">
+            <option value="date">Sort by Date</option>
+            <option value="accuracy">Sort by Accuracy</option>
+            <option value="score">Sort by Score</option>
+          </select>
+          <button onclick="exportCSV()">Export CSV</button>
+        </div>
 
-      <div class="pagination">
-        <button onclick="prevPage()">Prev</button>
-        <span id="pageInfo"></span>
-        <button onclick="nextPage()">Next</button>
+
+        <!-- ================= CHART ================= -->
+        <canvas id="progressChart" height="80"></canvas>
+
+
+        <!-- ================= TABLE ================= -->
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Quiz</th>
+                <th>Score</th>
+                <th>Total</th>
+                <th>Accuracy</th>
+                <th>Rank</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="historyTable"></tbody>
+          </table>
+
+          <div class="pagination">
+            <button onclick="prevPage()">Prev</button>
+            <span id="pageInfo"></span>
+            <button onclick="nextPage()">Next</button>
+          </div>
+
+        </div>
       </div>
-
-    </div>
-  </div>
+    </main>
 
 
 
-  <script>
-
-    /* =====================================================
-       🎓 StudentHub — QUIZ HISTORY ULTRA PRO MAX
-       -----------------------------------------------------
-       ✅ Stats cards
-       ✅ Streak counter
-       ✅ Continue last 3
-       ✅ Rank badges
-       ✅ Chart
-       ✅ Pagination
-       ✅ CSV export
-    ===================================================== */
-
-    let attempts = [];
-    let filtered = [];
-    let page = 1;
-    const pageSize = 10;
-
-    let ranksMap = {};
-    let recentList = [];
-    let streak = 0;
+    <script>
 
 
-    /* =====================================================
-       LOAD HISTORY
-    ===================================================== */
-    async function loadHistory() {
+      let attempts = [];
+      let filtered = [];
+      let page = 1;
+      const pageSize = 10;
 
-      const res = await fetch("/api/quiz/history", {
-        credentials: "include"
-      });
+      let ranksMap = {};
+      let recentList = [];
+      let streak = 0;
 
-      const data = await res.json();
 
-      attempts = (data.attempts || []).map(a => ({
-        ...a,
-        score: a.score || 0,
-        total: a.total || 0,
-        accuracy: a.accuracy || 0,
-        timeTaken: a.timeTaken || 0,
-        quizId: a.quizId || { title: "Quiz", id: "" }
-      }));
+      /* =====================================================
+         LOAD HISTORY
+      ===================================================== */
+      async function loadHistory() {
 
-      /* ⭐ NEW backend stats support */
-      ranksMap = data.stats?.ranks || {};
-      recentList = data.stats?.recent || [];
-      streak = data.stats?.streak || 0;
+        const res = await fetch("/api/quiz/history", {
+          credentials: "include"
+        });
 
-      filtered = [...attempts];
+        const data = await res.json();
 
-      renderContinue();
-      calculateStats();
-      drawChart();
-      renderTable();
-    }
+        attempts = (data.attempts || []).map(a => ({
+          ...a,
+          score: a.score || 0,
+          total: a.total || 0,
+          accuracy: a.accuracy || 0,
+          timeTaken: a.timeTaken || 0,
+          quizId: a.quizId || { title: "Quiz", id: "" }
+        }));
 
-    loadHistory();
+        /* ⭐ NEW backend stats support */
+        ranksMap = data.stats?.ranks || {};
+        recentList = data.stats?.recent || [];
+        streak = data.stats?.streak || 0;
+
+        filtered = [...attempts];
+
+        renderContinue();
+        calculateStats();
+        drawChart();
+        renderTable();
+      }
+
+      loadHistory();
 
 
 
-    /* =====================================================
-       🔥 CONTINUE LAST 3
-    ===================================================== */
-    function renderContinue() {
+      /* =====================================================
+         🔥 CONTINUE LAST 3
+      ===================================================== */
+      function renderContinue() {
 
-      if (!recentList.length) return;
+        if (!recentList.length) return;
 
-      const wrap = document.createElement("div");
+        const wrap = document.createElement("div");
 
-      wrap.style.cssText = `
+        wrap.style.cssText = `
     display:flex;
     gap:10px;
     flex-wrap:wrap;
     margin-bottom:18px;
   `;
 
-      recentList.forEach(a => {
-        const btn = document.createElement("button");
-        btn.className = "btn review";
-        btn.textContent = `▶ ${a.quizId.title} (${a.accuracy}%)`;
-        btn.onclick = () =>
-          location.href = `/quiz-attempt.html?quizId=${a.quizId.id}`;
+        recentList.forEach(a => {
+          const btn = document.createElement("button");
+          btn.className = "btn review";
+          btn.textContent = `▶ ${a.quizId.title} (${a.accuracy}%)`;
+          btn.onclick = () =>
+            location.href = `/quiz-attempt.html?quizId=${a.quizId.id}`;
 
-        wrap.appendChild(btn);
-      });
+          wrap.appendChild(btn);
+        });
 
-      document.querySelector(".container").prepend(wrap);
-    }
-
-
-
-    /* =====================================================
-       STATS PANEL (NOW WITH STREAK)
-    ===================================================== */
-    function calculateStats() {
-
-      if (!attempts.length) return;
-
-      const best = Math.max(...attempts.map(a => a.accuracy));
-
-      const avg = (
-        attempts.reduce((s, a) => s + a.accuracy, 0) / attempts.length
-      ).toFixed(1);
-
-      const totalSeconds =
-        attempts.reduce((s, a) => s + a.timeTaken, 0);
-
-      const m = Math.floor(totalSeconds / 60);
-      const s = totalSeconds % 60;
-
-      sAttempts.innerHTML =
-        `${attempts.length}<br><small>🔥 ${streak} day streak</small>`;
-
-      sBest.textContent = best + "%";
-      sAvg.textContent = avg + "%";
-      sTime.textContent = `${m}m ${s}s`;
-    }
-
-
-
-    /* =====================================================
-       CHART
-    ===================================================== */
-    function drawChart() {
-
-      if (!attempts.length) return;
-
-      const labels = attempts.map(a =>
-        new Date(a.createdAt).toLocaleDateString()
-      );
-
-      const values = attempts.map(a => a.accuracy);
-
-      if (window.progressInstance)
-        window.progressInstance.destroy();
-
-      window.progressInstance = new Chart(progressChart, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [{
-            label: "Accuracy %",
-            data: values,
-            tension: .35
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } }
-        }
-      });
-    }
-
-
-
-    /* =====================================================
-       SEARCH
-    ===================================================== */
-    searchBox.oninput = () => {
-
-      const q = searchBox.value.toLowerCase();
-
-      filtered = attempts.filter(a =>
-        a.quizId.title.toLowerCase().includes(q)
-      );
-
-      page = 1;
-      renderTable();
-    };
-
-
-
-    /* =====================================================
-       SORT
-    ===================================================== */
-    sortSelect.onchange = () => {
-
-      const v = sortSelect.value;
-
-      if (v === "accuracy")
-        filtered.sort((a, b) => b.accuracy - a.accuracy);
-
-      if (v === "score")
-        filtered.sort((a, b) => b.score - a.score);
-
-      if (v === "date")
-        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-      renderTable();
-    };
-
-
-
-    /* =====================================================
-       TABLE RENDER (NOW WITH RANK)
-    ===================================================== */
-    function renderTable() {
-
-      const start = (page - 1) * pageSize;
-      const rows = filtered.slice(start, start + pageSize);
-
-      historyTable.innerHTML = "";
-
-      if (!rows.length) {
-        historyTable.innerHTML =
-          `<tr><td colspan="8" style="padding:30px;opacity:.6;text-align:center">
-       No attempts yet 😊
-       </td></tr>`;
-        return;
+        document.querySelector(".container").prepend(wrap);
       }
 
-      const frag = document.createDocumentFragment();
 
-      rows.forEach((a, i) => {
 
-        let cls = "bad";
-        if (a.accuracy >= 80) cls = "good";
-        else if (a.accuracy >= 50) cls = "mid";
+      /* =====================================================
+         STATS PANEL (NOW WITH STREAK)
+      ===================================================== */
+      function calculateStats() {
 
-        const rank = ranksMap[a.quizId.id];
+        if (!attempts.length) return;
 
-        const tr = document.createElement("tr");
+        const best = Math.max(...attempts.map(a => a.accuracy));
 
-        tr.innerHTML = `
+        const avg = (
+          attempts.reduce((s, a) => s + a.accuracy, 0) / attempts.length
+        ).toFixed(1);
+
+        const totalSeconds =
+          attempts.reduce((s, a) => s + a.timeTaken, 0);
+
+        const m = Math.floor(totalSeconds / 60);
+        const s = totalSeconds % 60;
+
+        sAttempts.innerHTML =
+          `${attempts.length}<br><small>🔥 ${streak} day streak</small>`;
+
+        sBest.textContent = best + "%";
+        sAvg.textContent = avg + "%";
+        sTime.textContent = `${m}m ${s}s`;
+      }
+
+
+
+      /* =====================================================
+         CHART
+      ===================================================== */
+      function drawChart() {
+
+        if (!attempts.length) return;
+
+        const labels = attempts.map(a =>
+          new Date(a.createdAt).toLocaleDateString()
+        );
+
+        const values = attempts.map(a => a.accuracy);
+
+        if (window.progressInstance)
+          window.progressInstance.destroy();
+
+        window.progressInstance = new Chart(progressChart, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              label: "Accuracy %",
+              data: values,
+              tension: .35
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+
+
+      /* =====================================================
+         SEARCH
+      ===================================================== */
+      searchBox.oninput = () => {
+
+        const q = searchBox.value.toLowerCase();
+
+        filtered = attempts.filter(a =>
+          a.quizId.title.toLowerCase().includes(q)
+        );
+
+        page = 1;
+        renderTable();
+      };
+
+
+
+      /* =====================================================
+         SORT
+      ===================================================== */
+      sortSelect.onchange = () => {
+
+        const v = sortSelect.value;
+
+        if (v === "accuracy")
+          filtered.sort((a, b) => b.accuracy - a.accuracy);
+
+        if (v === "score")
+          filtered.sort((a, b) => b.score - a.score);
+
+        if (v === "date")
+          filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        renderTable();
+      };
+
+
+
+      /* =====================================================
+         TABLE RENDER (NOW WITH RANK)
+      ===================================================== */
+      function renderTable() {
+
+        const start = (page - 1) * pageSize;
+        const rows = filtered.slice(start, start + pageSize);
+
+        historyTable.innerHTML = "";
+
+        if (!rows.length) {
+          historyTable.innerHTML =
+            `<tr><td colspan="8" style="padding:30px;opacity:.6;text-align:center">
+       No attempts yet 😊
+       </td></tr>`;
+          return;
+        }
+
+        const frag = document.createDocumentFragment();
+
+        rows.forEach((a, i) => {
+
+          let cls = "bad";
+          if (a.accuracy >= 80) cls = "good";
+          else if (a.accuracy >= 50) cls = "mid";
+
+          const rank = ranksMap[a.quizId.id];
+
+          const tr = document.createElement("tr");
+
+          tr.innerHTML = `
 <td>${start + i + 1}</td>
 <td>${a.quizId.title}</td>
 <td>${a.score}</td>
@@ -515,87 +573,87 @@
 </td>
 `;
 
-        frag.appendChild(tr);
-      });
+          frag.appendChild(tr);
+        });
 
-      historyTable.appendChild(frag);
+        historyTable.appendChild(frag);
 
-      pageInfo.textContent =
-        `Page ${page} of ${Math.ceil(filtered.length / pageSize)}`;
-    }
-
-
-
-    /* =====================================================
-       ACTIONS
-    ===================================================== */
-    function retake(id) {
-      location.href = `/quiz-attempt.html?quizId=${id}`;
-    }
-
-    function review(id) {
-      location.href = `/quiz-result.html?attemptId=${id}`;
-    }
-
-    async function removeAttempt(id) {
-
-      if (!confirm("Delete this attempt?")) return;
-
-      await fetch(`/api/quiz/attempt/${id}`, {
-        method: "DELETE",
-        credentials: "include"
-      });
-
-      loadHistory();
-    }
-
-
-
-    /* =====================================================
-       PAGINATION
-    ===================================================== */
-    function nextPage() {
-      if (page * pageSize < filtered.length) {
-        page++;
-        renderTable();
+        pageInfo.textContent =
+          `Page ${page} of ${Math.ceil(filtered.length / pageSize)}`;
       }
-    }
 
-    function prevPage() {
-      if (page > 1) {
-        page--;
-        renderTable();
+
+
+      /* =====================================================
+         ACTIONS
+      ===================================================== */
+      function retake(id) {
+        location.href = `/quiz-attempt.html?quizId=${id}`;
       }
-    }
+
+      function review(id) {
+        location.href = `/quiz-result.html?attemptId=${id}`;
+      }
+
+      async function removeAttempt(id) {
+
+        if (!confirm("Delete this attempt?")) return;
+
+        await fetch(`/api/quiz/attempt/${id}`, {
+          method: "DELETE",
+          credentials: "include"
+        });
+
+        loadHistory();
+      }
 
 
 
-    /* =====================================================
-       CSV EXPORT
-    ===================================================== */
-    function exportCSV() {
+      /* =====================================================
+         PAGINATION
+      ===================================================== */
+      function nextPage() {
+        if (page * pageSize < filtered.length) {
+          page++;
+          renderTable();
+        }
+      }
 
-      let csv = "Quiz,Score,Total,Accuracy,Date\n";
+      function prevPage() {
+        if (page > 1) {
+          page--;
+          renderTable();
+        }
+      }
 
-      filtered.forEach(a => {
-        csv += `${a.quizId.title},${a.score},${a.total},${a.accuracy},${new Date(a.createdAt).toLocaleDateString()}\n`;
-      });
 
-      const blob = new Blob([csv]);
-      const url = URL.createObjectURL(blob);
 
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "history.csv";
-      link.click();
-    }
+      /* =====================================================
+         CSV EXPORT
+      ===================================================== */
+      function exportCSV() {
 
-    window.scrollTo(0, 0);
+        let csv = "Quiz,Score,Total,Accuracy,Date\n";
 
-  </script>
+        filtered.forEach(a => {
+          csv += `${a.quizId.title},${a.score},${a.total},${a.accuracy},${new Date(a.createdAt).toLocaleDateString()}\n`;
+        });
 
-  <script src="/js/guard.js"></script>
-  <script src="/script.js"></script>
+        const blob = new Blob([csv]);
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "history.csv";
+        link.click();
+      }
+
+      window.scrollTo(0, 0);
+
+    </script>
+
+    <script src="/js/guard.js"></script>
+    <script src="/script.js"></script>
 
 </body>
 
